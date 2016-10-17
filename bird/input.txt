@@ -22,7 +22,7 @@ The bird is drawn by a yellow rectangle, and each pipe is drawn by two green rec
 
 The bird's Y position moves down by a certain speed each frame. Each frame this speed is increased to simulate gravity.
 
-Qhen a key is pressed the bird's speed is set to a high number in the up direction.
+When a key is pressed the bird's speed is set to a high number in the up direction.
 
 The pipes have the same width and the same height of the space between the segments.
 
