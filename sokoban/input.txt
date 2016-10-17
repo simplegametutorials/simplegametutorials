@@ -1,0 +1,2310 @@
+# Sokoban
+
+## <a href="sokoban.love">Download sokoban.love</a>
+
+!
+
+<a href="http://git.rockbox.org/?p=rockbox.git;a=blob_plain;f=apps/plugins/sokoban.levels">The levels used in this tutorial are from Rockbox.</a>
+
+## Rules
+
+Push all the boxes to storage locations.
+
+Boxes can only be moved if there is a free space beyond it, not a wall or another box.
+
+### Legend
+
+& ! & Player
+& ! & Player on storage
+& ! & Box
+& ! & Box on storage
+& ! & Storage
+& ! & Wall
+
+### Controls
+
+& *Arrow keys* & Move
+& *r* & Reset level
+& *n* & Next level
+& *p* & Previous level
+
+## Overview
+
+### Representing data
+
+The different states a cell can be in are represented by the following strings:
+
+& *'@'* & Player
+& *'+'* & Player on storage
+& *'$'* & Box
+& *'&#42;'* & Box on storage
+& *'.'* & Storage
+& *'#'* & Wall
+
+The level is stored as a grid of these strings.
+
+!
+
+### Basic logic
+
+When an arrow key is pressed, the grid is looped through to find where the player is.
+
+If the position on the grid adjacent to the player in the direction of the arrow pressed is movable (i.e. empty or a storage location), the values of the grid are changed to reflect the new player position.
+
+!
+
+If position adjacent to the player is a box and the position beyond the box is movable, the grid is changed to reflect the new player and new box positions.
+
+!
+
+The grid is looped through and if there are no boxes left which aren't on storage locations then the level is complete.
+
+## Code
+
+### Drawing a level
+
+Each level is stored as a grid of strings. For now, a single level is stored, and a square is drawn for every cell which isn't a space (i.e. empty).
+
+`
+function love.load()
+	level = {
+		{' ', ' ', '#', '#', '#'},
+		{' ', ' ', '#', '.', '#'},
+		{' ', ' ', '#', ' ', '#', '#', '#', '#'},
+		{'#', '#', '#', '$', ' ', '$', '.', '#'},
+		{'#', '.', ' ', '$', '@', '#', '#', '#'},
+		{'#', '#', '#', '#', '$', '#'},
+		{' ', ' ', ' ', '#', '.', '#'},
+		{' ', ' ', ' ', '#', '#', '#'},
+	}
+end
+
+function love.draw()
+    for y, row in ipairs(level) do
+        for x, cell in ipairs(row) do
+            if cell ~= ' ' then
+                local cellSize = 23
+
+                love.graphics.rectangle(
+                    'fill',
+                    (x - 1) * cellSize,
+                    (y - 1) * cellSize,
+                    cellSize,
+                    cellSize
+                )
+            end
+        end
+    end
+end
+`
+
+!
+
+### Drawing cell types
+
+The cell's string is drawn above the cell.
+
+`
+function love.draw()
+    for y, row in ipairs(level) do
+        for x, cell in ipairs(row) do
+            if cell ~= ' ' then
+                local cellSize = 23
+
+                |love.graphics.setColor(255, 255, 255)|
+                love.graphics.rectangle(
+                    'fill',
+                    (x - 1) * cellSize,
+                    (y - 1) * cellSize,
+                    cellSize,
+                    cellSize
+                )
+                |love.graphics.setColor(0, 0, 0)|
+                |love.graphics.print(|
+                |    level[y][x],|
+                |    (x - 1) * cellSize,|
+                |    (y - 1) * cellSize|
+                |)|
+            end
+        end
+    end
+end
+`
+
+!
+
+### Settings colors
+
+The background color is set, and the color of each cell is set.
+
+`
+function love.load()
+    -- etc.
+
+    love.graphics.setBackgroundColor(255, 255, 190)
+end
+
+function love.draw()
+    for y, row in ipairs(level) do
+        for x, cell in ipairs(row) do
+            if cell ~= ' ' then
+                local cellSize = 23
+
+                |local colors = {|
+                |    ['@'] = {167, 135, 255},|
+                |    ['+'] = {158, 119, 255},|
+                |    ['$'] = {255, 201, 126},|
+                |    ['*'] = {150, 255, 127},|
+                |    ['.'] = {156, 229, 255},|
+                |    ['#'] = {255, 147, 209},|
+                |}|
+
+                |love.graphics.setColor(colors[cell])|
+                love.graphics.rectangle(
+                    'fill',
+                    (x - 1) * cellSize,
+                    (y - 1) * cellSize,
+                    cellSize,
+                    cellSize
+                )
+                |love.graphics.setColor(255, 255, 255)|
+                love.graphics.print(
+                    level[y][x],
+                    (x - 1) * cellSize,
+                    (y - 1) * cellSize
+                )
+            end
+        end
+    end
+end
+`
+
+!
+
+### Naming cell types
+
+So we don't have to remember what string means what cell type, the cell type strings are stored in variables.
+
+`
+function love.load()
+    -- etc.
+
+    player = '@'
+    playerOnStorage = '+'
+    box = '$'
+    boxOnStorage = '*'
+    storage = '.'
+    wall = '#'
+    empty = ' '
+end
+
+function love.draw()
+    for y, row in ipairs(level) do
+        for x, cell in ipairs(row) do
+            if cell ~= |empty| then
+                local cellSize = 23
+
+                local colors = {
+                    [|player|] = {167, 135, 255},
+                    [|playerOnStorage|] = {158, 119, 255},
+                    [|box|] = {255, 201, 126},
+                    [|boxOnStorage|] = {150, 255, 127},
+                    [|storage|] = {156, 229, 255},
+                    [|wall|] = {255, 147, 209},
+                }
+                
+                -- etc.
+            end
+        end
+    end
+end
+`
+
+### Finding player cell
+
+The first step in moving the player is finding which cell position they are at.
+
+The cells in the level are looped through, and if the cell type is a player or a player on storage, then the player's position has been found.
+
+`
+function love.keypressed(key)
+    if key == 'up' or key == 'down' or key == 'left' or key == 'right' then
+        local playerX
+        local playerY
+        for testY, row in ipairs(level) do
+            for testX, cell in ipairs(row) do
+                if cell == player or cell == playerOnStorage then
+                    playerX = testX
+                    playerY = testY
+                end
+            end
+        end
+        
+        print(playerX, playerY)
+    end
+end
+`
+
+~
+5       5
+~
+
+### Finding cell in direction of key pressed
+
+For now, the cell adjacent to the player in the direction of the key pressed is printed out.
+
+`
+function love.keypressed(key)
+    if key == 'up' or key == 'down' or key == 'left' or key == 'right' then
+        local playerX
+        local playerY
+        for testY, row in ipairs(level) do
+            for testX, cell in ipairs(row) do
+                if cell == player or cell == playerOnStorage then
+                    playerX = testX
+                    playerY = testY
+                end
+            end
+        end
+
+        |local dx = 0|
+        |local dy = 0|
+        |if key == 'left' then|
+        |    dx = -1|
+        |elseif key == 'right' then|
+        |    dx = 1|
+        |elseif key == 'up' then|
+        |    dy = -1|
+        |elseif key == 'down' then|
+        |    dy = 1|
+        |end|
+
+        |local current = level[playerY][playerX]|
+        |local adjacent = level[playerY + dy][playerX + dx]|
+
+        |print('current = level['..playerY..']['..playerX..'] ('..current..')')|
+        |print('adjacent = level['..playerY + dy..']['..playerX + dx..'] ('..adjacent..')')|
+        |print()|
+    end
+end
+`
+
+~
+current = level[5][5] (@)
+adjacent = level[4][5] ( )
+
+current = level[5][5] (@)
+adjacent = level[5][6] (#)
+
+current = level[5][5] (@)
+adjacent = level[6][5] ($)
+
+current = level[5][5] (@)
+adjacent = level[5][4] ($)
+~
+
+### Creating test level
+
+For testing player movement, a test level is made.
+
+`
+function love.load()
+    level = {
+        {'#', '#', '#', '#', '#'},
+        {'#', '@', ' ', '.', '#'},
+        {'#', ' ', '$', ' ', '#'},
+        {'#', '.', '$', ' ', '#'},
+        {'#', ' ', '$', '.', '#'},
+        {'#', '.', '$', '.', '#'},
+        {'#', '.', '*', ' ', '#'},
+        {'#', ' ', '*', '.', '#'},
+        {'#', ' ', '*', ' ', '#'},
+        {'#', '.', '*', '.', '#'},
+        {'#', '#', '#', '#', '#'},
+    }
+
+    -- etc.
+end
+`
+
+!
+
+### Moving player to empty location
+
+If the player's current position is the cell type *player* (i.e. not *playerOnStorage*) and the adjacent cell type is *empty*, then the player's position becomes *empty* and the adjacent position becomes *player*.
+
+`
+function love.keypressed(key)
+        -- etc.
+
+        if current == player and adjacent == empty then
+            level[playerY][playerX] = empty
+            level[playerY + dy][playerX + dx] = player
+        end
+    end
+end
+`
+
+!
+
+### Moving player to storage
+
+If the adjacent position is *storage* then the new adjacent position becomes *playerOnStorage*.
+
+Currently the player can move on to storage, but not off storage.
+
+`
+function love.keypressed(key)
+        -- etc.
+
+        if current == player then
+            |if| adjacent == empty then
+                level[playerY][playerX] = empty
+                level[playerY + dy][playerX + dx] = player
+            |elseif adjacent == storage then|
+                level[playerY][playerX] = empty
+                level[playerY + dy][playerX + dx] = |playerOnStorage|
+            |end|
+        end
+
+        -- etc.
+end
+`
+
+!
+
+### Simplifying code
+
+The new adjacent position is changed based on what *adjacent* is, so a table is made which returns the next adjacent cell type when indexed by the current adjacent cell type.
+
+Indexing by anything other than the values *empty* or *storage* will be result in nil, so it can also be used to check if the player can move at all.
+
+`
+function love.keypressed(key)
+        -- etc.
+
+        |local nextAdjacent = {|
+        |    [empty] = player,|
+        |    [storage] = playerOnStorage,|
+        |}|
+
+        if current == player |and nextAdjacent[adjacent]| then
+            level[playerY][playerX] = empty
+            level[playerY + dy][playerX + dx] = |nextAdjacent[adjacent]|
+        end
+
+        -- etc.
+end
+`
+
+### Moving player from storage
+
+If the player is on storage, then the player's current position is set to *storage*.
+
+`
+function love.keypressed(key)
+        -- etc.
+
+        if nextAdjacent[adjacent] then
+            |if| current == player then
+                level[playerY][playerX] = empty
+                level[playerY + dy][playerX + dx] = nextAdjacent[adjacent]
+            |elseif current == playerOnStorage then|
+                level[playerY][playerX] = |storage|
+                level[playerY + dy][playerX + dx] = nextAdjacent[adjacent]
+            |end|
+        end
+
+        -- etc.
+end
+`
+
+!
+
+### Simplifying code
+
+A table is made which returns the next cell for the player's previous position type when indexed by the current player cell type.
+
+`
+function love.keypressed(key)
+        -- etc.
+
+        |local nextCurrent = {|
+        |    [player] = empty,|
+        |    [playerOnStorage] = storage,|
+        |}|
+
+        if nextAdjacent[adjacent] then
+            level[playerY][playerX] = |nextCurrent[current]|
+            level[playerY + dy][playerX + dx] = nextAdjacent[adjacent]
+        end
+
+        -- etc.
+end
+`
+
+### Pushing box on to empty location
+
+The cell beyond the adjacent cell is stored in a variable.
+
+If the adjacent cell is a box and the beyond cell is empty, the adjacent position is set to *player* and the beyond position is set to *box*.
+
+`
+function love.keypressed(key)
+        -- etc.
+
+
+        local current = level[playerY][playerX]
+        local adjacent = level[playerY + dy][playerX + dx]
+        |local beyond|
+        |if level[playerY + dy + dy] then|
+        |    beyond = level[playerY + dy + dy][playerX + dx + dx]|
+        |end|
+
+        -- etc.
+
+        if nextAdjacent[adjacent] then
+            level[playerY][playerX] = nextCurrent[current]
+            level[playerY + dy][playerX + dx] = nextAdjacent[adjacent]
+
+        |elseif adjacent == box and beyond == empty then|
+        |    level[playerY][playerX] = nextCurrent[current]|
+        |    level[playerY + dy][playerX + dx] = player|
+        |    level[playerY + dy + dy][playerX + dx + dx] = box|
+        |end|
+
+        -- etc.
+end
+`
+
+!
+
+### Pushing box on to storage
+
+If the beyond position is *storage* then the new beyond position becomes *boxOnStorage*.
+
+`
+function love.keypressed(key)
+        -- etc.
+
+        if nextAdjacent[adjacent] then
+            level[playerY][playerX] = nextCurrent[current]
+            level[playerY + dy][playerX + dx] = nextAdjacent[adjacent]
+
+        elseif adjacent == box then
+            |if| beyond == empty then
+                level[playerY][playerX] = nextCurrent[current]
+                level[playerY + dy][playerX + dx] = player
+                level[playerY + dy + dy][playerX + dx + dx] = box
+            |elseif beyond == storage then|
+            |    level[playerY][playerX] = nextCurrent[current]|
+            |    level[playerY + dy][playerX + dx] = player|
+            |    level[playerY + dy + dy][playerX + dx + dx] = boxOnStorage|
+            |end|
+        end
+
+        -- etc.
+end
+`
+
+!
+
+### Simplifying code
+
+A table is made which returns the next beyond cell type when indexed by the current beyond cell type.
+
+`
+function love.keypressed(key)
+        -- etc.
+
+        |local nextBeyond = {|
+        |    [empty] = box,|
+        |    [storage] = boxOnStorage,|
+        |}|
+
+        if nextAdjacent[adjacent] then
+            level[playerY][playerX] = nextCurrent[current]
+            level[playerY + dy][playerX + dx] = nextAdjacent[adjacent]
+
+        elseif adjacent == box |and nextBeyond[beyond]| then
+            level[playerY][playerX] = nextCurrent[current]
+            level[playerY + dy][playerX + dx] = player
+            level[playerY + dy + dy][playerX + dx + dx] = |nextBeyond[beyond]|
+        end
+
+        -- etc.
+end
+`
+
+### Pushing box on storage
+
+If the adjacent cell is a box on storage, then the adjacent position is set to *boxOnStorage*.
+
+`
+function love.keypressed(key)
+        -- etc.
+
+        if nextAdjacent[adjacent] then
+            level[playerY][playerX] = nextCurrent[current]
+            level[playerY + dy][playerX + dx] = nextAdjacent[adjacent]
+
+        elseif nextBeyond[beyond] then
+            level[playerY][playerX] = nextCurrent[current]
+
+            |if| adjacent == box then
+                level[playerY + dy][playerX + dx] = player
+            |elseif adjacent == boxOnStorage then|
+                level[playerY + dy][playerX + dx] = |playerOnStorage|
+            |end|
+
+            level[playerY + dy + dy][playerX + dx + dx] = nextBeyond[beyond]
+        end
+
+        -- etc.
+end
+`
+
+!
+
+### Simplifying code
+
+A table is made which returns the next adjacent cell type when a box is pushed when indexed by the current adjacent cell type.
+
+`
+function love.keypressed(key)
+        -- etc.
+
+        |local nextAdjacentPush = {|
+        |    [box] = player,|
+        |    [boxOnStorage] = playerOnStorage,|
+        |}|
+
+        if nextAdjacent[adjacent] then
+            level[playerY][playerX] = nextCurrent[current]
+            level[playerY + dy][playerX + dx] = nextAdjacent[adjacent]
+
+        elseif nextBeyond[beyond] and |nextAdjacentPush[adjacent]| then
+            level[playerY][playerX] = nextCurrent[current]
+            level[playerY + dy][playerX + dx] = |nextAdjacentPush[adjacent]|
+            level[playerY + dy + dy][playerX + dx + dx] = nextBeyond[beyond]
+        end
+
+        -- etc.
+end
+`
+
+### Loading level from levels table
+
+The levels are stored in a table.
+
+The current level is stored as a number.
+
+The cells of the current level are copied into the level table.
+
+`
+function love.load()
+    -- etc.
+
+    levels = {
+        {
+            {' ', ' ', '#', '#', '#'},
+            {' ', ' ', '#', '.', '#'},
+            {' ', ' ', '#', ' ', '#', '#', '#', '#'},
+            {'#', '#', '#', '$', ' ', '$', '.', '#'},
+            {'#', '.', ' ', '$', '@', '#', '#', '#'},
+            {'#', '#', '#', '#', '$', '#'},
+            {' ', ' ', ' ', '#', '.', '#'},
+            {' ', ' ', ' ', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '#'},
+            {'#', '@', '$', '$', '#', ' ', '#', '#', '#'},
+            {'#', ' ', '$', ' ', '#', ' ', '#', '.', '#'},
+            {'#', '#', '#', ' ', '#', '#', '#', '.', '#'},
+            {' ', '#', '#', ' ', ' ', ' ', ' ', '.', '#'},
+            {' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'},
+            {'#', '#', '$', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', '@', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', '.', '.', '#', ' ', '$', ' ', '#', '#'},
+            {'#', '#', '.', '.', '#', ' ', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+    }
+
+    currentLevel = 1
+
+    level = {}
+    for y, row in ipairs(levels[currentLevel]) do
+        level[y] = {}
+        for x, cell in ipairs(row) do
+            level[y][x] = cell
+        end
+    end
+end
+`
+
+!
+
+### Resetting level
+
+When the *r* key is pressed the level is reset.
+
+The code for copying the current level to the level table is reused from *love.load*, so a function is made.
+
+`
+function love.load()
+    -- etc.
+
+    |function loadLevel()|
+        level = {}
+        for y, row in ipairs(levels[currentLevel]) do
+            level[y] = {}
+            for x, cell in ipairs(row) do
+                level[y][x] = cell
+            end
+        end
+    |end|
+
+    |loadLevel()|
+end
+
+function love.keypressed(key)
+    -- etc.
+
+    elseif key == 'r' then
+        loadLevel()
+    end
+end
+`
+
+### Next and previous level
+
+When the *n* key is pressed the next level is loaded, and when the *p* key is pressed the previous level is loaded.
+
+`
+function love.keypressed(key)
+    -- etc.
+
+    elseif key == 'n' then
+        currentLevel = currentLevel + 1
+        loadLevel()
+
+    elseif key == 'p' then
+        currentLevel = currentLevel - 1
+        loadLevel()
+    end
+end
+`
+
+!
+
+### Wrapping next and previous
+
+If the previous level is before the first level, the last level is loaded.
+
+If the next level is after the last level, the first level is loaded.
+
+`
+function love.keypressed(key)
+    -- etc.
+
+    elseif key == 'n' then
+        currentLevel = currentLevel + 1
+        |if currentLevel > #levels then|
+        |    currentLevel = 1|
+        |end|
+        loadLevel()
+
+    elseif key == 'p' then
+        currentLevel = currentLevel - 1
+        |if currentLevel < 1 then|
+        |    currentLevel = #levels|
+        |end|
+        loadLevel()
+    end
+end
+`
+
+### Go to next level when complete
+
+After the player has moved, all of the cells in the level are looped through. If none of the cells are boxes (i.e. they are all boxes on storage) then the level is complete and the next level is loaded.
+
+`
+function love.keypressed(key)
+    if key == 'up' or key == 'down' or key == 'left' or key == 'right' then
+        -- etc.
+
+        local complete = true
+
+        for y, row in ipairs(level) do
+            for x, cell in ipairs(row) do
+                if cell == box then
+                    complete = false
+                end
+            end
+        end
+
+        if complete then|
+            currentLevel = currentLevel + 1
+            if currentLevel > #levels then
+                currentLevel = 1
+            end
+            loadLevel()
+        end
+
+    elseif key == 'r' then
+    -- etc.
+end
+`
+
+## Final code
+
+`
+function love.load()
+    love.graphics.setBackgroundColor(255, 255, 190)
+
+    player = '@'
+    playerOnStorage = '+'
+    box = '$'
+    boxOnStorage = '*'
+    storage = '.'
+    wall = '#'
+    empty = ' '
+    
+    currentLevel = 1
+
+    levels = {
+        {
+            {' ', ' ', '#', '#', '#'},
+            {' ', ' ', '#', '.', '#'},
+            {' ', ' ', '#', ' ', '#', '#', '#', '#'},
+            {'#', '#', '#', '$', ' ', '$', '.', '#'},
+            {'#', '.', ' ', '$', '@', '#', '#', '#'},
+            {'#', '#', '#', '#', '$', '#'},
+            {' ', ' ', ' ', '#', '.', '#'},
+            {' ', ' ', ' ', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '#'},
+            {'#', '@', '$', '$', '#', ' ', '#', '#', '#'},
+            {'#', ' ', '$', ' ', '#', ' ', '#', '.', '#'},
+            {'#', '#', '#', ' ', '#', '#', '#', '.', '#'},
+            {' ', '#', '#', ' ', ' ', ' ', ' ', '.', '#'},
+            {' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'},
+            {'#', '#', '$', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', '@', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', '.', '.', '#', ' ', '$', ' ', '#', '#'},
+            {'#', '#', '.', '.', '#', ' ', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', ' ', ' ', '.', '#'},
+            {'#', ' ', ' ', ' ', '$', ' ', '*', '#'},
+            {'#', ' ', '$', '$', ' ', '$', '.', '#'},
+            {'#', '#', '@', '#', '#', '.', '.', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#'},
+            {' ', '#', '@', ' ', '#', '#', '#'},
+            {' ', '#', ' ', '$', ' ', ' ', '#'},
+            {'#', '#', '#', ' ', '#', ' ', '#', '#'},
+            {'#', '.', '#', ' ', '#', ' ', ' ', '#'},
+            {'#', '.', '$', ' ', ' ', '#', ' ', '#'},
+            {'#', '.', ' ', ' ', ' ', '$', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', '#', ' ', ' ', '#', ' ', '@', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'},
+            {' ', ' ', '#', '$', ' ', '$', ' ', '$', ' ', '#'},
+            {' ', ' ', '#', ' ', '$', '#', '#', ' ', ' ', '#'},
+            {'#', '#', '#', ' ', '$', ' ', '#', ' ', '#', '#'},
+            {'#', '.', '.', '.', '.', '.', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '.', ' ', '$', '#', '#', ' ', '#', '#'},
+            {'#', '.', '.', '$', ' ', '$', ' ', ' ', '@', '#'},
+            {'#', '.', '.', ' ', '$', ' ', '$', ' ', '#', '#'},
+            {'#', '#', '#', '#', '#', '#', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '$', '$', '$', ' ', '#'},
+            {'#', '@', ' ', '$', '.', '.', ' ', '#'},
+            {'#', ' ', '$', '.', '.', '.', '#', '#'},
+            {'#', '#', '#', '#', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', '#', '#', '#', '#'},
+            {' ', ' ', '#', '.', '.', '#'},
+            {' ', '#', '#', ' ', '.', '#', '#'},
+            {' ', '#', ' ', ' ', '$', '.', '#'},
+            {'#', '#', ' ', '$', ' ', ' ', '#', '#'},
+            {'#', ' ', ' ', '#', '$', '$', ' ', '#'},
+            {'#', ' ', ' ', '@', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', ' ', ' ', '@', '#'},
+            {'#', ' ', ' ', '$', '.', ' ', '#', '#'},
+            {'#', ' ', ' ', '.', '$', '.', ' ', '#'},
+            {'#', '#', '#', ' ', '*', '$', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', '#', '#'},
+            {' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', '$', '.', '.', '$', ' ', '#'},
+            {'#', '@', '$', '.', '*', ' ', '#', '#'},
+            {'#', ' ', '$', '.', '.', '$', ' ', '#'},
+            {'#', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', '#'},
+            {' ', ' ', '#', ' ', '$', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', ' ', '$', ' ', '#', '#', ' ', '#'},
+            {'#', '.', '.', '.', ' ', '$', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', '.', '$', '#', '$', ' ', '#', '#'},
+            {'#', '#', '#', '#', ' ', '#', ' ', '$', ' ', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', '@', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '$', '$', '$', '#', '#'},
+            {'#', ' ', ' ', '#', '.', '.', '#', '#', '#'},
+            {'#', '#', ' ', ' ', '.', '.', '$', ' ', '#'},
+            {' ', '#', ' ', '@', ' ', ' ', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', '#', '.', ' ', '#'},
+            {' ', '#', '#', ' ', ' ', '$', '.', '.', '.', '#'},
+            {' ', '#', ' ', ' ', '$', ' ', '#', '*', '.', '#'},
+            {'#', '#', ' ', '#', '#', '$', '#', ' ', '#', '#'},
+            {'#', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '@', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '.', '.', '.', '.', ' ', '#'},
+            {'#', '#', '#', '.', '.', '.', '$', '#', '#', '#'},
+            {'#', ' ', ' ', '$', '#', '$', ' ', '$', ' ', '#'},
+            {'#', ' ', '$', '$', ' ', ' ', '#', '$', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', ' ', '@', ' ', '#', '#', '#'},
+            {' ', ' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '.', '.', ' ', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', '$', ' ', '$', '@', '#'},
+            {'#', '$', '#', '$', '$', '$', '#', '#'},
+            {'#', '.', '.', '$', ' ', '$', ' ', '#'},
+            {'#', '.', '.', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '#', '$', '$', ' ', ' ', '#'},
+            {'#', ' ', '.', '.', '.', '#', ' ', '#'},
+            {'#', '#', '.', '.', '.', '$', ' ', '#', '#'},
+            {' ', '#', ' ', '#', '#', ' ', '$', ' ', '#'},
+            {' ', '#', '$', ' ', ' ', '$', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '#', ' ', ' ', '@', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '$', ' ', '$', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', ' ', ' ', '$', ' ', '@', '#'},
+            {'#', '#', '#', '$', '$', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', '.', '.', '#'},
+            {' ', ' ', '#', '.', '.', '.', '.', '#'},
+            {' ', ' ', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '*', ' ', ' ', ' ', '#'},
+            {'#', ' ', '$', '.', '$', '.', ' ', '@', '#'},
+            {'#', ' ', '.', '$', '.', '$', '.', ' ', '#'},
+            {'#', ' ', '$', '.', '$', '.', '$', ' ', '#'},
+            {'#', ' ', ' ', ' ', '*', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', '#', '$', '#', '$', ' ', '#'},
+            {'#', ' ', '$', '$', ' ', ' ', '.', '$', '.', '#'},
+            {'#', ' ', '@', '#', '#', '#', '.', '.', '.', '#'},
+            {'#', '#', '#', '#', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '.', ' ', '.', '.', '#'},
+            {' ', '#', '.', ' ', '$', '.', '#'},
+            {'#', '#', '#', ' ', ' ', '$', '#', '#'},
+            {'#', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', '#', '$', '#', '#', ' ', '#'},
+            {'#', ' ', ' ', ' ', '@', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#'},
+            {' ', '#', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {'#', '#', ' ', '#', '$', ' ', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', ' ', '$', '$', ' ', '#'},
+            {'#', ' ', '#', '$', '#', '.', '*', '.', '#'},
+            {'#', ' ', ' ', ' ', '@', '.', '.', '.', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', ' ', ' ', ' ', '#', '#'},
+            {'#', ' ', '$', ' ', '$', ' ', ' ', ' ', '#'},
+            {'#', '@', '#', '.', '*', '.', '#', ' ', '#'},
+            {'#', ' ', '#', '.', '*', '.', '#', ' ', '#'},
+            {'#', ' ', ' ', ' ', '$', ' ', '$', ' ', '#'},
+            {'#', '#', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', '.', ' ', ' ', '#', '#'},
+            {'#', ' ', '$', '.', '$', '.', ' ', ' ', '#'},
+            {'#', '@', '$', '#', ' ', '#', '$', ' ', '#'},
+            {'#', ' ', '$', '.', ' ', '.', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '$', '#', '$', ' ', '#'},
+            {' ', ' ', '#', '.', ' ', '.', ' ', ' ', '#'},
+            {' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', ' ', ' ', ' ', ' ', '.', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', '$', ' ', '$', '.', ' ', '#'},
+            {'#', ' ', ' ', '.', '#', '#', '#', '#', '.', '#', '#'},
+            {'#', ' ', '$', '.', '$', ' ', '$', ' ', '@', '#'},
+            {'#', ' ', ' ', '.', ' ', ' ', ' ', ' ', '#', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {'#', ' ', '$', ' ', '.', '*', '.', ' ', '$', ' ', '#'},
+            {'#', '@', '$', '.', '*', ' ', '*', '.', '$', ' ', '#'},
+            {'#', ' ', '$', ' ', '.', '*', '.', ' ', '$', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', ' ', '#', '#', '#', '#'},
+            {'#', ' ', '$', '*', '.', '.', '*', ' ', '#'},
+            {'#', ' ', '*', '.', '.', '*', '$', ' ', '#'},
+            {'#', '#', '#', '#', ' ', ' ', '$', ' ', '#'},
+            {' ', ' ', ' ', '#', ' ', '@', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', '.', ' ', ' ', '@', '#'},
+            {'#', ' ', ' ', '$', '$', '$', ' ', ' ', '#'},
+            {'#', '.', '#', '#', '.', '#', '#', '.', '#'},
+            {'#', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', '.', '#', ' ', '#', '#'},
+            {'#', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '.', ' ', ' ', '$', '.', ' ', '@', '#'},
+            {'#', ' ', '.', '$', '.', '$', ' ', ' ', '#'},
+            {'#', '#', '$', '.', '$', ' ', '$', '#', '#'},
+            {'#', ' ', '.', '$', '.', '$', ' ', ' ', '#'},
+            {'#', '.', ' ', ' ', '$', '.', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', '@', ' ', ' ', '#'},
+            {'#', '#', '$', ' ', '$', ' ', '#'},
+            {'#', ' ', ' ', '$', '$', '#', '#'},
+            {'#', '.', '.', '.', '.', '#'},
+            {'#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#'},
+            {' ', '#', ' ', ' ', '#', '#', '#', '#', '#'},
+            {'#', '#', '$', ' ', '#', '#', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', '@', '$', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', '#', '#', '$', ' ', '#'},
+            {'#', '#', '#', '.', '#', '#', ' ', '#', '#', '#'},
+            {' ', '#', '.', '.', '.', '$', ' ', '$', ' ', '#'},
+            {' ', '#', '#', '.', '.', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', '#', '.', '.', ' ', '#', '#'},
+            {'#', ' ', '$', '.', ' ', '$', '*', ' ', '#'},
+            {'#', ' ', ' ', '$', '@', '$', ' ', ' ', '#'},
+            {'#', ' ', '*', '$', ' ', '.', '$', ' ', '#'},
+            {'#', '#', ' ', '.', '.', '#', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', ' ', ' ', '*', ' ', ' ', '#', '#'},
+            {'#', ' ', '.', ' ', '.', ' ', '.', ' ', '#'},
+            {'#', ' ', '$', ' ', '*', ' ', ' ', ' ', '#'},
+            {'#', '*', '$', '$', '*', '$', '$', '*', '#'},
+            {'#', ' ', ' ', ' ', '*', ' ', '$', ' ', '#'},
+            {'#', ' ', '.', ' ', '.', '@', '.', ' ', '#'},
+            {'#', '#', ' ', ' ', '*', ' ', ' ', '#', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '.', '$', ' ', '@', '#'},
+            {'#', ' ', '$', ' ', '*', ' ', '$', ' ', '#'},
+            {'#', '*', '.', '.', '.', '*', '.', '*', '#'},
+            {'#', ' ', '$', '$', '*', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', '.', ' ', '$', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '#', '#', '.', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '#', '.', '.', '#', '#', ' ', '#'},
+            {' ', '#', ' ', ' ', '$', '.', '.', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '#', ' ', '.', '#', ' ', '#', '#'},
+            {'#', '#', '#', ' ', '#', '#', '$', '#', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', ' ', ' ', ' ', '$', '$', ' ', '#'},
+            {'#', ' ', '#', '$', '#', ' ', ' ', '#', ' ', ' ', '#'},
+            {'#', '@', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', '#', ' ', '.', '.', '.', '#'},
+            {'#', '#', '#', '#', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', '#', '#', '#', '$', ' ', '#', '#', '#'},
+            {'#', ' ', '$', ' ', '$', ' ', ' ', '$', '$', ' ', '#'},
+            {'#', '@', ' ', '$', ' ', '$', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', ' ', ' ', '#', '#', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#'},
+            {' ', '#', '$', ' ', '#', '#', '#', ' ', '$', '#'},
+            {' ', '#', ' ', '#', '.', '.', '.', '#', ' ', '#'},
+            {'#', '#', ' ', '#', '.', '.', '.', '#', ' ', '#', '#'},
+            {'#', ' ', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', '#', ' ', '@', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', ' ', ' ', ' ', '#', ' ', '#', ' ', '#'},
+            {'#', ' ', ' ', '#', '.', '$', '$', '$', ' ', '#'},
+            {'#', ' ', '#', '.', '*', '#', ' ', '#', '#', '#'},
+            {'#', ' ', ' ', '.', '.', '#', ' ', '#'},
+            {'#', '#', '#', '.', '.', '$', ' ', '#', '#'},
+            {' ', ' ', '#', '.', '#', ' ', '$', ' ', '#'},
+            {' ', '#', '#', ' ', '#', ' ', '#', '@', '#'},
+            {' ', '#', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {' ', '#', ' ', ' ', ' ', ' ', '#', '#', '#'},
+            {' ', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '@', ' ', '$', '$', '$', ' ', '$', ' ', ' ', '#'},
+            {'#', '#', ' ', '$', ' ', ' ', '$', ' ', '$', ' ', '#'},
+            {' ', '#', '#', ' ', '#', '#', '#', '#', ' ', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', '$', ' ', '#', '#'},
+            {'#', '#', '#', ' ', '#', '#', '$', ' ', '$', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', '#'},
+            {'#', '.', '.', '.', '.', '.', '#'},
+            {'#', '.', '.', '.', '.', '.', '#'},
+            {'#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '@', ' ', '$', '#', ' ', '#'},
+            {'#', '#', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', '$', '#', '.', '#', ' ', '#'},
+            {'#', ' ', ' ', '.', '*', '.', '$', '#'},
+            {'#', '#', ' ', '#', '.', '#', ' ', '#'},
+            {' ', '#', ' ', '#', '.', ' ', ' ', '#', '#'},
+            {'#', '#', ' ', '$', '.', '#', ' ', ' ', '#'},
+            {'#', ' ', ' ', '#', ' ', '$', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', ' ', ' ', '#', '#', '#'},
+            {'#', ' ', ' ', '#', '#', '#', '#'},
+            {'#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '@', ' ', '#'},
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', '#'},
+            {'#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', '.', '#', '#', '#', ' ', '#', '#'},
+            {'#', ' ', '#', ' ', '#', ' ', ' ', ' ', ' ', '#', '#'},
+            {'#', ' ', '#', ' ', '$', ' ', '$', '#', '.', ' ', '#'},
+            {'#', ' ', '#', ' ', ' ', '*', ' ', ' ', '#', ' ', '#'},
+            {'#', ' ', '.', '#', '$', ' ', '$', ' ', '#', ' ', '#'},
+            {'#', '#', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', '#'},
+            {' ', '#', ' ', '#', '#', '#', '.', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '#', '#'},
+            {'#', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', '$', ' ', '@', '#'},
+            {'#', '#', '#', '.', ' ', '#'},
+            {' ', ' ', '#', '.', '#', '#'},
+            {' ', ' ', '#', '.', ' ', '#'},
+            {'#', '#', '#', '.', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', '$', ' ', ' ', '#'},
+            {'#', '#', ' ', ' ', '#', '#'},
+            {' ', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#'},
+            {'#', ' ', ' ', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', '.', ' ', ' ', '#', ' ', '#'},
+            {'#', '#', '$', '#', ' ', ' ', '.', '#'},
+            {' ', '#', ' ', '#', '$', '#', ' ', '#'},
+            {'#', '#', '.', ' ', ' ', '.', ' ', '#'},
+            {'#', ' ', ' ', '#', '#', ' ', ' ', '#'},
+            {'#', ' ', ' ', '#', ' ', ' ', '*', '#'},
+            {'#', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', '$', '#', '*', ' ', '@', '#'},
+            {'#', ' ', ' ', '#', '.', '#', '#', '#'},
+            {'#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#'},
+            {' ', ' ', ' ', '#', '.', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '.', '$', ' ', '#', ' ', ' ', '#'},
+            {' ', '#', '.', '.', '.', ' ', ' ', '#', '$', ' ', '#'},
+            {' ', '#', '.', '#', '#', ' ', '$', ' ', ' ', ' ', '#'},
+            {'#', '#', '.', '$', ' ', '$', '#', '#', ' ', '#', '#'},
+            {'#', '.', '$', ' ', '#', ' ', '#', '#', ' ', '#'},
+            {'#', '.', '#', '$', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '.', '$', ' ', ' ', '#', '$', ' ', '$', '#'},
+            {'#', '.', ' ', '$', '#', '#', ' ', '@', ' ', '#'},
+            {'#', '.', '$', ' ', ' ', ' ', ' ', '$', ' ', '#'},
+            {'#', '.', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {' ', ' ', '#', '#', '#', ' ', ' ', '#', '#'},
+            {' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#'},
+            {' ', '#', ' ', ' ', ' ', '#', ' ', '.', '.', '#'},
+            {'#', '#', ' ', '$', '#', '*', '#', '$', '.', '#'},
+            {'#', ' ', ' ', '$', ' ', '#', ' ', '$', '.', '#'},
+            {'#', ' ', ' ', '$', ' ', '@', ' ', '$', '.', '#'},
+            {'#', ' ', ' ', '$', ' ', '#', ' ', '$', '.', '#'},
+            {'#', '#', '$', '$', '#', '*', '#', '$', '.', '#'},
+            {' ', '#', '.', ' ', ' ', '#', ' ', '.', '.', '#'},
+            {' ', '#', '#', '.', ' ', ' ', ' ', ' ', '#', '#'},
+            {' ', ' ', '#', '#', '#', ' ', ' ', '#', '#'},
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '#', ' ', '#', '#', '#', ' ', '#'},
+            {'#', ' ', '$', '$', ' ', ' ', '#', ' ', '#'},
+            {'#', '@', '$', ' ', ' ', ' ', '#', ' ', '#'},
+            {'#', '#', ' ', '#', '#', ' ', '#', ' ', '#'},
+            {'#', ' ', ' ', ' ', '$', ' ', '$', ' ', '#'},
+            {'#', ' ', '$', '#', '#', ' ', '#', ' ', '#'},
+            {'#', ' ', ' ', ' ', '#', '$', '#', ' ', '#'},
+            {'#', '.', '.', '.', '#', ' ', ' ', ' ', '#'},
+            {'#', '.', '#', '.', '#', '$', '#', '#', '#'},
+            {'#', '.', '.', '.', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', '.', '#'},
+            {'#', ' ', '#', '$', '#', '.', '.', '#', '#'},
+            {'#', ' ', ' ', ' ', '$', '.', '.', '.', '#'},
+            {'#', '#', ' ', '#', '#', '.', '$', '.', '#'},
+            {' ', '#', ' ', '#', '#', ' ', ' ', '#', '#'},
+            {' ', '#', '$', '#', '#', ' ', ' ', '#'},
+            {'#', '#', ' ', ' ', ' ', '#', '$', '#'},
+            {'#', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', '$', ' ', '#', '#', '#', '#'},
+            {'#', ' ', '$', ' ', '$', ' ', ' ', ' ', '@', '#'},
+            {'#', ' ', ' ', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#'},
+            {'#', ' ', ' ', '#', '#', '#', '#'},
+            {'#', ' ', ' ', '$', ' ', ' ', '#'},
+            {'#', ' ', '#', '.', '#', ' ', '#'},
+            {'#', ' ', '#', ' ', '#', ' ', '#'},
+            {'#', '.', '$', '.', '$', '.', '#'},
+            {'#', ' ', '#', ' ', '#', ' ', '#'},
+            {'#', ' ', '#', '.', '#', ' ', '#'},
+            {'#', ' ', ' ', '$', '$', ' ', '#'},
+            {'#', '#', ' ', '@', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '#', '#', '#'},
+            {' ', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', ' ', '#'},
+            {'#', ' ', '$', '$', ' ', ' ', '#', '#', ' ', ' ', '#'},
+            {'#', ' ', ' ', '#', ' ', '$', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', ' ', '#', '#', ' ', '$', '#', ' ', ' ', '#'},
+            {' ', '#', ' ', '#', '.', '.', '.', ' ', ' ', '#', '#'},
+            {' ', '#', ' ', ' ', '.', '.', '.', '#', '$', '#', '#'},
+            {' ', '#', ' ', '#', '.', '.', '.', '#', ' ', ' ', '#'},
+            {'#', '#', ' ', '#', ' ', '#', '#', '#', '@', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', '#', '$', '#', '#', '#', '#', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '.', '.', '$', ' ', '$', ' ', '*', '.', '#'},
+            {'#', '.', '*', ' ', '$', ' ', '$', '.', '.', '#'},
+            {'#', '#', '.', '$', ' ', '$', ' ', '*', '#', '#'},
+            {' ', '#', '*', ' ', '$', ' ', '$', '.', '#'},
+            {' ', '#', '.', '$', ' ', '$', ' ', '.', '#'},
+            {' ', '#', '.', ' ', '$', ' ', '$', '.', '#'},
+            {' ', '#', '.', '$', '@', '$', ' ', '*', '#'},
+            {'#', '#', '*', ' ', '$', ' ', '$', '.', '#', '#'},
+            {'#', '.', '.', '$', ' ', '$', ' ', '*', '.', '#'},
+            {'#', '.', '*', ' ', '$', ' ', '$', '.', '.', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', '#', '$', ' ', ' ', '#'},
+            {' ', ' ', '#', '#', '#', ' ', ' ', '$', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', '#'},
+            {'#', '#', '#', ' ', '#', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '#', ' ', '#', '#', ' ', '#', '#', '#', '#', '#', ' ', ' ', '.', '.', '#'},
+            {'#', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '.', '.', '#'},
+            {'#', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', '#', '@', '#', '#', ' ', ' ', '.', '.', '#'},
+            {' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '.', '.', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'},
+            {'#', '.', '.', ' ', ' ', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'},
+            {'#', '.', '.', ' ', ' ', '#', '$', '#', '#', '#', '#', ' ', ' ', '#'},
+            {'#', '.', '.', ' ', ' ', ' ', ' ', '@', ' ', '#', '#', ' ', ' ', '#'},
+            {'#', '.', '.', ' ', ' ', '#', ' ', '#', ' ', ' ', '$', ' ', '#', '#'},
+            {'#', '#', '#', '#', '#', '#', ' ', '#', '#', '$', ' ', '$', ' ', '#'},
+            {' ', ' ', '#', ' ', '$', ' ', ' ', '$', ' ', '$', ' ', '$', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '@', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', '#', '$', ' ', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', ' ', ' ', '$', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '$', ' ', '$', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '$', ' ', '#', ' ', '#', '#', '#'},
+            {'#', '.', '.', '.', '.', ' ', ' ', '#', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'},
+            {'#', '#', '.', '.', '.', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', '.', '.', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '.', '.', '.', '.', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', ' ', ' ', '.', '.', '.', '.', '#'},
+            {'#', ' ', '$', '$', '$', '#', '$', ' ', ' ', '$', ' ', '#', ' ', ' ', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', '$', ' ', '#', ' ', ' ', '.', '.', '.', '.', '#'},
+            {'#', ' ', '$', '$', ' ', '#', '$', ' ', '$', ' ', '$', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', '$', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#', '#'},
+            {'#', ' ', ' ', '$', '$', '#', '$', '$', ' ', ' ', '@', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '$', '#', '#', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '$', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', '.', '.', ' ', ' ', '#', '#', ' ', '$', ' ', ' ', '$', '#', '#', '#'},
+            {'#', '.', '.', '.', '.', ' ', ' ', ' ', ' ', '$', ' ', '$', '$', ' ', '#', '#'},
+            {'#', '.', '.', '.', '.', ' ', ' ', '#', '#', '$', ' ', ' ', '$', ' ', '@', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '$', ' ', ' ', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', ' ', '$', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', '#', '#', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#'},
+            {'#', '.', '.', ' ', ' ', '#', ' ', '#', '#', '@', '#', '#'},
+            {'#', '.', '.', ' ', ' ', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', ' ', ' ', ' ', ' ', ' ', '$', '$', ' ', '#'},
+            {'#', '.', '.', ' ', ' ', '#', ' ', '#', ' ', '$', ' ', '#'},
+            {'#', '.', '.', '#', '#', '#', ' ', '#', ' ', '$', ' ', '#'},
+            {'#', '#', '#', '#', ' ', '$', ' ', '#', '$', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', '$', '#', ' ', '$', ' ', '#'},
+            {' ', ' ', ' ', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#'},
+            {'#', '#', ' ', '#', ' ', '@', '#', '#', ' ', '$', '$', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', ' ', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', ' ', '#', '#', '#', '#', '#', '$', '#', '#', '#'},
+            {'#', ' ', '$', ' ', ' ', '#', '#', '#', ' ', '.', '.', '#'},
+            {'#', ' ', '$', ' ', '$', ' ', '$', ' ', '.', '.', '.', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', '#', '#', '.', '.', '.', '#'},
+            {'#', ' ', '$', '$', ' ', '#', ' ', '#', '.', '.', '.', '#'},
+            {'#', ' ', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', '$', ' ', '$', ' ', '#'},
+            {' ', ' ', '#', ' ', '$', '#', ' ', '$', ' ', '#', ' ', ' ', '$', ' ', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', ' ', '$', '#', ' ', '#', ' ', ' ', '#', '#', '#', '#', ' ', '#'},
+            {'#', '@', '#', '$', ' ', '$', ' ', '$', ' ', ' ', '#', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', '$', ' ', '#', '$', '#', ' ', ' ', ' ', '#', ' ', '#'},
+            {'#', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', '$', ' ', '$', ' ', '#'},
+            {'#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', '#', '.', '.', '.', '.', '.', '.', '#'},
+            {' ', ' ', '#', '.', '.', '.', '.', '.', '.', '#'},
+            {' ', ' ', '#', '.', '.', '.', '.', '.', '.', '#'},
+            {' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '.', '.', '.', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', '.', '.', '.', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '.', ' ', '.', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', '.', '.', '.', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', '#', '#', ' ', ' ', '.', '.', '.', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', ' ', '$', '$', '$', ' ', '#', '#'},
+            {' ', '#', '#', '#', '#', '#', ' ', ' ', '$', ' ', '$', ' ', '#', '#', '#', '#', '#'},
+            {'#', '#', ' ', ' ', ' ', '#', '$', ' ', '$', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', '@', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', ' ', '$', '$', ' ', '$', ' ', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', '@', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', '$', '$', ' ', ' ', ' ', '$', '$', ' ', ' ', '$', ' ', '$', ' ', '.', '.', '.', '#'},
+            {'#', ' ', ' ', '$', '$', '$', '#', ' ', ' ', ' ', ' ', '$', ' ', ' ', '#', '.', '.', '.', '#'},
+            {'#', ' ', '$', ' ', ' ', ' ', '#', ' ', '$', '$', ' ', '$', '$', ' ', '#', '.', '.', '.', '#'},
+            {'#', '#', '#', ' ', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#', '.', '.', '.', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', ' ', '$', ' ', '$', ' ', '#', '.', '.', '.', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '.', '.', '.', '#'},
+            {'#', '#', ' ', '#', ' ', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', ' ', '#', '.', '.', '.', '#'},
+            {'#', ' ', ' ', '#', '#', ' ', '#', ' ', '$', '$', ' ', '$', ' ', '$', '#', '#', '.', '.', '#'},
+            {'#', ' ', '.', '.', '#', ' ', '#', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', '#', '.', '#'},
+            {'#', ' ', '.', '.', '#', ' ', '#', ' ', '$', '$', '$', ' ', '$', '$', '$', ' ', '#', '.', '#'},
+            {'#', '#', '#', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '.', '#'},
+            {' ', ' ', ' ', ' ', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '.', '#'},
+            {' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '.', '#'},
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', ' ', '#', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', '#', '#', ' ', ' ', '#', '#', '#', '$', ' ', '#'},
+            {' ', ' ', '#', '#', ' ', ' ', ' ', '@', ' ', ' ', '$', ' ', ' ', '#'},
+            {' ', '#', '#', ' ', ' ', '$', ' ', '$', '$', '#', '#', ' ', '#', '#'},
+            {' ', '#', ' ', ' ', '#', '$', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', '#', ' ', '$', ' ', '$', '$', ' ', '#', ' ', '#', '#', '#'},
+            {' ', '#', ' ', ' ', ' ', '$', ' ', '#', ' ', ' ', '#', ' ', '$', ' ', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '$', '$', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', ' ', '#', '#', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '.', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '.', '.', ' ', '.', '.', '#', ' ', '#', '#', '#', '#'},
+            {'#', '.', '.', '.', '#', '.', '#'},
+            {'#', '.', '.', '.', '.', '.', '#'},
+            {'#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '#', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', '$', ' ', '$', '#', ' ', ' ', '#'},
+            {'#', ' ', '#', ' ', ' ', ' ', '$', '@', '$', ' ', ' ', ' ', '#', '#', ' ', '#', '#'},
+            {'#', ' ', '#', ' ', '#', '$', ' ', '$', ' ', '$', '#', '#', '#', '.', '.', '.', '#'},
+            {'#', ' ', '#', ' ', ' ', ' ', '$', ' ', '$', ' ', ' ', '#', '#', '.', '.', '.', '#'},
+            {'#', ' ', '#', '#', '#', '$', '$', '$', ' ', '$', ' ', '#', '#', '.', '.', '.', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '#', ' ', '#', '#', '.', '.', '.', '#'},
+            {'#', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#', ' ', '#', '#', '.', '.', '.', '#'},
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', '#'},
+            {'#', ' ', ' ', '$', ' ', '#', '$', ' ', '#', ' ', ' ', '#', ' ', ' ', '.', '.', '.', ' ', '#'},
+            {'#', ' ', '#', ' ', '$', '#', '@', '$', '#', '#', ' ', '#', ' ', '#', '.', '#', '.', ' ', '#'},
+            {'#', ' ', ' ', '#', ' ', '#', '$', ' ', ' ', '#', ' ', ' ', ' ', ' ', '.', ' ', '.', ' ', '#'},
+            {'#', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', '#', ' ', '#', ' ', '#', '.', '#', '.', ' ', '#'},
+            {'#', ' ', ' ', ' ', '#', '#', ' ', ' ', '#', '#', '$', ' ', '$', ' ', '.', ' ', '.', ' ', '#'},
+            {'#', ' ', '$', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#', '$', '#', '.', '#', '.', ' ', '#'},
+            {'#', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', '$', ' ', ' ', '$', '.', '.', '.', ' ', '#'},
+            {' ', '#', '$', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', '@', '$', ' ', '#'},
+            {' ', '#', '$', '$', ' ', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', ' ', '#', '#', '#', '.', '.', '.', '.', '.', '.', '#', '#', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', ' ', '$', '.', '.', '.', '.', '.', '.', '#', '#', ' ', '#', ' ', '#'},
+            {' ', '#', ' ', '#', '#', '#', '.', '.', '.', '.', '.', '.', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', ' ', ' ', ' ', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', '#', '$', '#', '#'},
+            {'#', ' ', ' ', '#', '$', ' ', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', '#', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', '$', '$', '$', ' ', ' ', '#', ' ', '$', '#', '#', ' ', '#'},
+            {'#', ' ', ' ', ' ', '$', ' ', '$', ' ', '#', '#', '#', '$', '$', ' ', '#', ' ', '#'},
+            {'#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#', ' ', '#'},
+            {' ', ' ', ' ', ' ', '#', '#', '#', ' ', '#', '#', '#', ' ', ' ', ' ', '#', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', ' ', '#'},
+            {' ', '#', '#', '#', ' ', '#', '$', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {' ', '#', ' ', ' ', '$', ' ', ' ', '#', '#', '$', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '#', ' ', '@', ' ', '$', ' ', '#', ' ', '$', '#'},
+            {' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '$', ' ', '#', '#', '#', '#'},
+            {' ', '#', '#', ' ', '#', '#', '#', '#', '$', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', '$', '#', '.', '.', '.', '.', '.', '#', ' ', '#', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '$', '.', '.', '*', '*', '.', ' ', '$', '#', ' ', '#', '#', '#'},
+            {'#', '#', ' ', ' ', '#', '.', '.', '.', '.', '.', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', '$', '$', ' ', ' ', '#', ' ', ' ', '#'},
+            {'#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#'},
+            {'#', ' ', '$', ' ', ' ', '#', '#', '#', '#', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', '$', ' ', '$', ' ', ' ', ' ', '$', '#'},
+            {'#', '#', '#', '@', ' ', '#', '$', ' ', ' ', ' ', ' ', '#', '#'},
+            {' ', '#', ' ', ' ', '#', '#', ' ', ' ', '$', ' ', '$', ' ', '#', '#'},
+            {' ', '#', ' ', '$', ' ', ' ', '#', '#', ' ', '#', '#', ' ', '.', '#'},
+            {' ', '#', ' ', ' ', '#', '$', '#', '#', '$', ' ', ' ', '#', '.', '#'},
+            {' ', '#', '#', '#', ' ', ' ', ' ', '$', '.', '.', '#', '#', '.', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '.', '*', '.', '.', '.', '#'},
+            {' ', ' ', '#', ' ', '$', '$', ' ', '#', '.', '.', '.', '.', '.', '#'},
+            {' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', '#'},
+            {' ', ' ', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', '#', '.', '.', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', '.', '.', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', '.', '.', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#'},
+            {' ', ' ', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '#', ' ', ' ', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', '#', ' ', ' ', '#'},
+            {'#', '#', '#', '#', ' ', '#', '#', ' ', ' ', '#', '#', '#', '#', ' ', '#', '#'},
+            {'#', ' ', ' ', '$', ' ', ' ', '#', '#', '#', '#', '#', ' ', '#', ' ', ' ', '#'},
+            {'#', ' ', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#', ' ', '$', ' ', ' ', '#'},
+            {'#', ' ', '@', '$', ' ', ' ', '$', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#'},
+            {'#', '#', '#', '#', ' ', '#', '#', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '.', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '.', ' ', ' ', ' ', ' ', '@', ' ', '#'},
+            {' ', '#', '#', '#', '#', '#', ' ', '#', '#', '.', '.', '#', ' ', '#', '#', '#', '#'},
+            {'#', '#', ' ', ' ', '#', ' ', '.', '.', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'},
+            {'#', ' ', '$', ' ', '#', '.', '.', '.', ' ', ' ', ' ', '$', ' ', '#', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', '.', '.', ' ', '#', '#', ' ', ' ', '#', '#', ' ', '#', '#', ' ', '#'},
+            {'#', '#', '#', '#', '$', '#', '#', '$', '#', ' ', '$', ' ', '#', ' ', ' ', ' ', '#', ' ', '#'},
+            {' ', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', '#', '$', ' ', '$', '$', ' ', '#', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', '$', ' ', '#', ' ', '#', ' ', ' ', '#', ' ', '$', '#', '#', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '#'},
+            {' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', '@', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', '#', ' ', '$', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {'#', ' ', '$', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#', ' ', '#'},
+            {'#', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#', ' ', '#'},
+            {'#', '#', ' ', '$', ' ', '$', ' ', '#', '#', '#', ' ', '#', ' ', '#'},
+            {'#', '#', ' ', '#', ' ', ' ', '$', ' ', ' ', '#', ' ', '#', ' ', '#'},
+            {'#', '#', ' ', '#', ' ', '#', '$', '#', ' ', ' ', ' ', '#', ' ', '#'},
+            {'#', '#', ' ', '#', '#', '#', ' ', ' ', ' ', '#', ' ', '#', ' ', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', '$', ' ', ' ', '#', '#', '#', '#', ' ', '#', ' ', '#', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', '.', '.', '#', '.', '#'},
+            {'#', '#', '#', '#', '$', ' ', ' ', '$', '#', ' ', '$', ' ', ' ', ' ', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', '.', '.', '.', '.', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '$', ' ', ' ', '#', '@', ' ', '#'},
+            {'#', ' ', '#', '#', '#', '#', '#', '#', '#', '$', '#', '#', '#', '#', ' ', ' ', '#', '#', '#'},
+            {'#', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', '#', ' ', ' ', '#', '$', ' ', '.', '.', '#'},
+            {'#', ' ', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', '.', '#'},
+            {'#', ' ', '#', ' ', '$', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '$', ' ', '.', '.', '#'},
+            {'#', ' ', '#', ' ', ' ', '#', '#', '#', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '.', '#'},
+            {'#', ' ', '#', '#', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', '$', ' ', '.', '.', '#'},
+            {'#', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', '$', '#', '#', '#', '#', ' ', ' ', '#', '.', '#'},
+            {'#', ' ', '#', '$', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '#', '*', ' ', '.', '.', '#'},
+            {'#', ' ', ' ', ' ', ' ', '$', ' ', '#', ' ', '$', ' ', '$', ' ', '#', ' ', ' ', '#', '.', '#'},
+            {'#', '#', '#', '#', ' ', '$', '#', '#', '#', ' ', ' ', ' ', ' ', '#', '*', ' ', '.', '.', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '$', '$', ' ', '#', '#', '#', '.', '.', '.', '.', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {'#', '#', ' ', '#', '#', '#', '#', ' ', '#', ' ', ' ', '#'},
+            {'#', '#', ' ', '#', '@', '#', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '$', '$', '$', ' ', '$', ' ', ' ', '$', '$', '#'},
+            {'#', ' ', ' ', '#', ' ', '#', '#', ' ', '$', ' ', ' ', '#'},
+            {'#', ' ', ' ', '#', ' ', '#', '#', ' ', ' ', '$', ' ', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', ' ', ' ', '$', '$', '$', ' ', '$', '#', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', '.', '.', '.', '.', '#'},
+            {' ', '#', ' ', '#', ' ', ' ', ' ', '#', ' ', '#', '.', '.', ' ', '.', '#'},
+            {' ', '#', ' ', ' ', ' ', '#', ' ', '#', ' ', '#', '#', '.', '.', '.', '#'},
+            {' ', '#', '#', '#', '#', '#', ' ', '$', ' ', ' ', '#', '.', '.', '.', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '$', '#', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', '#', ' ', '$', ' ', '$', ' ', ' ', '#'},
+            {'#', '#', '$', ' ', '$', ' ', ' ', ' ', '#', ' ', '@', '#', ' ', '$', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#'},
+            {'#', ' ', '#', ' ', ' ', ' ', '#', '.', '.', '.', '.', '.', '.', '.', '#', ' ', '$', '#'},
+            {'#', ' ', '#', '#', ' ', ' ', '#', ' ', '.', '.', '.', '.', '.', '.', '#', ' ', ' ', '#'},
+            {'#', ' ', '#', ' ', ' ', ' ', '$', '.', '.', '.', '.', '.', '.', '.', '.', '$', ' ', '#'},
+            {'#', ' ', '#', ' ', '$', ' ', '#', '.', '.', '.', '.', ' ', '.', '.', '#', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', '$', '#', '#', '#', '#', '$', '#', '#', '#', '#', ' ', '$', '#'},
+            {'#', ' ', '$', ' ', ' ', ' ', '#', '#', '#', ' ', '$', ' ', ' ', ' ', '$', ' ', ' ', '#', '#'},
+            {'#', ' ', '$', ' ', ' ', ' ', ' ', ' ', '$', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', ' ', '#', '#', '#', '#', '#', '#', ' ', '$', ' ', '#', '#', '#', '#', '#', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', '#', ' ', '$', '#', '$', ' ', '#', ' ', ' ', '#', '#'},
+            {'#', '.', '.', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', ' ', '#', ' ', '$', '#', '$', ' ', '#', ' ', ' ', '$', '#', '#', '#', '#'},
+            {'#', '.', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '$', ' ', ' ', '#', ' ', ' ', '#'},
+            {'#', '.', '.', ' ', ' ', ' ', '$', '#', ' ', ' ', '#', ' ', '$', ' ', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', '@', '#', ' ', ' ', '#', '$', ' ', '#', '$', ' ', ' ', '#', ' ', ' ', '#'},
+            {'#', '.', '.', ' ', '#', ' ', '$', '#', ' ', ' ', ' ', ' ', ' ', '$', '#', ' ', ' ', '#'},
+            {'#', '.', '.', ' ', '#', ' ', ' ', '#', '$', '$', '#', '$', ' ', ' ', '#', ' ', ' ', '#', '#'},
+            {'#', '.', '.', ' ', '#', ' ', '$', '#', ' ', ' ', '#', ' ', ' ', '$', '#', '$', ' ', ' ', '#'},
+            {'#', '.', '.', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', '#', '.', ' ', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', ' ', ' ', '.', '#', '#', '#', '#'},
+            {'#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '$', '$', '.', '#', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '$', ' ', '#', ' ', ' ', ' ', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', '$', ' ', '#'},
+            {'#', '#', ' ', '#', '#', '#', '#', ' ', ' ', ' ', '#', ' ', ' ', '$', ' ', '#', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', '#', ' ', '#', '#'},
+            {'#', ' ', ' ', '$', '#', ' ', ' ', '#', ' ', '#', '#', ' ', ' ', '#', '#', '#', ' ', '#'},
+            {'#', ' ', '$', ' ', '#', '$', '#', '#', '#', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', '#'},
+            {'#', '#', '#', ' ', ' ', '$', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', '#', '#', ' ', '#'},
+            {' ', '#', '#', ' ', ' ', ' ', ' ', '$', ' ', '#', '#', ' ', '#', ' ', ' ', '#', ' ', '#', '#'},
+            {' ', '#', ' ', '$', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', '$', ' ', '$', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '$', ' ', ' ', '$', '#', '$', '$', '$', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {' ', '#', ' ', '@', '#', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#'},
+            {'#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', '#', ' ', ' ', ' ', '.', '.', '#', '.', '.', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', '#', ' ', '#', ' ', '#', '#', '#', '#', '#', ' ', '.', '.', '.', '#'},
+            {'#', '#', '$', '#', ' ', ' ', ' ', ' ', '.', '.', '.', '.', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', ' ', '#', '#', '$', '#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#'},
+            {'#', ' ', '$', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '@', ' ', '#'},
+            {'#', '#', '$', ' ', '#', ' ', '$', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', '#', '$', '$', '$', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '$', '#', '$', '#', '#', '#'},
+            {'#', ' ', '#', '#', '#', '#', ' ', '#', '$', '$', '$', '$', '$', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '#', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', '#', ' ', ' ', ' ', '#', '#', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'},
+            {'#', ' ', '#', '#', '#', '#', '#', '#', '$', '#', '#', '#', '#', '#', '#', ' ', '$', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#'},
+            {'#', '#', ' ', ' ', '#', ' ', ' ', '#', '.', '.', '.', '#', '#', '#'},
+            {'#', ' ', ' ', '$', '#', ' ', ' ', '#', '.', '.', '.', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', '#', '$', '$', ' ', '.', '.', '.', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', '#', ' ', ' ', '#', '.', '.', '.', ' ', '.', '#'},
+            {'#', ' ', ' ', ' ', '#', ' ', '$', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', '$', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '$', ' ', '$', ' ', '#'},
+            {'#', '#', ' ', ' ', '#', ' ', ' ', '$', '$', ' ', '#', ' ', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#', '$', '$', '@', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '.', '.', '.', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#'},
+            {'#', '#', '.', '.', '.', '.', '.', ' ', ' ', '$', '#', '#', ' ', '#', ' ', '#', '$', ' ', '#'},
+            {'#', '.', '.', '.', '.', '.', '.', '#', ' ', ' ', '$', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', '.', '.', '.', '.', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', '#', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '$', ' ', ' ', '$', ' ', '$', ' ', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '$', '#', '#', '$', ' ', '#', '#', '$', '#', '#'},
+            {' ', '#', '#', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#', ' ', '$', ' ', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '#', '#', ' ', '#', '#', '#', ' ', '#', ' ', ' ', '#', '#', '$', ' ', '#'},
+            {' ', '#', ' ', '$', ' ', '$', '$', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'},
+            {' ', '#', ' ', '$', ' ', ' ', ' ', ' ', '$', '#', '#', '$', ' ', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '@', ' ', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', '#', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', '#', ' ', '$', ' ', ' ', '$', ' ', '$', ' ', '#', '#', '.', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '$', '$', ' ', ' ', '#', '#', '.', '.', '#'},
+            {'#', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '.', '.', ' ', '#'},
+            {'#', '#', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '.', '.', '.', ' ', '#'},
+            {'#', ' ', '$', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '.', '.', '.', ' ', '#'},
+            {'#', '@', ' ', '#', '$', ' ', '#', '#', ' ', '#', '#', '#', '#', '.', '.', '.', '#'},
+            {'#', '#', '#', '#', ' ', ' ', '$', ' ', '$', '$', ' ', ' ', '#', '#', '.', '.', '#'},
+            {' ', ' ', ' ', '#', '#', ' ', ' ', '$', ' ', '$', ' ', ' ', '$', '.', '.', '.', '#'},
+            {' ', ' ', ' ', ' ', '#', ' ', '$', '$', ' ', ' ', '$', ' ', '#', ' ', ' ', '.', '#'},
+            {' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '$', ' ', '$', ' ', ' ', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '#', '#'},
+            {'#', ' ', '$', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', ' ', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', ' ', '#', ' ', ' ', ' ', '$', '#', '$', '#', '@', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '$', ' ', '#', ' ', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#'},
+            {'#', ' ', ' ', '#', '#', ' ', '.', '.', '*', '.', '.', '.', '.', '.', ' ', '#', ' ', '#', '#'},
+            {'#', '#', ' ', '#', '#', ' ', '*', '.', '*', '.', '.', '*', '.', '*', ' ', '#', ' ', '#', '#'},
+            {'#', ' ', '$', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '$', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', ' ', '#'},
+            {'#', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '$', ' ', '$', ' ', '#'},
+            {'#', ' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', '$', '#', '#', ' ', '#', ' ', '#', '#'},
+            {'#', ' ', '$', ' ', '#', '#', ' ', ' ', ' ', '#', ' ', '#', '#', ' ', '$', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', ' ', '@', '$', '$', ' ', '#', ' ', '#', '#', '$', '$', '$', ' ', '#'},
+            {'#', '#', ' ', '#', '#', '#', ' ', ' ', ' ', '#', ' ', '#', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', ' ', '#', ' ', ' ', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '$', '#'},
+            {'#', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', '#', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', '#', '#', '#', ' ', '#', '#', ' ', '$', ' ', '#', '.', '.', '.', '.', '#', '#'},
+            {'#', ' ', '$', ' ', ' ', ' ', '$', ' ', '#', ' ', ' ', ' ', '#', '.', '.', '$', '.', ' ', '#'},
+            {'#', ' ', ' ', '#', '#', ' ', '$', ' ', '#', ' ', ' ', '#', '#', '.', '.', '.', '.', ' ', '#'},
+            {'#', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '.', '.', '.', '#', '#'},
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '#', ' ', ' ', '#', '#', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '$', '#', ' ', '$', '@', '$', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {' ', '#', '$', ' ', ' ', '$', ' ', ' ', '#', ' ', '$', ' ', '$', '#', ' ', ' ', '#', '#'},
+            {'#', '#', ' ', ' ', '$', '#', '#', ' ', '#', '$', ' ', '$', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '#', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', '$', '$', '$', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', '#', '#', ' ', '#', '#', '#', '#'},
+            {'#', ' ', '$', ' ', '$', ' ', '#', '$', '#', ' ', ' ', '#', ' ', ' ', '#'},
+            {'#', '#', ' ', ' ', '#', '#', '#', ' ', ' ', '#', '#', '#', '$', ' ', '#'},
+            {' ', '#', ' ', ' ', '#', '.', '.', '.', '.', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', '.', '.', '.', '.', '.', '.', '#', '#', '#', '#'},
+            {' ', ' ', ' ', '#', '.', '.', '.', '.', '#', '#', '#', '#'},
+            {' ', ' ', ' ', '#', '.', '.', '.', '#', '#'},
+            {' ', ' ', ' ', '#', '.', '.', '.', '#'},
+            {' ', ' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', '#'},
+            {' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '$', '#'},
+            {'#', '#', ' ', '$', ' ', ' ', '#', '#', ' ', '#', '#', '#'},
+            {'#', '@', '$', ' ', '$', ' ', '#', ' ', '$', ' ', ' ', '#'},
+            {'#', '#', '#', '#', ' ', '#', '#', ' ', ' ', ' ', '$', '#'},
+            {' ', '#', '.', '.', '.', '.', '#', '$', ' ', '$', ' ', '#'},
+            {' ', '#', '.', '.', '.', '.', '#', ' ', ' ', ' ', '$', '#'},
+            {' ', '#', '.', '.', '.', '.', ' ', ' ', '$', '$', ' ', '#', '#'},
+            {' ', '#', '.', '.', '.', ' ', '#', ' ', '$', ' ', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '$', ' ', '$', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', '$', ' ', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', '#'},
+            {'#', '#', ' ', ' ', ' ', '$', ' ', ' ', ' ', '$', ' ', '#'},
+            {'#', '#', '#', '#', ' ', '#', '#', ' ', '$', '$', ' ', '#'},
+            {'#', ' ', ' ', ' ', '$', ' ', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '$', '$', '$', ' ', '#', ' ', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '#', ' ', '#', ' ', '$', ' ', '#', '#'},
+            {'#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', '$', '#', ' ', '$', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', '.', '.', '#', ' ', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', '.', '.', ' ', '$', ' ', '#', '@', '#'},
+            {'#', '.', '.', '.', '.', '.', '#', ' ', '$', '#', ' ', '#'},
+            {'#', '#', '.', '.', '.', '.', '#', ' ', ' ', '$', ' ', '#'},
+            {'#', '#', '#', '.', '.', '#', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '.', '.', '.', '.', ' ', ' ', ' ', '#', '#'},
+            {' ', '#', '.', '#', '.', '#', ' ', ' ', '$', ' ', '#', '#'},
+            {'#', '#', '.', '.', '.', '.', '#', ' ', '#', ' ', '@', '#', '#'},
+            {'#', ' ', '.', '.', '.', '.', '#', ' ', ' ', '#', ' ', ' ', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', '#', '$', ' ', '#', '#', '$', ' ', '#'},
+            {'#', '#', ' ', '#', '#', '#', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#'},
+            {' ', '#', '$', ' ', ' ', '$', ' ', '$', ' ', '$', '#', ' ', ' ', '#'},
+            {' ', '#', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', '#', '#', ' ', '#'},
+            {' ', '#', ' ', ' ', '#', '#', '#', ' ', ' ', '#', '#', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', '#', '#', ' ', '#', '#'},
+            {' ', '#', ' ', ' ', '$', ' ', '#', ' ', ' ', '$', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '$', ' ', '$', ' ', ' ', ' ', '#', '#', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', '#', '#', '#', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', ' ', '$', '$', '#', ' ', ' ', ' ', '@', ' ', ' ', '.', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', ' ', '#', ' ', '#', '#', '#', ' ', ' ', ' ', '#', ' ', '.', '.', '.', '.', '#'},
+            {'#', '#', ' ', '#', '#', ' ', '#', '#', '#', ' ', ' ', '#', ' ', ' ', '.', '.', '.', '.', '#'},
+            {' ', '#', ' ', '$', ' ', '$', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', '#', '#', '#', '#'},
+            {' ', '#', ' ', ' ', '$', ' ', '$', '#', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', ' ', '#', ' ', ' ', '#', '#', '#', '#', ' ', '#', ' ', '#', '#', ' ', '#'},
+            {'#', ' ', ' ', '#', ' ', '#', '$', ' ', ' ', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', '#', '#'},
+            {'#', ' ', '#', ' ', '$', ' ', '$', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', '#', '#', ' ', '#', '#', ' ', '#', ' ', '#', '#', '#', '#', '#'},
+            {'#', ' ', '$', '$', ' ', ' ', ' ', ' ', ' ', '$', '$', ' ', ' ', '#'},
+            {'#', '#', ' ', '#', '#', ' ', '#', '#', '#', ' ', '$', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', '#', '#', '#', '#', ' ', ' ', '$', ' ', '$', ' ', '$', ' ', '#'},
+            {'#', ' ', '$', ' ', ' ', ' ', '#', '#', ' ', '#', '#', ' ', '#', '#', ' ', ' ', '#', '#'},
+            {'#', ' ', ' ', ' ', '$', ' ', '$', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {'#', '#', '#', ' ', '$', ' ', ' ', '#', '#', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#'},
+            {' ', ' ', '#', ' ', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '$', '$', ' ', '#'},
+            {' ', '#', '#', '$', '#', '#', '#', '#', '#', ' ', '@', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', '$', ' ', ' ', '#', '#', '#', '$', '#', '#', '#', ' ', '$', ' ', ' ', '#', '#'},
+            {' ', '#', ' ', '$', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', '#', ' ', ' ', '#', '#', '#'},
+            {' ', '#', ' ', '$', '$', ' ', '$', ' ', '#', ' ', ' ', ' ', '$', '$', ' ', '#'},
+            {' ', '#', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#', '.', '.', ' ', '.', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', '#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'},
+            {' ', ' ', ' ', ' ', '#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'},
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '.', '.', '.', '.', '.', '.', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '.', '.', '.', '.', '.', '.', ' ', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', '#', '#', '#', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', '.', ' ', '$', ' ', '$', ' ', '#', ' ', ' ', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', '.', '#', '$', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#'},
+            {'#', '#', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '$', ' ', ' ', '#', '$', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', '$', '$', ' ', '$', ' ', '$', ' ', ' ', '$', '#', '#', ' ', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', '$', ' ', ' ', ' ', '#', '$', '#', '$', ' ', '#', '#', '$', ' ', '#'},
+            {' ', ' ', '#', '#', '#', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', '#', '#', ' ', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', '#', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '@', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', ' ', '@', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', '$', '#', '#', ' ', '$', '#'},
+            {'#', '#', '$', '#', '.', '.', '.', '#', ' ', '#'},
+            {' ', '#', ' ', '$', '.', '.', '.', ' ', ' ', '#'},
+            {' ', '#', ' ', '#', '.', ' ', '.', '#', ' ', '#', '#'},
+            {' ', '#', ' ', ' ', ' ', '#', ' ', '#', '$', ' ', '#'},
+            {' ', '#', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '.', '.', '.', '.', '#'},
+            {'#', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', '$', '$', '#', '#', ' ', ' ', '$', ' ', '@', '#', '#', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '$', '$', ' ', '$', '#', ' ', ' ', '.', '.', '.', '.', '#'},
+            {'#', ' ', ' ', '$', ' ', '#', '#', ' ', '$', '$', ' ', '#', ' ', '#', ' ', '.', '.', '.', '#'},
+            {'#', ' ', ' ', '$', ' ', '#', '#', ' ', '$', ' ', ' ', '#', ' ', ' ', '.', '.', '.', '.', '#'},
+            {'#', '#', ' ', '#', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', '#', '#', '.', '#', '#', '#'},
+            {'#', '#', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', '#', '#', ' ', ' ', ' ', '.', ' ', ' ', '#'},
+            {'#', ' ', '$', '#', '#', '#', ' ', ' ', '#', ' ', '#', '#', '#', '#', '#', ' ', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', '#', '$', ' ', '$', ' ', '$', '#', '#', '#', ' ', ' ', '#'},
+            {'#', ' ', '$', '$', '$', '#', ' ', '$', ' ', ' ', ' ', '#', ' ', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '$', '$', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#'},
+            {' ', ' ', ' ', ' ', '#', ' ', ' ', '#', ' ', '#', '$', '$', ' ', '$', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', '#', '$', ' ', '#', '$', '#', ' ', ' ', '#', '#', ' ', '@', '#'},
+            {' ', ' ', ' ', '#', '#', ' ', '#', '#', ' ', '#', ' ', '$', ' ', '#', ' ', '#', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', ' ', '$', ' ', '#', '$', ' ', ' ', '#', ' ', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', '$', ' ', ' ', ' ', '#', ' ', '#'},
+            {' ', ' ', ' ', '#', '#', ' ', '$', ' ', '$', ' ', ' ', ' ', '#', '#', ' ', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', '$', ' ', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', '$', '$', '#', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '$', '$', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', '.', '.', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', '.', '#', '.', '.', '.', ' ', '#', '#'},
+            {'#', '.', '.', '.', '.', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', '.', '.', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', '$', '$', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', '$', '$', ' ', ' ', '$', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', '#'},
+            {'#', '#', '#', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '$', '$', ' ', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', '.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '$', '$', '$', '@', '#'},
+            {'#', '.', '#', ' ', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', ' ', ' ', ' ', '#', '#'},
+            {'#', '.', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '.', ' ', '#', '$', ' ', '$', '#', '#'},
+            {'#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', ' ', '#', ' ', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '$', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', '$', ' ', '$', ' ', ' ', ' ', '@', '#'},
+            {' ', ' ', '#', ' ', '#', '#', ' ', '#', '#', '$', '#', '$', ' ', '$', ' ', '$', '#', '#'},
+            {'#', '#', '#', ' ', '.', '.', '.', '.', '.', '.', '#', ' ', ' ', '$', '$', ' ', '#', '#'},
+            {'#', ' ', ' ', ' ', '.', '.', '.', '.', '.', '.', '#', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', '#', ' ', '.', '.', '.', '.', '.', '.', '#', '$', ' ', ' ', '$', ' ', ' ', '#'},
+            {'#', ' ', '#', ' ', '.', '.', '.', '.', '.', '.', ' ', '$', '$', '#', ' ', '$', ' ', '#'},
+            {'#', ' ', '$', ' ', '#', '#', '#', ' ', '#', '#', '#', '$', ' ', ' ', '$', ' ', '#', '#'},
+            {'#', '#', '#', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {' ', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', ' ', '#', '$', '$', ' ', '#', '#', ' ', '#', '#', ' ', ' ', '#'},
+            {'#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', '#', '#', ' ', '#', '#', '#'},
+            {'#', ' ', ' ', '#', '#', '#', ' ', '$', '#', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'},
+            {'#', '.', '.', '.', ' ', ' ', ' ', ' ', '#', ' ', '#', '#', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', '.', '.', '.', '#', ' ', ' ', ' ', ' ', '@', ' ', '#', ' ', '#', '#', '#', ' ', '#', '#'},
+            {'#', '.', '.', '.', '#', ' ', ' ', '#', '#', '#', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', '#', '#', '#', '#', '#'},
+            {' ', '#', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', '#', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '$', '@', '#', '#', '#', '#', '#', '#'},
+            {' ', '#', ' ', '$', ' ', '#', '#', '$', ' ', '#', '#', '#', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', '#', '#', '#', '#', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', '#'},
+            {' ', '#', ' ', '#', '#', '#', '#', '#', ' ', '#', ' ', ' ', '#', '$', ' ', '#', '#', '#', '#'},
+            {'#', '#', ' ', ' ', '#', '#', '#', '#', ' ', '#', '#', '$', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', '#', ' ', ' ', '$', ' ', ' ', '#', ' ', '#', '#', ' ', '#', '#', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '.', '.', '.', '#', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', ' ', ' ', '.', '.', '.', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', ' ', '#', ' ', '#', '.', '.', '.', '#', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '#', '#', ' ', '#', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', ' ', '#', '#', '#', '#'},
+            {'#', '.', '.', '.', '#', ' ', '#', ' ', ' ', '#', '#', '#', '#'},
+            {'#', '.', '.', '.', '#', '#', '#', ' ', ' ', '$', ' ', ' ', '#'},
+            {'#', '.', '.', '.', '.', '#', '#', ' ', '$', ' ', ' ', '$', '#', '#', '#'},
+            {'#', '#', '.', '.', '.', '.', '#', '#', ' ', ' ', ' ', '$', ' ', ' ', '#'},
+            {'#', '#', '#', '.', '.', '.', ' ', '#', '#', ' ', '$', ' ', '$', ' ', '#'},
+            {'#', ' ', '#', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', '#'},
+            {'#', ' ', ' ', '#', '#', ' ', '#', ' ', '#', '#', '#', ' ', '#', '#', '#', '#'},
+            {'#', ' ', '$', ' ', '#', ' ', '#', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', '@', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', '#', ' ', '$', ' ', '$', '$', ' ', '$', ' ', '#', '#', '#'},
+            {'#', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#'},
+            {'#', ' ', '#', '#', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {'#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {'#', ' ', '#', '#', '#', '#', '#', '#', ' ', '#', ' ', ' ', '#', '#'},
+            {'#', ' ', '#', ' ', '$', ' ', '$', ' ', '$', ' ', ' ', '$', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '$', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '$', ' ', ' ', '$', '$', '#', ' ', ' ', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', '#', '#', ' ', '#', ' ', '$', '#', '#'},
+            {' ', ' ', '#', '#', '$', '#', ' ', ' ', ' ', '$', ' ', '@', '#'},
+            {' ', ' ', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', '#', '#', '#'},
+            {' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', '$', ' ', ' ', '#'},
+            {' ', ' ', ' ', '#', ' ', '#', '#', ' ', ' ', ' ', '#', ' ', '#'},
+            {' ', ' ', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', '#', '.', '.', '.', '.', '.', '.', '.', '#', '#', '#'},
+            {' ', ' ', '#', '.', '.', '.', '.', '.', '.', '.', '#'},
+            {' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#'},
+            {'#', '#', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', '$', ' ', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', '#', '#', ' ', '#', '#', ' ', ' ', ' ', '#', '#', '.', '.', '.', '#'},
+            {'#', ' ', '#', '$', '$', ' ', '$', ' ', '$', '$', '#', '$', '#', '#', '.', '.', '.', '#'},
+            {'#', ' ', '#', ' ', ' ', ' ', ' ', '@', ' ', ' ', '#', ' ', ' ', ' ', '.', '.', '.', '#'},
+            {'#', ' ', ' ', '$', '#', ' ', '#', '#', '#', '$', '$', ' ', ' ', ' ', '.', '.', '.', '#'},
+            {'#', ' ', '$', ' ', ' ', '$', '$', ' ', ' ', '$', ' ', '#', '#', '.', '.', '.', '.', '#'},
+            {'#', '#', '#', '$', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', '*', '.', '*', '#', '*', '.', '*', '#'},
+            {' ', ' ', '#', '.', '*', '.', '*', '.', '*', '.', '#'},
+            {' ', ' ', '#', '*', '.', '*', '.', '*', '.', '*', '#'},
+            {' ', ' ', '#', '.', '*', '.', '*', '.', '*', '.', '#'},
+            {' ', ' ', '#', '*', '.', '*', '.', '*', '.', '*', '#'},
+            {' ', ' ', '#', '#', '#', ' ', ' ', ' ', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '$', ' ', '$', ' ', '$', ' ', '$', ' ', '$', ' ', '#'},
+            {'#', '#', ' ', '$', ' ', '$', ' ', '$', ' ', '$', ' ', '#', '#'},
+            {' ', '#', '$', ' ', '$', ' ', '$', ' ', '$', ' ', '$', '#'},
+            {' ', '#', ' ', ' ', ' ', '$', '@', '$', ' ', ' ', ' ', '#'},
+            {' ', '#', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', '#'},
+            {' ', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', '$', ' ', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', '$', ' ', ' ', '$', ' ', '#', '#'},
+            {' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', ' ', ' ', '#', ' ', '#', '#', '#', '#', '#', ' ', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', ' ', '#', '.', '.', '.', '.', '$', ' ', '#'},
+            {'#', ' ', '#', ' ', ' ', ' ', '$', ' ', '.', '.', '.', '.', '#', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', '#', ' ', '#', '.', '*', '.', '.', '#', ' ', '#'},
+            {'#', '#', '#', ' ', ' ', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', '#'},
+            {' ', ' ', '#', '#', '#', '#', ' ', '@', '$', ' ', ' ', '#', '#', '$', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', '$', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {' ', ' ', ' ', ' ', ' ', '#', '#', '.', '.', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {' ', ' ', ' ', ' ', '#', '#', '.', '.', '*', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', '#'},
+            {' ', ' ', ' ', '#', '#', '.', '.', '*', '.', '#', ' ', '#', ' ', '#', '$', ' ', '#', '#'},
+            {' ', ' ', ' ', '#', '.', '.', '*', '.', '#', ' ', '#', ' ', '#', ' ', '$', ' ', ' ', '#'},
+            {'#', '#', '#', '#', '.', '.', '.', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', '#'},
+            {'#', ' ', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {'#', ' ', '@', '$', ' ', '$', ' ', '#', '#', '#', ' ', ' ', '#', ' ', '#', ' ', '#', '#'},
+            {'#', ' ', '$', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', '#', '#', '$', '$', ' ', ' ', ' ', '#', ' ', '#', ' ', '#', ' ', '#', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#', ' ', '#', ' ', '#', '#', '#', '#', '#'},
+            {' ', ' ', '#', ' ', '$', '#', ' ', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', '#', '$', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', '#', '#', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+            {' ', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#'},
+            {' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'},
+        },
+        {
+            {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+            {'#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'},
+            {'#', ' ', '#', '#', '$', ' ', '$', ' ', ' ', '#', ' ', '$', '$', ' ', '#', ' ', '$', ' ', '#'},
+            {'#', '.', '#', ' ', '.', ' ', '.', '$', ' ', '#', ' ', '#', '.', '.', '#', ' ', '#', '.', '#'},
+            {'#', '.', '#', '#', '#', '#', '.', '#', ' ', '#', ' ', '#', ' ', '#', '#', ' ', '#', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', '#', ' ', '#'},
+            {'#', ' ', ' ', '$', ' ', '#', ' ', '#', ' ', '#', '#', '#', ' ', '#', ' ', '#', '#', ' ', '#'},
+            {'#', ' ', ' ', '#', ' ', '#', ' ', '#', ' ', '#', '.', '$', ' ', '#', ' ', '#', ' ', ' ', '#'},
+            {'#', ' ', '$', '$', '.', '#', ' ', '#', ' ', '#', '#', ' ', ' ', '#', ' ', '#', '#', ' ', '#'},
+            {'#', '$', ' ', '#', ' ', '#', ' ', '#', ' ', ' ', '#', ' ', '#', '#', ' ', ' ', '#', ' ', '#'},
+            {'#', ' ', '.', '#', ' ', '#', ' ', '#', '#', ' ', '#', ' ', '#', ' ', ' ', '#', '#', ' ', '#'},
+            {'#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', ' ', '#', ' ', '#', ' ', '#', '#', ' ', ' ', '#'},
+            {'#', '#', ' ', ' ', ' ', '#', '#', ' ', '#', ' ', '#', ' ', '#', ' ', '#', ' ', '$', '.', '#'},
+            {'#', '#', '#', ' ', '#', '#', '#', ' ', '$', '.', '#', ' ', '$', '.', '#', ' ', '$', '.', '#'},
+            {'#', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '@', '#'},
+            {' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+        },
+    }
+
+    function loadLevel()
+        level = {}
+        for y, row in ipairs(levels[currentLevel]) do
+            level[y] = {}
+            for x, cell in ipairs(row) do
+                level[y][x] = cell
+            end
+        end
+    end
+
+    loadLevel()
+end
+
+function love.draw()
+    for y, row in ipairs(level) do
+        for x, cell in ipairs(row) do
+            if cell ~= empty then
+                local cellSize = 23
+
+                local colors = {
+                    [player] = {167, 135, 255},
+                    [playerOnStorage] = {158, 119, 255},
+                    [box] = {255, 201, 126},
+                    [boxOnStorage] = {150, 255, 127},
+                    [storage] = {156, 229, 255},
+                    [wall] = {255, 147, 209},
+                }
+
+                love.graphics.setColor(colors[cell])
+                love.graphics.rectangle(
+                    'fill',
+                    (x - 1) * cellSize,
+                    (y - 1) * cellSize,
+                    cellSize,
+                    cellSize
+                )
+                love.graphics.setColor(255, 255, 255)
+                love.graphics.print(
+                    level[y][x],
+                    (x - 1) * cellSize,
+                    (y - 1) * cellSize
+                )
+            end
+        end
+    end
+end
+
+function love.keypressed(key)
+    if key == 'up' or key == 'down' or key == 'left' or key == 'right' then
+        local playerX
+        local playerY
+        for testY, row in ipairs(level) do
+            for testX, cell in ipairs(row) do
+                if cell == player or cell == playerOnStorage then
+                    playerX = testX
+                    playerY = testY
+                end
+            end
+        end
+
+        local dx = 0
+        local dy = 0
+        if key == 'left' then
+            dx = -1
+        elseif key == 'right' then
+            dx = 1
+        elseif key == 'up' then
+            dy = -1
+        elseif key == 'down' then
+            dy = 1
+        end
+
+        local current = level[playerY][playerX]
+        local adjacent = level[playerY + dy][playerX + dx]
+        local beyond
+        if level[playerY + dy + dy] then
+            beyond = level[playerY + dy + dy][playerX + dx + dx]
+        end
+
+        local nextAdjacent = {
+            [empty] = player,
+            [storage] = playerOnStorage,
+        }
+        
+        local nextCurrent = {
+            [player] = empty,
+            [playerOnStorage] = storage,
+        }
+
+        local nextBeyond = {
+            [empty] = box,
+            [storage] = boxOnStorage,
+        }
+
+        local nextAdjacentPush = {
+            [box] = player,
+            [boxOnStorage] = playerOnStorage,
+        }
+
+        if nextAdjacent[adjacent] then
+            level[playerY][playerX] = nextCurrent[current]
+            level[playerY + dy][playerX + dx] = nextAdjacent[adjacent]
+
+        elseif nextBeyond[beyond] and nextAdjacentPush[adjacent] then
+            level[playerY][playerX] = nextCurrent[current]
+            level[playerY + dy][playerX + dx] = nextAdjacentPush[adjacent]
+            level[playerY + dy + dy][playerX + dx + dx] = nextBeyond[beyond]
+        end
+
+        local complete = true
+
+        for y, row in ipairs(level) do
+            for x, cell in ipairs(row) do
+                if cell == box then
+                    complete = false
+                end
+            end
+        end
+
+        if complete then
+            currentLevel = currentLevel + 1
+            if currentLevel > #levels then
+                currentLevel = 1
+            end
+            loadLevel()
+        end
+
+    elseif key == 'r' then
+        loadLevel()
+
+    elseif key == 'n' then
+        currentLevel = currentLevel + 1
+        if currentLevel > #levels then
+            currentLevel = 1
+        end
+        loadLevel()
+
+    elseif key == 'p' then
+        currentLevel = currentLevel - 1
+        if currentLevel < 1 then
+            currentLevel = #levels
+        end
+        loadLevel()
+    end
+end
+`

@@ -1,0 +1,1655 @@
+# Blocks
+
+## <a href="blocks.love">Download blocks.love</a>
+
+!
+
+## Rules
+
+There are seven types of pieces. Each piece contains four blocks.
+
+!
+
+Pieces fall from the top of the playing area. The player can move the pieces left and right and rotate them. When a piece comes to rest, the next piece falls.
+
+The type of the next piece that will fall is shown above the playing area.
+
+!
+
+When an unbroken row of blocks is formed the row disappears and all the blocks above it move down one row.
+
+The game ends when the stack of blocks reaches the top of the playing area and the next piece would overlap a block already on the stack.
+
+## Controls
+
+& *Left arrow* & Move left
+& *Right arrow* & Move right
+& *z* & Rotate counter-clockwise
+& *x* & Rotate clockwise
+& *c* & Drop
+
+## Overview
+
+### Representing data
+
+A grid stores the inert blocks which have already fallen.
+
+The state of a cell can be empty or filled with a block of a certain color. The string *' '* (a space) represents an empty cell, and the strings *'i'*, *'j'*, *'l'*, *'o'*, *'s'*, *'t'* and *'z'* represent blocks of different colors.
+
+!
+
+All the different types of pieces are stored with their rotated variations.
+
+!
+
+The currently falling piece is stored as a number representing which type of piece it is, a number representing which rotation variation it is at, and number representing its X and Y position on the playing area.
+
+### Basic logic
+
+A new piece is created at the top of the screen, unless it would overlap an inert block, in which case the game is over.
+
+The player can move the piece left and right, unless this new position would overlap an inert block or be outside the playing area.
+
+After an amount of time has passed, the piece moves down, unless this new position would overlap an inert block or be outside the playing area, in which case it has come to rest.
+
+When a rotate button is pressed, the piece changes to its next rotation variation, unless this variation would overlap an inert block or be outside the playing area.
+
+When the drop button is pressed, the piece moves down until the next position would overlap an inert block or be outside the playing area, at which point it has come to rest.
+
+When the piece comes to rest, meaning that if it moved down it would overlap an inert piece of be outside the playing area, the blocks of the pieces are added to the inert pieces, and the next piece is created.
+
+A sequence of one of each of the seven pieces in a random order is created, and the next piece is taken from this sequence. Once all of the pieces have been taken, a new random sequence is created.
+
+## Coding
+
+### Drawing the grid of blocks
+
+A square is drawn for each block in the playing area.
+
+`
+function love.draw()
+    for y = 1, 18 do
+        for x = 1, 10 do
+            local blockSize = 20
+            local blockDrawSize = blockSize - 1
+            love.graphics.rectangle(
+                'fill',
+                (x - 1) * blockSize,
+                (y - 1) * blockSize,
+                blockDrawSize,
+                blockDrawSize
+            )
+        end
+    end
+end
+`
+
+!
+
+### Colors
+
+The background color and block color are set.
+
+`
+function love.load()
+    |love.graphics.setBackgroundColor(255, 255, 255)|
+end
+
+function love.draw()
+    for y = 1, 18 do
+        for x = 1, 10 do
+            |love.graphics.setColor(222, 222, 222)|
+            local blockSize = 20
+            local blockDrawSize = blockSize - 1
+            love.graphics.rectangle(
+                'fill',
+                (x - 1) * blockSize,
+                (y - 1) * blockSize,
+                blockDrawSize,
+                blockDrawSize
+            )
+        end
+    end
+end
+`
+
+!
+
+### Inert blocks
+
+The grid for the inert blocks is created and every cell is set to ' ' (a string containing the space character), representing an empty cell.
+
+The width and height of the grid in blocks is reused from drawing the blocks, so they are made into variables.
+
+`
+function love.load()
+    -- etc.
+
+    gridXCount = 10
+    gridYCount = 18
+
+    inert = {}
+    for y = 1, gridYCount do
+        inert[y] = {}
+        for x = 1, gridXCount do
+            inert[y][x] = ' '
+        end
+    end
+end
+
+function love.draw()
+    for y = 1, |gridYCount| do
+        for x = 1, |gridXCount| do
+            -- etc.
+        end
+    end
+end
+`
+
+### Setting block color
+
+When the blocks of the grid are drawn, the color is set based on what is stored in the inert grid.
+
+To test the inert blocks, some cells are set to values representing blocks of varying colors.
+
+`
+function love.load()
+    -- etc.
+
+    -- Temporary
+    inert[18][1] = 'i'
+    inert[17][2] = 'j'
+    inert[16][3] = 'l'
+    inert[15][4] = 'o'
+    inert[14][5] = 's'
+    inert[13][6] = 't'
+    inert[12][7] = 'z'
+end
+
+function love.draw()
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+            |local colors = {|
+            |    [' '] = {222, 222, 222},|
+            |    i = {120, 195, 239},|
+            |    j = {236, 231, 108},|
+            |    l = {124, 218, 193},|
+            |    o = {234, 177, 121},|
+            |    s = {211, 136, 236},|
+            |    t = {248, 147, 196},|
+            |    z = {169, 221, 118},|
+            |}|
+            |local block = inert[y][x]|
+            |local color = colors[block]|
+            love.graphics.setColor(|color|)
+                
+            local blockSize = 20
+            local blockDrawSize = blockSize - 1
+            love.graphics.rectangle(
+                'fill',
+                (x - 1) * blockSize,
+                (y - 1) * blockSize,
+                blockDrawSize,
+                blockDrawSize
+            )
+        end
+    end
+end
+`
+
+!
+
+### Storing the piece structures
+
+Each rotation of a piece structure is stored as a 4 by 4 grid.
+
+`
+{
+    {' ', ' ', ' ', ' '},
+    {'i', 'i', 'i', 'i'},
+    {' ', ' ', ' ', ' '},
+    {' ', ' ', ' ', ' '},
+}
+`
+
+Each piece structure is stored as a table of piece rotations.
+
+`
+{
+    {
+        {' ', ' ', ' ', ' '},
+        {'i', 'i', 'i', 'i'},
+        {' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' '},
+    },
+    {
+        {' ', 'i', ' ', ' '},
+        {' ', 'i', ' ', ' '},
+        {' ', 'i', ' ', ' '},
+        {' ', 'i', ' ', ' '},
+    },
+}
+`
+
+All of piece structures are stored in a table.
+
+`
+function love.load()
+    -- etc.
+
+    pieceStructures = {
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {'i', 'i', 'i', 'i'},
+                {' ', ' ', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 'i', ' ', ' '},
+                {' ', 'i', ' ', ' '},
+                {' ', 'i', ' ', ' '},
+                {' ', 'i', ' ', ' '},
+            },
+        },
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {' ', 'o', 'o', ' '},
+                {' ', 'o', 'o', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+        },
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {'j', 'j', 'j', ' '},
+                {' ', ' ', 'j', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 'j', ' ', ' '},
+                {' ', 'j', ' ', ' '},
+                {'j', 'j', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {'j', ' ', ' ', ' '},
+                {'j', 'j', 'j', ' '},
+                {' ', ' ', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 'j', 'j', ' '},
+                {' ', 'j', ' ', ' '},
+                {' ', 'j', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+        },
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {'l', 'l', 'l', ' '},
+                {'l', ' ', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 'l', ' ', ' '},
+                {' ', 'l', ' ', ' '},
+                {' ', 'l', 'l', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', ' ', 'l', ' '},
+                {'l', 'l', 'l', ' '},
+                {' ', ' ', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {'l', 'l', ' ', ' '},
+                {' ', 'l', ' ', ' '},
+                {' ', 'l', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+        },
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {'t', 't', 't', ' '},
+                {' ', 't', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 't', ' ', ' '},
+                {' ', 't', 't', ' '},
+                {' ', 't', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 't', ' ', ' '},
+                {'t', 't', 't', ' '},
+                {' ', ' ', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 't', ' ', ' '},
+                {'t', 't', ' ', ' '},
+                {' ', 't', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+        },
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {' ', 's', 's', ' '},
+                {'s', 's', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {'s', ' ', ' ', ' '},
+                {'s', 's', ' ', ' '},
+                {' ', 's', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+        },
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {'z', 'z', ' ', ' '},
+                {' ', 'z', 'z', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 'z', ' ', ' '},
+                {'z', 'z', ' ', ' '},
+                {'z', ' ', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+        },
+    }
+end
+`
+
+### Storing the current piece
+
+The currently falling piece is represented by a number indicating which type it is, and a number indicating which rotation it is at.
+
+`
+function love.load()
+    -- etc.
+
+    pieceType = 1
+    pieceRotation = 1
+end
+`
+
+### Drawing the piece
+
+The piece is drawn by looping through the grid and, unless the block is empty, drawing a square with a color determined by the block type.
+
+`
+function love.draw()
+    -- etc.
+
+    for y = 1, 4 do
+        for x = 1, 4 do
+            local block = pieceStructures[pieceType][pieceRotation][y][x]
+            if block ~= ' ' then
+                local colors = {
+                    i = {120, 195, 239},
+                    j = {236, 231, 108},
+                    l = {124, 218, 193},
+                    o = {234, 177, 121},
+                    s = {211, 136, 236},
+                    t = {248, 147, 196},
+                    z = {169, 221, 118},
+                }
+                
+                local color = colors[block]
+                love.graphics.setColor(color)
+
+                local blockSize = 20
+                local blockDrawSize = blockSize - 1
+                love.graphics.rectangle(
+                    'fill',
+                    (x - 1) * blockSize,
+                    (y - 1) * blockSize,
+                    blockDrawSize,
+                    blockDrawSize
+                )
+            end
+        end
+    end
+end
+`
+
+!
+
+### Simplifying code
+
+The code for drawing the inert blocks and drawing the falling piece's blocks is the same, so a function is made.
+
+`
+function love.draw()
+    |local function drawBlock(block, x, y)|
+        local colors = {
+            [' '] = {222, 222, 222},
+            i = {120, 195, 239},
+            j = {236, 231, 108},
+            l = {124, 218, 193},
+            o = {234, 177, 121},
+            s = {211, 136, 236},
+            t = {248, 147, 196},
+            z = {169, 221, 118},
+        }
+        local color = colors[block]
+        love.graphics.setColor(color)
+       
+        local blockSize = 20
+        local blockDrawSize = blockSize - 1
+        love.graphics.rectangle(
+            'fill',
+            (x - 1) * blockSize,
+            (y - 1) * blockSize,
+            blockDrawSize,
+            blockDrawSize
+        )
+    |end|
+
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+            |drawBlock(inert[y][x], x, y)|
+        end
+    end
+
+    for y = 1, 4 do
+        for x = 1, 4 do
+            local block = pieceStructures[pieceType][pieceRotation][y][x]
+            if block ~= ' ' then
+                |drawBlock(block, x, y)|
+            end
+        end
+    end
+end
+`
+
+### Rotation
+
+When the *x* key is pressed, the piece rotation number is increased by 1, rotating the piece clockwise.
+
+If the rotation number is greater than the number of rotation positions (i.e. greater than the last position), the rotation number is set to 1 (i.e. the first position).
+
+Likewise, when the *z* key is pressed, the piece rotation number is decreased by 1, rotating the piece counter-clockwise.
+
+If the rotation number is less than 1 (i.e. less than the first position), the rotation number is set to the the number of rotation positions (i.e. the last position).
+
+`
+function love.keypressed(key)
+    if key == 'x' then
+        pieceRotation = pieceRotation + 1
+        if pieceRotation > #pieceStructures[pieceType] then
+            pieceRotation = 1
+        end
+
+    elseif key == 'z' then
+        pieceRotation = pieceRotation - 1
+        if pieceRotation < 1 then
+            pieceRotation = #pieceStructures[pieceType]
+        end
+    end
+end
+`
+
+!
+
+### Testing pieces
+
+For testing, the up and down arrows cycle through the piece types.
+
+`
+function love.keypressed(key)
+    -- etc.
+
+    -- Temporary
+
+    elseif key == 'down' then
+        pieceType = pieceType + 1
+        if pieceType > #pieceStructures then
+            pieceType = 1
+        end
+        pieceRotation = 1
+
+    elseif key == 'up' then
+        pieceType = pieceType - 1
+        if pieceType < 1 then
+            pieceType = #pieceStructures
+        end
+        pieceRotation = 1
+    end
+end
+`
+
+!
+
+### Setting piece position
+
+The position of the piece in the playing area is stored, and the piece is drawn at that position.
+
+`
+function love.load()
+    -- etc.
+
+    pieceX = 3
+    pieceY = 0
+end
+
+function love.draw()
+    -- etc.
+
+    for y = 1, 4 do
+        for x = 1, 4 do
+            local block = pieceStructures[pieceType][pieceRotation][y][x]
+            if block ~= ' ' then
+                drawBlock(block, x |+ pieceX|, y |+ pieceY|)
+            end
+        end
+    end
+end
+`
+
+!
+
+### Moving piece
+
+The left and right arrows subtract or add 1 to the piece's X position.
+
+`
+function love.keypressed(key)
+    -- etc.
+
+    elseif key == 'left' then
+        pieceX = pieceX - 1
+
+    elseif key == 'right' then
+        pieceX = pieceX + 1
+    end
+end
+`
+
+!
+
+### Falling
+
+A timer is used to increase the piece's Y position every 0.5 seconds.
+
+`
+function love.load()
+    -- etc.
+
+    timer = 0
+    timerLimit = 0.5
+end
+
+function love.update(dt)
+    timer = timer + dt
+    if timer >= timerLimit then
+        timer = timer - timerLimit
+
+        pieceY = pieceY + 1
+    end
+end
+`
+
+!
+
+### Confining movement
+
+To prevent the piece from moving off the left or right of the screen when it is moved or rotated, each of its blocks is checked to see if they are within the playing area before it is moved/rotated.
+
+Because this checking will be done in multiple places, it will be written as a function. This function is given the position and rotation to check, and returns true or false depending on whether the piece can move or rotate.
+
+To begin with, this function will always return true, so moving and rotating is still always possible.
+
+The code is changed from immediately setting positions/rotations, to creating variables for the changed values, and if the checking function returns true, the actual position/rotation is set.
+
+`
+function love.load()
+    -- etc.
+
+    function canPieceMove(testX, testY, testRotation)
+        return true
+    end
+end
+
+function love.update(dt)
+    timer = timer + dt
+    if timer >= timerLimit then
+        timer = timer - timerLimit
+
+        |local testY = pieceY + 1|
+        |if canPieceMove(pieceX, testY, pieceRotation) then|
+        |    pieceY = testY|
+        |end|
+    end
+end
+
+function love.keypressed(key)
+    if key == 'x' then
+        |local testRotation| = pieceRotation + 1
+        if |testRotation| > #pieceStructures[pieceType] then
+            |testRotation| = 1
+        end
+
+        |if canPieceMove(pieceX, pieceY, testRotation) then|
+        |    pieceRotation = testRotation|
+        |end|
+
+    elseif key == 'z' then
+        |local testRotation| = |pieceRotation| - 1
+        if |testRotation| < 1 then
+            |testRotation| = #pieceStructures[pieceType]
+        end
+
+        |if canPieceMove(pieceX, pieceY, testRotation) then|
+        |    pieceRotation = testRotation|
+        |end|
+
+    elseif key == 'left' then
+        |local testX| = pieceX - 1
+
+        |if canPieceMove(testX, pieceY, pieceRotation) then|
+        |    pieceX = testX|
+        |end|
+
+    elseif key == 'right' then
+        |local testX| = pieceX + 1
+
+        |if canPieceMove(testX, pieceY, pieceRotation) then|
+        |    pieceX = testX|
+        |end|
+    end
+end
+`
+
+### Checking left of playing area
+
+If any block is not empty and block's X position is less than 1 (i.e. off the left of the playing area) the function returns false.
+
+Otherwise the function returns true.
+
+`
+function love.load()
+    -- etc.
+
+    function canPieceMove(testX, testY, testRotation)
+        for x = 1, 4 do
+            for y = 1, 4 do
+                if pieceStructures[pieceType][testRotation][y][x] ~= ' '
+                and (testX + x) < 1 then
+                    return false
+                end
+            end
+        end
+        
+        return true
+    end
+end
+`
+
+### Simplifying code
+
+The number of blocks each piece has on the X and Y axes are reused from drawing the pieces, so variables are made for these.
+
+`
+function love.load()
+    -- etc.
+
+    |pieceXCount = 4|
+    |pieceYCount = 4|
+
+    function canPieceMove(testX, testY, testRotation)
+        for x = 1, |pieceXCount| do
+            for y = 1, |pieceYCount| do
+                if pieceStructures[pieceType][testRotation][y][x] ~= ' '
+                and (testX + x) < 1 then
+                    return false
+                end
+            end
+        end
+        
+        return true
+    end
+end
+
+function love.draw()
+    -- etc.
+
+    for y = 1, |pieceYCount| do
+        for x = 1, |pieceXCount| do
+            local block = pieceStructures[pieceType][pieceRotation][y][x]
+            if block ~= ' ' then
+                drawBlock(block, x + pieceX, y + pieceY)
+            end
+        end
+    end
+end
+`
+### Checking right of playing area
+
+If any block's X position is greater than the width of the playing area (i.e. off the right of the playing area) the function also returns false.
+
+`
+function love.load()
+    -- etc.
+
+    function canPieceMove(testX, testY, testRotation)
+        for x = 1, pieceYCount do
+            for y = 1, pieceXCount do
+                if pieceStructures[pieceType][testRotation][y][x] ~= ' ' and |(|
+                    (testX + x) < 1
+                    |or (testX + x) > gridXCount|
+                |)| then
+                    return false
+                end
+            end
+        end
+        
+        return true
+    end
+end
+`
+
+### Checking bottom
+
+If any block's Y position is greater than the height of the playing area (i.e off the bottom of the playing area) the function also returns false.
+
+`
+function love.load()
+    -- etc.
+
+    function canPieceMove(testX, testY, testRotation)
+        for y = 1, pieceYCount do
+            for x = 1, pieceXCount do
+                if pieceStructures[pieceType][testRotation][y][x] ~= ' ' and (
+                    (testX + x) < 1
+                    or (testX + x) > gridXCount
+                    |or (testY + y) > gridYCount|
+                ) then
+                    return false
+                end
+            end
+        end
+        
+        return true
+    end
+end
+`
+
+### Checking inert
+
+If there is an inert block at any block's position, the function also returns false.
+
+To test this, an inert block is manually set.
+
+`
+function love.load()
+    -- etc.
+
+    -- Temporary
+    inert[8][5] = 'z'
+
+    function canPieceMove(testX, testY, testRotation)
+        for y = 1, pieceYCount do
+            for x = 1, pieceXCount do
+                if pieceStructures[pieceType][testRotation][y][x] ~= ' ' and (
+                    (testX + x) < 1
+                    or (testX + x) > gridXCount
+                    or (testY + y) > gridYCount
+                    |or inert[testY + y][testX + x] ~= ' '|
+                )
+                then
+                    return false
+                end
+            end
+        end
+        
+        return true
+    end
+end
+`
+
+!
+
+### Simplifying code
+
+The calculated block positions to test are reused, so these can be stored in variables.
+
+`
+function love.load()
+    -- etc.
+
+    function canPieceMove(testX, testY, testRotation)
+        for y = 1, pieceYCount do
+            for x = 1, pieceXCount do
+                |local testBlockX = testX + x|
+                |local testBlockY = testY + y|
+
+                if pieceStructures[pieceType][testRotation][blockY][blockX] ~= ' ' and (
+                    |testBlockX| < 1
+                    or |testBlockX| > gridXCount
+                    or |testBlockY| > gridYCount
+                    or inert[|testBlockY|][|testBlockX|] ~= ' '
+                ) then
+                    return false
+                end
+            end
+        end
+        
+        return true
+    end
+end
+`
+
+### Drop
+
+When the *c* key is pressed, the piece's Y position is increased by 1 while that position is movable.
+
+`
+function love.keypressed(key)
+    -- etc.
+
+    elseif key == 'c' then
+        while canPieceMove(pieceX, pieceY + 1, pieceRotation) do
+            pieceY = pieceY + 1
+        end
+    end
+end
+`
+
+### Resetting piece
+
+If the timer ticks and the piece can't move down, the piece is reset to its initial position and rotation, and (for now) its initial type.
+
+`
+function love.update(dt)
+    timer = timer + dt
+    if timer >= timerLimit then
+        timer = timer - timerLimit
+
+        testY = pieceY + 1
+        if canPieceMove(pieceX, testY, pieceRotation) then
+            pieceY = testY
+        |else|
+        |    pieceX = 3|
+        |    pieceY = 0|
+        |    pieceType = 1|
+        |    pieceRotation = 1|
+        end
+    end
+end
+`
+
+### Simplifying code
+
+The piece is set to its initial state in two places, so a function is made.
+
+`
+function love.load()
+    -- etc.
+    
+    |function newPiece()|
+        pieceX = 3
+        pieceY = 0
+        pieceType = 1
+        pieceRotation = 1
+    |end|
+
+    |newPiece()|
+end
+
+function love.update(dt)
+    timer = timer + dt
+    if timer >= timerLimit then
+        timer = timer - timerLimit
+
+        testY = pieceY + 1
+        if canPieceMove(pieceX, testY, pieceRotation) then
+            pieceY = testY
+        else
+            |newPiece()|
+        end
+    end
+end
+`
+
+### Creating the sequence of next pieces
+
+The sequence for the next pieces is stored as a table containing the numbers representing piece types in a random order.
+
+Each number representing a piece type is looped through and inserted into the sequence at a random position from 1 (the first position) to 1 more than the number of piece types already in the sequence table (the last position).
+
+To test this, a new sequence is created when the *s* key is pressed and is printed.
+
+`
+function love.load()
+    -- etc.
+    
+    function newSequence()
+        sequence = {}
+        for pieceTypeIndex = 1, #pieceStructures do
+            local position = love.math.random(#sequence + 1)
+            table.insert(
+                sequence,
+                position,
+                pieceTypeIndex
+            )
+        end
+    end
+
+    newSequence()
+
+    function newPiece()
+        -- etc.
+    end
+
+    newPiece()
+end
+
+function love.keypressed(key)
+    -- etc.
+
+    -- Temporary
+    elseif key == 's' then
+        newSequence()
+
+        print('Sequence:')
+        for pieceTypeIndex, pieceType in ipairs(sequence) do
+            print(pieceType)
+        end
+    end
+end
+`
+
+~
+Sequence:
+7
+4
+5
+2
+3
+6
+1
+~
+
+### New piece from sequence
+
+When a new piece is created, it removes the last item of the sequence and uses it for the piece type.
+
+When the sequence is empty, a new sequence is created.
+
+`
+function love.load()
+    -- etc.
+    
+    function newPiece()
+        pieceX = 3
+        pieceY = 0
+        pieceRotation = 1
+        |pieceType = table.remove(sequence)|
+
+        |if #sequence == 0 then|
+        |    newSequence()|
+        |end|
+    end
+
+    newPiece()
+end
+`
+
+### Add to inert
+
+When the piece has come to rest, the blocks in the piece are added to the inert blocks.
+
+The piece's blocks are looped through, and if the block isn't empty then the inert block at this position is set to the piece's block.
+
+`
+function love.update(dt)
+    timer = timer + dt
+    if timer >= timerLimit then
+        timer = timer - timerLimit
+
+        testY = pieceY + 1
+        if canPieceMove(pieceX, testY, pieceRotation) then
+            pieceY = testY
+        else
+            |-- Add piece to inert|
+            |for y = 1, pieceYCount do|
+            |    for x = 1, pieceXCount do|
+            |        local block = pieceStructures[pieceType][pieceRotation][y][x]|
+            |        if block ~= ' ' then|
+            |            inert[pieceY + y][pieceX + x] = block|
+            |        end|
+            |    end|
+            |end|
+
+            newPiece()
+        end
+    end
+end
+`
+
+### New piece immediately after drop
+
+When the piece is dropped the timer is set immediately to the limit so that adding the piece to the inert pieces and creating the new piece happen immediately.
+
+`
+function love.keypressed(key)
+    -- etc.
+
+    elseif key == 'c' then
+        while canPieceMove(pieceX, pieceY + 1, pieceRotation) do
+            pieceY = pieceY + 1
+            |timer = timerLimit|
+        end
+    end
+end
+`
+
+### Finding complete rows
+
+Each row of the inert blocks is looped through, and if none of the columns of the row contain an empty block the row is complete.
+
+For now, the complete row is printed out.
+
+`
+function love.update(dt)
+    timer = timer + dt
+    if timer >= timerLimit then
+        timer = timer - timerLimit
+
+        testY = pieceY + 1
+        if canPieceMove(pieceX, testY, pieceRotation) then
+            pieceY = testY
+        else
+            -- Add piece to inert
+            for y = 1, pieceYCount do
+                for x = 1, pieceXCount do
+                    if pieceStructures[pieceType][pieceRotation][y][x] ~= ' ' then
+                        inert[pieceY + y][pieceX + x] = pieceStructures[pieceType][pieceRotation][y][x]
+                    end
+                end
+            end
+
+            |-- Find complete rows|
+            |for y = 1, gridYCount do|
+            |    local complete = true|
+            |    for x = 1, gridXCount do|
+            |        if inert[y][x] == ' ' then|
+            |            complete = false|
+            |        end|
+            |    end|
+            |    |
+            |    -- Temporary|
+            |    if complete then|
+            |       print('Complete row: '..y)|
+            |    end|
+            |end|
+
+            newPiece()
+        end
+    end
+end
+`
+
+### Removing complete rows
+
+If the row is complete, the rows from the complete row to the row second from the top are looped through.
+
+Each block in the row is looped through and set to the value of the block above it. Because there is nothing above the top row it doesn't need to be looped through.
+
+The top row is then set to all empty blocks.
+
+`
+function love.update(dt)
+            -- etc.
+
+            for y = 1, gridYCount do
+                local complete = true
+                for x = 1, gridXCount do
+                    if inert[y][x] == ' ' then
+                        complete = false
+                    end
+                end
+
+                if complete then
+                    |for removeY = y, 2, -1 do|
+                    |    for removeX = 1, gridXCount do|
+                    |        inert[removeY][removeX] = inert[removeY - 1][removeX]|
+                    |    end|
+                    |    |
+                    |end|
+                
+                    |for removeX = 1, gridXCount do|
+                    |    inert[1][removeX] = ' '|
+                    |end|
+                end
+            end
+
+             -- etc.
+end
+`
+
+### Game over
+
+If a newly created piece is in an unmovable position the game is over.
+
+For now, *love.load* is called to reset the game to its initial state.
+
+`
+function love.update(dt)
+    timer = timer + dt
+    if timer >= timerLimit then
+        timer = timer - timerLimit
+
+        testY = pieceY + 1
+        if canPieceMove(pieceX, testY, pieceRotation) then
+            pieceY = testY
+        else
+            -- Add piece to inert
+            -- Find complete rows
+
+            newPiece()
+
+            |if not canPieceMove(pieceX, pieceY, pieceRotation) then|
+            |    love.load()|
+            |end|
+        end
+    end
+end
+`
+
+### Offsetting the playing area
+
+The playing area is drawn 2 blocks from the left of the screen and 5 blocks from the top of the screen.
+
+`
+function love.draw()
+    -- etc.
+
+    |local offsetX = 2|
+    |local offsetY = 5|
+
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+            drawBlock(inert[y][x], x |+ offsetX|, y |+ offsetY|)
+        end
+    end
+
+    for y = 1, 4 do
+        for x = 1, 4 do
+            local block = pieceStructures[pieceType][pieceRotation][y][x]
+            if block ~= ' ' then
+                drawBlock(block, x + pieceX |+ offsetX|, y + pieceY |+ offsetY|)
+            end
+        end
+    end
+end
+`
+
+!
+
+### Drawing next piece
+
+The last piece of the sequence (the next piece to fall) is drawn at its first rotation position. It is offset 5 blocks from the left and 1 block from the top.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawBlock(block, x, y)
+        local colors = {
+            [' '] = {222, 222, 222},
+            i = {120, 195, 239},
+            j = {236, 231, 108},
+            l = {124, 218, 193},
+            o = {234, 177, 121},
+            s = {211, 136, 236},
+            t = {248, 147, 196},
+            z = {169, 221, 118},
+            |preview = {190, 190, 190},|
+        }
+
+        -- etc.
+    end
+
+    -- etc.
+
+    for y = 1, pieceYCount do
+        for x = 1, pieceXCount do
+            local block = pieceStructures[sequence[#sequence]][1][y][x]
+            if block ~= ' ' then
+                drawBlock('preview', x + 5, y + 1)
+            end
+        end
+    end
+end
+`
+
+!
+
+### Resetting
+
+When the game is over only some of the variables need to be reset, so a function is made.
+
+`
+function love.load()
+    love.graphics.setBackgroundColor(255, 255, 255)
+
+    pieceStructures = { 
+        -- etc.
+    }
+
+    gridXCount = 10
+    gridYCount = 18
+
+    pieceYCount = 4
+    pieceXCount = 4
+
+    timerLimit = 0.5
+
+    function canPieceMove(testX, testY, testRotation)
+        -- etc.
+    end
+
+    function newSequence()
+        -- etc.
+    end
+
+    function newPiece()
+        -- etc.
+    end
+
+    |function reset()|
+        for y = 1, gridYCount do
+            inert[y] = {}
+            for x = 1, gridXCount do
+                inert[y][x] = ' '
+            end
+        end
+
+        newSequence()
+        newPiece()
+
+        timer = 0
+    |end|
+
+    |reset()|
+end
+
+function love.update(dt)
+             -- etc.
+
+            if not canPieceMove(pieceX, pieceY, pieceRotation) then
+                |reset()|
+            end
+        end
+    end
+end
+`
+
+## Final code
+
+`
+function love.load()
+    love.graphics.setBackgroundColor(255, 255, 255)
+
+    pieceStructures = {
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {'i', 'i', 'i', 'i'},
+                {' ', ' ', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 'i', ' ', ' '},
+                {' ', 'i', ' ', ' '},
+                {' ', 'i', ' ', ' '},
+                {' ', 'i', ' ', ' '},
+            },
+        },
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {' ', 'o', 'o', ' '},
+                {' ', 'o', 'o', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+        },
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {'j', 'j', 'j', ' '},
+                {' ', ' ', 'j', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 'j', ' ', ' '},
+                {' ', 'j', ' ', ' '},
+                {'j', 'j', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {'j', ' ', ' ', ' '},
+                {'j', 'j', 'j', ' '},
+                {' ', ' ', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 'j', 'j', ' '},
+                {' ', 'j', ' ', ' '},
+                {' ', 'j', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+        },
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {'l', 'l', 'l', ' '},
+                {'l', ' ', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 'l', ' ', ' '},
+                {' ', 'l', ' ', ' '},
+                {' ', 'l', 'l', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', ' ', 'l', ' '},
+                {'l', 'l', 'l', ' '},
+                {' ', ' ', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {'l', 'l', ' ', ' '},
+                {' ', 'l', ' ', ' '},
+                {' ', 'l', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+        },
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {'t', 't', 't', ' '},
+                {' ', 't', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 't', ' ', ' '},
+                {' ', 't', 't', ' '},
+                {' ', 't', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 't', ' ', ' '},
+                {'t', 't', 't', ' '},
+                {' ', ' ', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 't', ' ', ' '},
+                {'t', 't', ' ', ' '},
+                {' ', 't', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+        },
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {' ', 's', 's', ' '},
+                {'s', 's', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {'s', ' ', ' ', ' '},
+                {'s', 's', ' ', ' '},
+                {' ', 's', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+        },
+        {
+            {
+                {' ', ' ', ' ', ' '},
+                {'z', 'z', ' ', ' '},
+                {' ', 'z', 'z', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+            {
+                {' ', 'z', ' ', ' '},
+                {'z', 'z', ' ', ' '},
+                {'z', ' ', ' ', ' '},
+                {' ', ' ', ' ', ' '},
+            },
+        },
+    }
+
+    gridXCount = 10
+    gridYCount = 18
+
+    pieceXCount = 4
+    pieceYCount = 4
+
+    timerLimit = 0.5
+
+    function canPieceMove(testX, testY, testRotation)
+        for x = 1, pieceXCount do
+            for y = 1, pieceYCount do
+                local testBlockX = testX + x
+                local testBlockY = testY + y
+
+                if pieceStructures[pieceType][testRotation][y][x] ~= ' '
+                and (
+                    testBlockX < 1
+                    or testBlockX > gridXCount
+                    or testBlockY > gridYCount
+                    or inert[testBlockY][testBlockX] ~= ' '
+                ) then
+                    return false
+                end
+            end
+        end
+        
+        return true
+    end
+
+    function newSequence()
+        sequence = {}
+        for pieceTypeIndex = 1, #pieceStructures do
+            local position = love.math.random(#sequence + 1)
+            table.insert(
+                sequence,
+                position,
+                pieceTypeIndex
+            )
+        end
+    end
+
+    function newPiece()
+        pieceX = 3
+        pieceY = 0
+        pieceRotation = 1
+        pieceType = table.remove(sequence)
+
+        if #sequence == 0 then
+            newSequence()
+        end
+    end
+
+    function reset()
+        inert = {}
+        for y = 1, gridYCount do
+            inert[y] = {}
+            for x = 1, gridXCount do
+                inert[y][x] = ' '
+            end
+        end
+
+        newSequence()
+        newPiece()
+
+        timer = 0
+    end
+
+    reset()
+end
+
+function love.update(dt)
+    timer = timer + dt
+    if timer >= timerLimit then
+        timer = timer - timerLimit
+
+        local testY = pieceY + 1
+        if canPieceMove(pieceX, testY, pieceRotation) then
+            pieceY = testY
+        else
+            -- Add piece to inert
+            for y = 1, pieceYCount do
+                for x = 1, pieceXCount do
+                    local block = pieceStructures[pieceType][pieceRotation][y][x]
+                    if block ~= ' ' then
+                        inert[pieceY + y][pieceX + x] = block
+                    end
+                end
+            end
+
+            -- Find complete rows
+            for y = 1, gridYCount do
+                local complete = true
+                for x = 1, gridXCount do
+                    if inert[y][x] == ' ' then
+                        complete = false
+                    end
+                end
+                
+                if complete then
+                   for removeY = y, 2, -1 do
+                        for removeX = 1, gridXCount do
+                            inert[removeY][removeX] = inert[removeY - 1][removeX]
+                        end
+                        
+                    end
+                
+                    for removeX = 1, gridXCount do
+                        inert[1][removeX] = ' '
+                    end
+                end
+            end
+
+            newPiece()
+
+            if not canPieceMove(pieceX, pieceY, pieceRotation) then
+                reset()
+            end
+        end
+    end
+end
+
+function love.draw()
+    local function drawBlock(block, x, y)
+        local colors = {
+            [' '] = {222, 222, 222},
+            i = {120, 195, 239},
+            j = {236, 231, 108},
+            l = {124, 218, 193},
+            o = {234, 177, 121},
+            s = {211, 136, 236},
+            t = {248, 147, 196},
+            z = {169, 221, 118},
+            preview = {190, 190, 190},
+        }
+        local color = colors[block]
+        love.graphics.setColor(color)
+       
+        local blockSize = 20
+        local blockDrawSize = blockSize - 1
+        love.graphics.rectangle(
+            'fill',
+            (x - 1) * blockSize,
+            (y - 1) * blockSize,
+            blockDrawSize,
+            blockDrawSize
+        )
+    end
+
+    local offsetX = 2
+    local offsetY = 5
+
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+            drawBlock(inert[y][x], x + offsetX, y + offsetY)
+        end
+    end
+
+    for y = 1, pieceYCount do
+        for x = 1, pieceXCount do
+            local block = pieceStructures[pieceType][pieceRotation][y][x]
+            if block ~= ' ' then
+                drawBlock(block, x + pieceX + offsetX, y + pieceY + offsetY)
+            end
+        end
+    end
+
+    for y = 1, pieceYCount do
+        for x = 1, pieceXCount do
+            local block = pieceStructures[sequence[#sequence]][1][y][x]
+            if block ~= ' ' then
+                drawBlock('preview', x + 5, y + 1)
+            end
+        end
+    end
+end
+
+function love.keypressed(key)
+    if key == 'x' then
+        local testRotation = pieceRotation + 1
+        if testRotation > #pieceStructures[pieceType] then
+            testRotation = 1
+        end
+
+        if canPieceMove(pieceX, pieceY, testRotation) then
+            pieceRotation = testRotation
+        end
+
+    elseif key == 'z' then
+        local testRotation = pieceRotation - 1
+        if testRotation < 1 then
+            testRotation = #pieceStructures[pieceType]
+        end
+
+        if canPieceMove(pieceX, pieceY, testRotation) then
+            pieceRotation = testRotation
+        end
+        
+    elseif key == 'left' then
+        local testX = pieceX - 1
+
+        if canPieceMove(testX, pieceY, pieceRotation) then
+            pieceX = testX
+        end
+
+    elseif key == 'right' then
+        local testX = pieceX + 1
+
+        if canPieceMove(testX, pieceY, pieceRotation) then
+            pieceX = testX
+        end
+
+    elseif key == 'c' then
+        while canPieceMove(pieceX, pieceY + 1, pieceRotation) do
+            pieceY = pieceY + 1
+            timer = timerLimit
+        end
+    end
+end
+`

@@ -1,0 +1,182 @@
+# Eyes
+
+## <a href="eyes.love">Download eyes.love</a>
+
+The eyes follow the cursor.
+
+!
+
+### Drawing an eye
+
+The eye is drawn with a white circle and a smaller dark blue circle for the pupil.
+
+`
+function love.draw()
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.circle('fill', 200, 200, 50)
+
+    love.graphics.setColor(0, 0, 100)
+    love.graphics.circle('fill', 200, 200, 15)
+end
+`
+
+!
+
+### Getting X and Y distance between cursor and eye
+
+The distance between the center of the eye and the mouse cursor is displayed.
+
+The X and Y position of the eye is reused from drawing the eye, so variables are made for these.
+
+`
+function love.draw()
+    |local eyeX = 200|
+    |local eyeY = 200|
+
+    |local distanceX = love.mouse.getX() - eyeX|
+    |local distanceY = love.mouse.getY() - eyeY|
+
+    |local output = {}|
+
+    |table.insert(output, 'distance x: '..distanceX)|
+    |table.insert(output, 'distance y: '..distanceY)|
+
+    |love.graphics.setColor(255, 255, 255)|
+    |love.graphics.print(output, table.concat(output, '\n'))|
+
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.circle('fill', |eyeX|, |eyeY|, 50)
+
+    love.graphics.setColor(0, 0, 100)
+    love.graphics.circle('fill', 200, 200, 15)
+end
+`
+
+!
+
+### Getting straight-line distance between cursor and eye
+
+The distance in a straight-line is calculated using the Pythagorean theorem.
+
+The square root of the distance on the X axis squared plus the distance on the Y axis squared is the distance in a straight line.
+
+`
+function love.draw()
+    local distanceX = love.mouse.getX() - eyeX
+    local distanceY = love.mouse.getY() - eyeY
+    
+    -- etc.
+
+    table.insert(output, 'distance: '..distance)
+
+    -- etc.
+end
+`
+
+!
+
+### Getting angle between cursor and eye
+
+The angle in radians between the mouse cursor and the center of the eye is calculated using *math.atan2*.
+
+`
+function love.draw()
+    -- etc.
+
+    local angle = math.atan2(distanceX, distanceY)
+
+    -- etc.
+    table.insert(output, 'angle: '..angle)
+
+    -- etc.
+end
+`
+
+!
+
+### Moving pupil
+
+The sine/cosine of the X/Y positions give the ratio between the X/Y positions and the straight-line distance.
+
+For example, when the mouse is directly below the eye, all of the straight-line distance goes into the Y axis, so the cosine is 1 and the sine is 0.
+
+For another example, when the sine is 0.5, the X distance is 0.5 (i.e. half) of the straight-line distance, and the Y distance is around 0.86 of the straight-line distance.
+
+The pupil is moved by the sine/cosine of the angle multiplied by the distance, which brings the pupil to the mouse position.
+
+`
+function love.draw()
+    -- etc.
+
+    |local pupilX = eyeX + (math.sin(angle) * distance)|
+    |local pupilY = eyeY + (math.cos(angle) * distance)|
+
+    -- etc.
+
+    |table.insert(output, 'sin(angle): '..math.sin(angle))|
+    |table.insert(output, 'cos(angle): '..math.cos(angle))|
+
+    -- etc.
+
+    love.graphics.setColor(0, 0, 100)
+    love.graphics.circle('fill', |pupilX|, |pupilY|)
+end
+`
+
+!
+
+### Moving pupil maximum distance
+
+The straight-line distance is limited to a certain number so that it can't move outside of the eye.
+
+`
+function love.draw()
+    -- etc.
+
+    |local eyeMaxPupilDistance = 30|
+    |if distance > eyeMaxPupilDistance then|
+    |    distance = eyeMaxPupilDistance|
+    |end|
+
+    local pupilX = eyeX + (math.sin(angle) * distance)
+    local pupilY = eyeY + (math.cos(angle) * distance)
+
+    -- etc.
+end
+`
+
+!
+
+### Multiple eyes
+
+The code is made into a function which takes an eye's X and Y positions.
+
+`
+function love.draw()
+    |function drawEye(eyeX, eyeY)|
+        local distanceX = love.mouse.getX() - eyeX
+        local distanceY = love.mouse.getY() - eyeY
+        local distance = math.sqrt(distanceX^2 + distanceY^2)
+        local angle = math.atan2(distanceX, distanceY)
+
+        local eyeMaxPupilDistance = 30
+        if distance > eyeMaxPupilDistance then
+            distance = eyeMaxPupilDistance
+        end
+
+        local pupilX = eyeX + (math.sin(angle) * distance)
+        local pupilY = eyeY + (math.cos(angle) * distance)
+
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.circle('fill', eyeX, eyeY, 50)
+
+        love.graphics.setColor(0, 0, 100)
+        love.graphics.circle('fill', pupilX, pupilY, 15)
+    |end|
+
+    |drawEye(200, 200)|
+    |drawEye(330, 200)|
+end
+`
+
+!

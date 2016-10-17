@@ -1,0 +1,2124 @@
+# Blackjack
+
+## <a href="blackjack.love">Download blackjack.love</a>
+
+!
+
+## Rules
+
+The dealer and player are both dealt two cards. The dealer's first card is hidden from the player.
+
+The player can hit (i.e. take another card) or stand (i.e. stop taking cards).
+
+If total of the player's hand goes over 21 they have gone bust and can't take more cards.
+
+After the player has stood or gone bust, the dealer takes cards until the total of their hand is 17 or over.
+
+The round is then over, and the hand with the highest total (if the total is 21 or under) wins the round.
+
+### Controls
+& *Left click* & Click on hit or stand button
+
+## Overview
+
+Each card is represented by a table containing a string representing its suit, and a number representing its rank. Jacks, queens and kings are represented by the numbers 11, 12 and 13.
+
+The deck initially contains one of every card.
+
+!
+
+The player's and the dealer's hands are tables, and cards are removed from the deck at random positions and inserted into their hands when they take cards.
+
+The cards are assembled from the following images, sometimes with the images colored or flipped horizontally or vertically.
+
+!
+
+## Coding
+
+### The deck of cards
+
+Each card is represented by a table containing a string representing its suit, and a number representing its rank. Jacks, queens and kings are represented by the numbers 11, 12 and 13.
+
+A table for the deck is created containing one of every card.
+
+`
+function love.load()
+    deck = {}
+    for suitIndex, suit in ipairs({'club', 'diamond', 'heart', 'spade'}) do
+        for rank = 1, 13 do
+            print('suit: '..suit..', rank: '..rank)
+            table.insert(deck, {suit = suit, rank = rank})
+        end
+    end
+    print('Total number of cards in deck: '..#deck)
+end
+`
+
+~
+suit: club, rank: 1
+suit: club, rank: 2
+suit: club, rank: 3
+suit: club, rank: 4
+suit: club, rank: 5
+suit: club, rank: 6
+suit: club, rank: 7
+suit: club, rank: 8
+suit: club, rank: 9
+suit: club, rank: 10
+suit: club, rank: 11
+suit: club, rank: 12
+suit: club, rank: 13
+suit: diamond, rank: 1
+suit: diamond, rank: 2
+suit: diamond, rank: 3
+suit: diamond, rank: 4
+suit: diamond, rank: 5
+suit: diamond, rank: 6
+suit: diamond, rank: 7
+suit: diamond, rank: 8
+suit: diamond, rank: 9
+suit: diamond, rank: 10
+suit: diamond, rank: 11
+suit: diamond, rank: 12
+suit: diamond, rank: 13
+suit: heart, rank: 1
+suit: heart, rank: 2
+suit: heart, rank: 3
+suit: heart, rank: 4
+suit: heart, rank: 5
+suit: heart, rank: 6
+suit: heart, rank: 7
+suit: heart, rank: 8
+suit: heart, rank: 9
+suit: heart, rank: 10
+suit: heart, rank: 11
+suit: heart, rank: 12
+suit: heart, rank: 13
+suit: spade, rank: 1
+suit: spade, rank: 2
+suit: spade, rank: 3
+suit: spade, rank: 4
+suit: spade, rank: 5
+suit: spade, rank: 6
+suit: spade, rank: 7
+suit: spade, rank: 8
+suit: spade, rank: 9
+suit: spade, rank: 10
+suit: spade, rank: 11
+suit: spade, rank: 12
+suit: spade, rank: 13
+Total number of cards in deck: 52
+~
+
+### Taking cards for the player's hand
+
+A table for the player's hand is created.
+
+A card is removed from the deck table at a random index between 1 and the number of cards in the deck. This card is inserted into the player's hand.
+
+This happens again for the player's second card.
+
+`
+function love.load()
+    -- etc.
+
+    playerHand = {}
+    table.insert(playerHand, table.remove(deck, love.math.random(#deck)))
+    table.insert(playerHand, table.remove(deck, love.math.random(#deck)))
+    
+    -- Temporary
+    print('Player hand:')
+    for cardIndex, card in ipairs(playerHand) do
+        print('suit: '..card.suit..', rank: '..card.rank)
+    end
+    print('Total number of cards in deck: '..#deck)
+end
+`
+
+~
+Player hand:
+suit: heart, rank: 1
+suit: spade, rank: 12
+Total number of cards in deck: 50
+~
+
+### Displaying state
+
+For now, information about the state of the game will be displayed as text.
+
+A table is created for the output strings, and is concatenated is drawn to the screen.
+
+`
+function love.draw()
+    local output = {}
+
+    table.insert(output, 'Player hand:')
+    for cardIndex, card in ipairs(playerHand) do
+        table.insert(output, 'suit: '..card.suit..', rank: '..card.rank)
+    end
+
+    love.graphics.print(table.concat(output, '\n'), 15, 15)
+end
+`
+
+!
+
+### Dealing dealer's hand
+
+A table is created for the dealer's hand and two random cards from the deck are inserted into it.
+
+`
+function love.load()
+    -- etc.
+
+    playerHand = {}
+    table.insert(playerHand, table.remove(deck, love.math.random(#deck)))
+    table.insert(playerHand, table.remove(deck, love.math.random(#deck)))
+
+    |dealerHand = {}|
+    |table.insert(dealerHand, table.remove(deck, love.math.random(#deck)))|
+    |table.insert(dealerHand, table.remove(deck, love.math.random(#deck)))|
+end
+
+function love.draw()
+    local output = {}
+
+    table.insert(output, 'Player hand:')
+    for cardIndex, card in ipairs(playerHand) do
+        table.insert(output, 'suit: '..card.suit..', rank: '..card.rank)
+    end
+
+    |table.insert(output, '')|
+
+    |table.insert(output, 'Dealer hand:')|
+    |for cardIndex, card in ipairs(dealerHand) do|
+    |    table.insert(output, 'suit: '..card.suit..', rank: '..card.rank)|
+    |end|
+
+    love.graphics.print(table.concat(output, '\n'), 15, 15)
+end
+`
+
+!
+
+### Simplifying code
+
+The only difference between the code for inserting a card into the player's hand and inserting a card the dealer's hand is the hand to insert it into, so a function is made with the hand as a parameter.
+
+`
+function love.load()
+    -- etc.
+
+    |local function takeCard(hand)|
+        table.insert(|hand|, table.remove(deck, love.math.random(#deck)))
+    |end|
+
+    playerHand = {}
+    |takeCard(playerHand)|
+    |takeCard(playerHand)|
+
+    dealerHand = {}
+    |takeCard(dealerHand)|
+    |takeCard(dealerHand)|
+end
+`
+
+### Hitting
+
+For now, the keyboard is used for input instead of on-screen buttons.
+
+When the *h* key is pressed the player takes a card from the deck.
+
+Since *takeCard* is used in *love.keypressed* it is made global.
+
+`
+function love.load()
+    -- etc.
+
+    function takeCard(hand)
+
+    -- etc.
+end
+
+function love.keypressed(key)
+    if key == 'h' then
+        takeCard(playerHand)
+    end
+end
+`
+
+!
+
+### Total
+
+For each hand, the rank of each card is added together to get the total value of the hand.
+
+Currently this does not account for face cards or the value of aces sometimes being 11.
+
+`
+function love.draw()
+    -- etc.
+
+    local function getTotal(hand)
+        local total = 0
+        for cardIndex, card in ipairs(hand) do
+            total = total + card.rank
+        end
+        return total
+    end
+
+    table.insert(output, 'Total: '..getTotal(playerHand))
+
+    -- etc.
+
+    table.insert(output, 'Total: '..getTotal(dealerHand))
+
+    -- etc.
+end
+`
+
+!
+
+### Total accounting for face cards
+
+If a card's rank is higher than 10 (i.e. 11, 12 or 13) it is a face card and its value is 10.
+
+`
+function love.draw()
+    -- etc.
+
+    local function getTotal(hand)
+        local total = 0
+        for cardIndex, card in ipairs(hand) do
+            |if card.rank > 10 then|
+            |    total = total + 10|
+            |else|
+                total = total + card.rank
+            |end|
+        end
+        return total
+    end
+
+    -- etc.
+end
+`
+
+!
+
+### Total accounting for ace
+
+Aces have a value of 11 instead of 1 if it would increase the value of the hand without it going over 21.
+
+First, the values of all of the cards in that hand are added together, counting aces as 1 instead of 11.
+
+Then, if the hand has an ace and the total value of the hand is 11 or less, 10 is added to the total (10 is added instead of 11 because the total has already had 1 added to it for that ace). If the total of the value hand was 12 (or more) then an ace counting as 11 would make the value of the hand 22 (or more).
+
+`
+function love.draw()
+    -- etc.
+
+    local function getTotal(hand)
+        local total = 0
+        |local hasAce = false|
+
+        for cardIndex, card in ipairs(hand) do
+            if card.rank > 10 then
+                total = total + 10
+            else
+                total = total + card.rank
+            end
+
+            |if card.rank == 1 then|
+            |    hasAce = true|
+            |end|
+        end
+
+        |if hasAce and total <= 11 then|
+        |    total = total + 10|
+        |end|
+
+        return total
+    end
+
+    -- etc.
+end
+`
+
+!
+
+### Standing and displaying winner
+
+When the *s* key is pressed the player stands and, for now, the round is over.
+
+The total of the player's hand is compared to the total of the dealer's hand and the winner is displayed.
+
+Currently this does not account for busts (i.e. hands with a value of over 21).
+
+The player can hit only when the round is not over.
+
+`
+function love.load()
+    -- etc.
+
+    roundOver = false
+end
+
+function love.draw()
+    -- etc.
+
+    if roundOver then
+        table.insert(output, '')
+
+        if getTotal(playerHand) > getTotal(dealerHand) then
+            table.insert(output, 'Player wins')
+        elseif getTotal(dealerHand) > getTotal(playerHand) then
+            table.insert(output, 'Dealer wins')
+        else
+            table.insert(output, 'Draw')
+        end
+    end
+
+    -- etc.
+end
+
+function love.keypressed(key)
+    if key == 'h' |and not roundOver| then
+        takeCard(playerHand)
+    |elseif key == 's' then|
+    |    roundOver = true|
+    end
+end
+`
+
+!
+
+### Winner accounting for bust
+
+The player or dealer wins if they haven't gone bust, and...
+- their hand has a greater total than that of their opponent, or...
+- their opponent has gone bust.
+
+`
+function love.load()
+    -- etc.
+
+    roundOver = false
+end
+
+function love.draw()
+    -- etc.
+
+    if roundOver then
+        table.insert(output, '')
+
+        if |getTotal(playerHand) <= 21|
+        |and (|
+        |    getTotal(dealerHand) > 21|
+        |    or| getTotal(playerHand) > getTotal(dealerHand)
+        |)| then
+            table.insert(output, 'Player wins')
+        elseif |getTotal(dealerHand) <= 21|
+        |and (|
+        |    getTotal(playerHand) > 21|
+        |    or| getTotal(dealerHand) > getTotal(playerHand)
+        |)| then
+            table.insert(output, 'Dealer wins')
+        else
+            table.insert(output, 'Draw')
+        end
+    end
+
+    -- etc.
+end
+`
+
+!
+
+### Simplifying code
+
+The only differences in the code determining if a hand has won is that hand and the hand of their opponent, so a function is made.
+
+`
+function love.draw()
+    -- etc.
+
+    if roundOver then
+        table.insert(output, '')
+
+        |local function hasHandWon(thisHand, otherHand)|
+            return getTotal(|thisHand|) <= 21
+            and (
+                getTotal(|otherHand|) > 21
+                or getTotal(|thisHand|) > getTotal(|otherHand|)
+            )
+        |end|
+
+        if |hasHandWon(playerHand, dealerHand)| then
+            table.insert(output, 'Player wins')
+        elseif |hasHandWon(dealerHand, playerHand)| then
+            table.insert(output, 'Dealer wins')
+        else
+            table.insert(output, 'Draw')
+        end
+    end
+
+    -- etc.
+end
+`
+
+### Play again
+
+When a key is pressed when the round over, *love.load* is called to start another game.
+
+`
+function love.keypressed(key)
+    |if not roundOver then|
+        if key == 'h' and not roundOver then
+            takeCard(playerHand)
+        elseif key == 's' then
+            roundOver = true
+        end
+    |else|
+    |    love.load()|
+    |end|
+end
+`
+
+### End round on bust or blackjack
+
+If the player has gone bust or the value of their hand is already 21, the round is automatically over.
+
+Since this requires getting the total value of a hand, *getTotal* is moved into *love.load*.
+
+`
+function love.load()
+    -- etc.
+
+    function getTotal(hand)
+        -- etc.
+    end
+end
+
+function love.keypressed(key)
+    if not roundOver then
+        if key == 'h' and not roundOver then
+            takeCard(playerHand)
+            |if getTotal(playerHand) >= 21 then|
+            |    roundOver = true|
+            |end|
+        elseif key == 's' then
+            roundOver = true
+        end
+    else
+        love.load()
+    end
+end
+`
+
+### Dealer hitting
+
+If the player has stood, gone bust or has 21, the dealer takes cards while the value of their hand is less than 17.
+
+`
+function love.keypressed(key)
+    if not roundOver then
+        if key == 'h' and not roundOver then
+            takeCard(playerHand)
+            if getTotal(playerHand) >= 21 then
+                roundOver = true
+            end
+        elseif key == 's' then
+            roundOver = true
+        end
+
+        |if roundOver then|
+        |    while getTotal(dealerHand) < 17 do|
+        |        takeCard(dealerHand)|
+        |    end|
+        |end|
+    else
+        love.load()
+    end
+end
+`
+
+!
+
+### Hiding dealer's first card
+
+Until the round is over the dealer's first card (i.e. the first item of the dealer's hand table) is hidden.
+
+`
+function love.draw()
+    -- etc.
+
+    table.insert(output, 'Dealer hand:')
+    for cardIndex, card in ipairs(dealerHand) do
+        |if not roundOver and cardIndex == 1 then|
+        |    table.insert(output, '(Card hidden)')|
+        |else|
+            table.insert(output, 'suit: '..card.suit..', rank: '..card.rank)
+        |end|
+    end
+
+    -- etc.
+end
+`
+
+!
+
+### Hiding dealer's total
+
+Until the round is over the total of the dealer's hand is hidden.
+
+`
+function love.draw()
+    -- etc.
+
+    |if roundOver then|
+        table.insert(output, 'Total: '..getTotal(dealerHand))
+    |else|
+    |    table.insert(output, 'Total: ?')|
+    |end|
+
+    -- etc.
+end
+`
+
+!
+
+### Loading images
+
+All of the images used for drawing cards are loaded.
+
+`
+function love.load()
+    -- etc.
+
+	images = {}
+	for nameIndex, name in ipairs({
+		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+		'pip_heart', 'pip_diamond', 'pip_club', 'pip_spade',
+		'mini_heart', 'mini_diamond', 'mini_club', 'mini_spade',
+		'card', 'card_face_down',
+		'face_jack', 'face_queen', 'face_king',
+	}) do
+		images[name] = love.graphics.newImage('images/'..name..'.png')
+	end
+end
+`
+
+### Drawing cards
+
+The text display is commented out.
+
+The cards in the player's hand are looped through and, for now, a blank card is drawn for each one.
+
+`
+function love.load()
+    -- etc.
+
+    love.graphics.setBackgroundColor(255, 255, 255)
+end
+
+function love.draw()
+    -- etc.
+
+    --love.graphics.print(table.concat(output, '\n'), 15, 15)
+
+    for cardIndex, card in ipairs(playerHand) do
+        love.graphics.draw(images.card, (cardIndex - 1) * 60)
+    end
+end
+`
+
+!
+
+### Drawing text for suit and rank
+
+For now, the suit and rank of each card is drawn as text.
+
+`
+function love.draw()
+    -- etc.
+
+    for cardIndex, card in ipairs(playerHand) do
+        |love.graphics.setColor(255, 255, 255)|
+        love.graphics.draw(images.card, (cardIndex - 1) * 60, 0)
+
+        |love.graphics.setColor(0, 0, 0)|
+        |love.graphics.print(card.suit, (cardIndex - 1) * 60, 0)|
+        |love.graphics.print(card.rank, (cardIndex - 1) * 60, 15)|
+    end
+end
+`
+
+!
+
+### Test hands
+
+The code for drawing a card is made into a function, and test hands are created.
+
+`
+function love.draw()
+    -- etc.
+
+    |local function drawCard(card, x, y)|
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.draw(images.card, |x|, |y|)
+
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.print(card.suit, |x|, |y|)
+        love.graphics.print(card.rank, |x|, |y +| 15)
+    |end|
+    
+    |local testHand1 = {|
+    |    {suit = 'club', rank = 1},|
+    |    {suit = 'diamond', rank = 2},|
+    |    {suit = 'heart', rank = 3},|
+    |    {suit = 'spade', rank = 4},|
+    |    {suit = 'club', rank = 5},|
+    |    {suit = 'diamond', rank = 6},|
+    |    {suit = 'heart', rank = 7},|
+    |}|
+    
+    |for cardIndex, card in ipairs(testHand1) do|
+    |    drawCard(card, (cardIndex - 1) * 60, 0)|
+    |end|
+
+    |local testHand2 = {|
+    |    {suit = 'spade', rank = 8},|
+    |    {suit = 'club', rank = 9},|
+    |    {suit = 'diamond', rank = 10},|
+    |    {suit = 'heart', rank = 11},|
+    |    {suit = 'spade', rank = 12},|
+    |    {suit = 'club', rank = 13},|
+    |}|
+    
+    |for cardIndex, card in ipairs(testHand2) do|
+    |    drawCard(card, (cardIndex - 1) * 60, 80)|
+    |end|
+end
+`
+
+!
+
+### Drawing rank
+
+The card's rank is drawn by indexing the image table with the card's rank, which corresponds to the appropriate image file.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawCard(card, x, y)
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.draw(images.card, x, y)
+
+        love.graphics.setColor(0, 0, 0)
+        |love.graphics.draw(images[card.rank], x + 3, y + 4)|
+    end
+end
+`
+!
+
+### Drawing bottom number
+
+The card's rank is drawn at the bottom right corner minus the same offset used when drawing the rank at the top of the card. The image is flipped both horizontally and vertically, which results in its bottom right corner (after flipping) being at the bottom right of the card.
+
+To calculate this position, the card's width and height are needed (and they will also be used when drawing the suit and pips), and the offset from the corner is reused from drawing the top number, so variables are made for these.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawCard(card, x, y)
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.draw(images.card, x, y)
+
+        love.graphics.setColor(0, 0, 0)
+
+        |local cardWidth = 53|
+        |local cardHeight = 73|
+        |local numberOffsetX = 3|
+        |local numberOffsetY = 4|
+
+        love.graphics.draw(
+            images[card.rank],
+            x + |numberOffsetY|,
+            y + |numberOffsetY|
+        )
+        |love.graphics.draw(|
+        |    images[card.rank],|
+        |    x + cardWidth - numberOffsetX,|
+        |    y + cardHeight - numberOffsetY,|
+        |    0,|
+        |    -1|
+        |)|
+    end
+    
+    -- etc.
+end
+`
+
+!
+
+### Drawing suit
+
+The suit is drawn similarly to the rank.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawCard(card, x, y)
+        -- etc.
+
+        local suitOffsetX = 3
+        local suitOffsetY = 14
+        local suitImage = images['mini_'..card.suit]
+
+        love.graphics.draw(
+            suitImage,
+            x + suitOffsetX,
+            y + suitOffsetY
+        )
+        love.graphics.draw(
+            suitImage,
+            x + cardWidth - suitOffsetX,
+            y + cardHeight - suitOffsetY,
+            0,
+            -1
+        )
+    end
+    
+    -- etc.
+end
+`
+
+### Simplifying code
+
+The only differences between drawing the rank and suit are the image and the offset, so a function is made with these as parameters.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawCard(card, x, y)
+        -- etc.
+
+        local cardWidth = 53
+        local cardHeight = 73
+
+        |local function drawCorner(image, offsetX, offsetY)|
+            love.graphics.draw(
+                |image|,
+                x + |offsetX|,
+                y + |offsetY|
+            )
+            love.graphics.draw(
+                image,
+                x + cardWidth - |offsetX|,
+                y + cardHeight - |offsetY|,
+                0,
+                -1
+            )
+        |end|
+
+        |drawCorner(images[card.rank], 3, 4)|
+        |drawCorner(images['mini_'..card.suit], 3, 14)|
+    end
+    
+    -- etc.
+end
+`
+
+!
+
+### Setting color based on suit
+
+If the card's suit is diamonds or hearts, the color of the rank and suit is red, otherwise for clubs and spades it is black.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawCard(card, x, y)
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.draw(images.card, x, y)
+
+        -- Removed: love.graphics.setColor(0, 0, 0)
+
+        |if card.suit == 'heart' or card.suit == 'diamond' then|
+        |    love.graphics.setColor(228, 15, 100)|
+        |else|
+        |    love.graphics.setColor(50, 50, 50)|
+        |end|
+
+        -- etc.
+    end
+end
+`
+
+!
+
+### Drawing face cards
+
+If the card's rank is 11, 12 or 13, the image for the jack, queen or king is drawn.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawCard(card, x, y)
+        -- etc.
+
+        if card.rank > 10 then
+            local faceImage
+            if card.rank == 11 then
+                faceImage = images.face_jack
+            elseif card.rank == 12 then
+                faceImage = images.face_queen
+            elseif card.rank == 13 then
+                faceImage = images.face_king
+            end
+            love.graphics.setColor(255, 255, 255)
+            love.graphics.draw(faceImage, x + 12, y + 11)
+        end
+    end
+
+    -- etc.
+end
+`
+
+!
+
+### Drawing ace
+
+If the card is an ace a pip drawn in the middle of the card.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawCard(card, x, y)
+        -- etc.
+
+        if card.rank > 10 then
+            -- etc.
+        |else|
+        |    local pipImage = images['pip_'..card.suit]|
+        |    if card.rank == 1 then|
+        |        love.graphics.draw(pipImage, x + 21, y + 31)|
+        |    end|
+        end
+    end
+
+    |local testHand = {|
+    |    {suit = 'club', rank = 1},|
+    |    {suit = 'diamond', rank = 1},|
+    |    {suit = 'heart', rank = 1},|
+    |    {suit = 'spade', rank = 1},|
+    |}|
+    
+    for cardIndex, card in ipairs(|testHand|) do
+        drawCard(card, (cardIndex - 1) * 60, 0)
+    end
+end
+`
+
+!
+
+### Drawing 2
+
+For a rank of 2, two pips are drawn.
+
+The first pip is in the middle on the X axis and at the top plus an offset of 7 on the Y axis.
+
+The second pip is also in the middle on the X axis, and is "mirrored" on the Y axis by being offset by 7 from the bottom and drawn flipped both horizontally and vertically, similarly to the rank and suit.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawCard(card, x, y)
+        -- etc.
+
+        if card.rank > 10 then
+            -- etc.
+        else
+            local pipImage = images['pip_'..card.suit]
+            |local pipWidth = 11|
+            if card.rank == 1 then
+                love.graphics.draw(
+                    pipImage,
+                    x + 21,
+                    y + 31
+                )
+            |elseif card.rank == 2 then|
+            |    love.graphics.draw(|
+            |        pipImage,|
+            |        x + 21,|
+            |        y + 7|
+            |    )|
+            |    love.graphics.draw(|
+            |        pipImage,|
+            |        x + 21 + pipWidth,|
+            |        y + cardHeight - 7,|
+            |        0,|
+            |        -1|
+            |    )|
+            end
+        end
+    end
+
+    local testHand = {
+        {suit = 'club', rank = |2|},
+        {suit = 'diamond', rank = |2|},
+        {suit = 'heart', rank = |2|},
+        {suit = 'spade', rank = |2|},
+    }
+    
+    -- etc.
+end
+`
+
+!
+
+### Simplifying code
+
+Numbers are reused, so these are made into variables.
+
+`
+function love.draw()
+             -- etc.
+
+            local pipImage = images['pip_'..card.suit]
+            local pipWidth = 11
+
+            |local xMid = 21|
+            |local yTop = 7|
+
+            if card.rank == 1 then
+                love.graphics.draw(
+                    pipImage,
+                    x + |xMid|,
+                    y + 31
+                )
+            elseif card.rank == 2 then
+                love.graphics.draw(
+                    pipImage,
+                    x + |xMid|,
+                    y + |yTop|
+                )
+                love.graphics.draw(
+                    pipImage,
+                    x + |xMid| + pipWidth,
+                    y + cardHeight - |yTop|,
+                    0,
+                    -1
+                )
+            end
+            
+            -- etc.
+end
+`
+
+### Drawing 3
+
+Drawing a 3 is the same as drawing both an ace and a 2.
+
+The middle of the card on the Y axis is reused, so this is made into a variable.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawCard(card, x, y)
+        -- etc.
+
+        if card.rank > 10 then
+            -- etc.
+        else
+            local pipImage = images['pip_'..card.suit]
+            local pipWidth = 11
+
+            local xMid = 21
+            local yTop = 7
+            |local yMid = 31|
+
+            if card.rank == 1 then
+                love.graphics.draw(
+                    pipImage,
+                    x + xMid,
+                    y + |yMid|
+                )
+            elseif card.rank == 2 then
+                love.graphics.draw(
+                    pipImage,
+                    x + xMid,
+                    y + yTop
+                )
+                love.graphics.draw(
+                    pipImage,
+                    x + xMid + pipWidth,
+                    y + cardHeight - yTop,
+                    0,
+                    -1
+                )
+            |elseif card.rank == 3 then|
+            |    love.graphics.draw(|
+            |        pipImage,|
+            |        x + xMid,|
+            |        y + yMid|
+            |    )|
+            |    love.graphics.draw(|
+            |        pipImage,|
+            |        x + xMid,|
+            |        y + yTop|
+            |    )|
+            |    love.graphics.draw(|
+            |        pipImage,|
+            |        x + xMid + pipWidth,|
+            |        y + cardHeight - yTop,|
+            |        0,|
+            |        -1|
+            |    )|
+            end
+        end
+    end
+
+    local testHand = {
+        {suit = 'club', rank = |3|},
+        {suit = 'diamond', rank = |3|},
+        {suit = 'heart', rank = |3|},
+        {suit = 'spade', rank = |3|},
+    }
+    
+    -- etc.
+end
+`
+
+!
+
+### Drawing 4
+
+The pips for rank 4 are in the same position on the Y axis as the pips for rank 2, with a different X offset and "mirrored" on the X axis.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawCard(card, x, y)
+        -- etc.
+
+        if card.rank > 10 then
+            -- etc.
+        else
+            local pipImage = images['pip_'..card.suit]
+            local pipWidth = 11
+
+            |local xLeft = 11|
+            local xMid = 21
+            local yTop = 7
+            local yMid = 31
+
+            if card.rank == 1 then
+                love.graphics.draw(
+                    pipImage,
+                    x + xMid,
+                    y + yMid
+                )
+            elseif card.rank == 2 then
+                love.graphics.draw(
+                    pipImage,
+                    x + xMid,
+                    y + yTop
+                )
+                love.graphics.draw(
+                    pipImage,
+                    x + xMid + pipWidth,
+                    y + cardHeight - yTop,
+                    0,
+                    -1
+                )
+            elseif card.rank == 3 then
+                love.graphics.draw(
+                    pipImage,
+                    x + xMid,
+                    y + yMid
+                )
+                love.graphics.draw(
+                    pipImage,
+                    x + xMid,
+                    y + yTop
+                )
+                love.graphics.draw(
+                    pipImage,
+                    x + xMid + pipWidth,
+                    y + cardHeight - yTop,
+                    0,
+                    -1
+                )
+            |elseif card.rank == 4 then|
+            |    love.graphics.draw(|
+            |        pipImage,|
+            |        x + xLeft,|
+            |        y + yTop|
+            |    )|
+            |    love.graphics.draw(|
+            |        pipImage,|
+            |        x + cardWidth - xLeft,|
+            |        y + yTop|
+            |    )|
+            |    love.graphics.draw(|
+            |        pipImage,|
+            |        x + xLeft,|
+            |        y + cardHeight - yTop,|
+            |        0,|
+            |        -1|
+            |    )|
+            |    love.graphics.draw(|
+            |        pipImage,|
+            |        x + cardWidth - xLeft,|
+            |        y + cardHeight - yTop,|
+            |        0,|
+            |        -1|
+            |    )|
+            end
+        end
+    end
+
+    local testHand = {
+        {suit = 'club', rank = |4|},
+        {suit = 'diamond', rank = |4|},
+        {suit = 'heart', rank = |4|},
+        {suit = 'spade', rank = |4|},
+    }
+    
+    -- etc.
+end
+`
+
+!
+
+### Simplifying code
+
+Pips have an individual offset, and can be "mirrored" on the X and Y axis.
+
+A function is made with the offset and whether to mirror on the X or Y axis as parameters.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawCard(card, x, y)
+        -- etc.
+
+        if card.rank > 10 then
+            -- etc.
+        else
+            |local function drawPip(offsetX, offsetY, mirrorX, mirrorY)|
+                local pipImage = images['pip_'..card.suit]
+                local pipWidth = 11
+                love.graphics.draw(
+                    pipImage,
+                    x + |offsetX|,
+                    y + |offsetY|
+                )
+                if mirrorX then
+                    love.graphics.draw(
+                        pipImage,
+                        x + cardWidth - |offsetX| - pipWidth,
+                        y + |offsetY|
+                    )
+                end
+                if mirrorY then
+                    love.graphics.draw(
+                        pipImage,
+                        x + |offsetX|,
+                        cardHeight - |offsetY| + pipWidth,
+                        0,
+                        -1
+                    )
+                end
+                if mirrorX and mirrorY then
+                    love.graphics.draw(
+                        pipImage,
+                        x + cardWidth - |offsetX|,
+                        y + cardHeight - |offsetY|,
+                        0,
+                        -1
+                    )
+                end
+            |end|
+
+            local xLeft = 11
+            local xMid = 21
+            local yTop = 7
+            local yMid = 31
+
+            if card.rank == 1 then
+                |drawPip(xMid, yMid)|
+            elseif card.rank == 2 then
+                |drawPip(xMid, yTop, false, true)|
+            elseif card.rank == 3 then
+                |drawPip(xMid, yTop, false, true)|
+                |drawPip(xMid, yMid)|
+            elseif card.rank == 4 then
+                |drawPip(xLeft, yTop, true, true)|
+            end
+        end
+    end
+
+    -- etc.
+end
+`
+
+### Drawing the rest of the ranks
+
+The rest of the ranks are drawn, with two new variables made for repeated Y positions.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawCard(card, x, y)
+        -- etc.
+
+        if card.rank > 10 then
+            -- etc.
+        else
+            -- etc.
+
+            local xLeft = 11
+            local xMid = 21
+            local yTop = 7
+            |local yThird = 19|
+            |local yQtr = 23|
+            local yMid = 31
+
+            if card.rank == 1 then
+                drawPip(xMid, yMid)
+            elseif card.rank == 2 then
+                drawPip(xMid, yTop, false, true)
+            elseif card.rank == 3 then
+                drawPip(xMid, yTop, false, true)
+                drawPip(xMid, yMid)
+            elseif card.rank == 4 then
+                drawPip(xLeft, yTop, true, true)
+            |elseif card.rank == 5 then|
+            |    drawPip(xLeft, yTop, true, true)|
+            |    drawPip(xMid, yMid)|
+            |elseif card.rank == 6 then|
+            |    drawPip(xLeft, yTop, true, true)|
+            |    drawPip(xLeft, yMid, true)|
+            |elseif card.rank == 7 then|
+            |    drawPip(xLeft, yTop, true, true)|
+            |    drawPip(xLeft, yMid, true)|
+            |    drawPip(xMid, yThird)|
+            |elseif card.rank == 8 then|
+            |    drawPip(xLeft, yTop, true, true)|
+            |    drawPip(xLeft, yMid, true)|
+            |    drawPip(xMid, yThird, false, true)|
+            |elseif card.rank == 9 then|
+            |    drawPip(xLeft, yTop, true, true)|
+            |    drawPip(xLeft, yQtr, true, true)|
+            |    drawPip(xMid, yMid)|
+            |elseif card.rank == 10 then|
+            |    drawPip(xLeft, yTop, true, true)|
+            |    drawPip(xLeft, yQtr, true, true)|
+            |    drawPip(xMid, 16, false, true)|
+            end
+        end
+    end
+
+    |local testHand1 = {|
+    |    {suit = 'club', rank = 1},|
+    |    {suit = 'diamond', rank = 2},|
+    |    {suit = 'heart', rank = 3},|
+    |    {suit = 'spade', rank = 4},|
+    |    {suit = 'club', rank = 5},|
+    |}|
+    
+    |for cardIndex, card in ipairs(testHand1) do|
+    |    drawCard(card, (cardIndex - 1) * 60, 0)|
+    |end|
+
+    |local testHand2 = {|
+    |    {suit = 'diamond', rank = 6},|
+    |    {suit = 'heart', rank = 7},|
+    |    {suit = 'spade', rank = 8},|
+    |    {suit = 'club', rank = 9},|
+    |    {suit = 'diamond', rank = 10},|
+    |}|
+    
+    |for cardIndex, card in ipairs(testHand2) do|
+    |    drawCard(card, (cardIndex - 1) * 60, 80)|
+    |end|
+end
+`
+
+!
+
+### Positioning hands
+
+The player's and dealer's hands are drawn.
+
+They use the same space between the cards and offset on the X axis, so variables are made for these.
+
+`
+function love.draw()
+    -- etc.
+
+    local cardSpacing = 60
+    local marginX = 10
+
+    for cardIndex, card in ipairs(dealerHand) do
+        drawCard(card, ((cardIndex - 1) * cardSpacing) + marginX, 10)
+    end
+
+    for cardIndex, card in ipairs(playerHand) do
+        drawCard(card, ((cardIndex - 1) * cardSpacing) + marginX, 140)
+    end
+end
+`
+
+!
+
+### Hiding dealer's first card
+
+Until the round is over, the dealer's first card is hidden. Instead of drawing the card, another image is drawn for a face down card.
+
+The Y position of the face down is reused from drawing the dealer's other cards, so it is made into a variable.
+
+`
+function love.draw()
+    -- etc.
+
+    local cardSpacing = 60
+    local marginX = 10
+
+    for cardIndex, card in ipairs(dealerHand) do
+        |local dealerMarginY = 30|
+        |if not roundOver and cardIndex == 1 then|
+        |    love.graphics.draw(images.card_face_down, marginX, dealerMarginY)|
+        |else|
+            drawCard(card, ((cardIndex - 1) * cardSpacing) + marginX, |dealerMarginY|)
+        |end|
+    end
+
+    for cardIndex, card in ipairs(playerHand) do
+        drawCard(card, ((cardIndex - 1) * cardSpacing) + marginX, 140)
+    end
+end
+`
+
+!
+
+### Displaying totals
+
+The totals of each hand are drawn.
+
+The dealer's total is drawn only when the round is over.
+
+`
+function love.draw()
+    -- etc.
+
+    love.graphics.setColor(0, 0, 0)
+
+    if roundOver then
+        love.graphics.print('Total: '..getTotal(dealerHand), marginX, 10)
+    else
+        love.graphics.print('Total: ?', marginX, 10)
+    end
+
+    love.graphics.print('Total: '..getTotal(playerHand), marginX, 120)
+end
+`
+
+!
+
+### Displaying winner
+
+When the round is over the result of the game is drawn.
+
+`
+function love.draw()
+    -- etc.
+
+    if roundOver then
+        local function hasHandWon(thisHand, otherHand)
+            return getTotal(thisHand) <= 21
+            and (
+                getTotal(otherHand) > 21
+                or getTotal(thisHand) > getTotal(otherHand)
+            )
+        end
+
+        local function drawWinner(message)
+            love.graphics.print(message, marginX, 268)
+        end
+
+        if hasHandWon(playerHand, dealerHand) then
+            drawWinner('Player wins')
+        elseif hasHandWon(dealerHand, playerHand) then
+            drawWinner('Dealer wins')
+        else
+            drawWinner('Draw')
+        end
+    end
+end
+`
+
+!
+
+### Drawing hit and stand buttons
+
+The hit and stand buttons are drawn as rectangles with text on top.
+
+`
+function love.draw()
+    -- etc.
+
+    love.graphics.setColor(255, 127, 57)
+    love.graphics.rectangle('fill', 10, 230, 53, 25)
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.print('Hit!', 16, 236)
+
+    love.graphics.setColor(255, 127, 57)
+    love.graphics.rectangle('fill', 70, 230, 53, 25)
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.print('Stand', 78, 236)
+end
+`
+
+!
+
+### Drawing play again button
+
+The "play again" button is drawn occupying the same position as the other buttons, since it will only be visible when the round is over.
+
+The Y position and height of all three buttons are reused, so these are made into variables.
+
+`
+function love.draw()
+    -- etc.
+
+    --[[
+    love.graphics.setColor(255, 127, 57)
+    love.graphics.rectangle('fill', 10, 230, 53, 25)
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.print('Hit!', 16, 236)
+
+    love.graphics.setColor(255, 127, 57)
+    love.graphics.rectangle('fill', 70, 230, 53, 25)
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.print('Stand', 78, 236)
+    --]]
+
+    love.graphics.setColor(255, 127, 57)
+    love.graphics.rectangle('fill', 10, 230, 113, 25)
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.print('Play again', 34, 236)
+end
+`
+
+!
+
+### Basing text position on button position
+
+The X and Y position of the text is based on the X and Y position of the buttons plus some offset.
+
+Each button's X position is used twice, so these are made into variables. The same Y position is used by all buttons.
+
+`
+function love.draw()
+    -- etc.
+
+    |local buttonY = 230|
+
+    |local buttonHitX = 10|
+    love.graphics.setColor(255, 127, 57)
+    love.graphics.rectangle('fill', |buttonHitX|, |buttonY|, 53, 25)
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.print('Hit!', |buttonHitX + 6|, |buttonY + 6|)
+
+    |local buttonStandX = 70|
+    love.graphics.setColor(255, 127, 57)
+    love.graphics.rectangle('fill', |buttonStandX|, |buttonY|, 53, 25)
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.print('Stand', |buttonStandX + 8|, |buttonY + 6|)
+
+    --[[
+    |local buttonPlayAgainX = 10|
+    love.graphics.setColor(255, 127, 57)
+    love.graphics.rectangle('fill', |buttonPlayAgainX|, |buttonY|, 113, 25)
+    love.graphics.setColor(255, 255, 255)
+    love.graphics.print('Play again', |buttonPlayAgainX + 24|, |buttonY + 6|)
+    --]]
+end
+`
+
+### Simplifying code
+
+The only difference between the code for drawing each button is the button's text, X position, width and text offset on the X axis. A function is made with these as parameters.
+
+`
+function love.draw()
+    -- etc.
+
+    |local function drawButton(text, buttonX, buttonWidth, textOffsetX)|
+        local buttonY = 230
+        love.graphics.setColor(255, 127, 57)
+        love.graphics.rectangle('fill', |buttonX|, buttonY, |buttonWidth|, 25)
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.print(|text|, |buttonX + textOffsetX|, buttonY + 6)
+    |end|
+
+    |drawButton('Hit!', 10, 53, 16)|
+    |drawButton('Stand', 70, 53, 8)|
+    |--drawButton('Play again', 10, 113, 24)|
+end
+`
+
+### Highlighting button when cursor is over it
+
+The color of the rectangle changes when the mouse cursor is over it.
+
+The cursor is over the button when...
+- the mouse's X position is to the right of the button's left edge
+- the mouse's X position is to the left of the button's right edge (i.e less than the position of the button plus the width of the button)
+- the mouse's X position is below the button's top edge
+- the mouse's Y position is above the button's bottom edge (i.e. less than the position of the button plus the height of the button)
+
+The button height is reused from drawing the button, so a variable is made.
+
+`
+function love.draw()
+    -- etc.
+
+    local function drawButton(text, buttonX, buttonWidth, textOffsetX)
+        local buttonY = 230
+        |local buttonHeight = 25|
+
+        |if love.mouse.getX() >= buttonX|
+        |and love.mouse.getX() < buttonX + buttonWidth|
+        |and love.mouse.getY() >= buttonY|
+        |and love.mouse.getY() < buttonY + buttonHeight then|
+        |    love.graphics.setColor(255, 202, 75)|
+        |else|
+            love.graphics.setColor(255, 127, 57)
+        |end|
+        love.graphics.rectangle('fill', buttonX, buttonY, buttonWidth, |buttonHeight|)
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.print(text, buttonX + textOffsetX, buttonY + 6)
+    end
+
+    -- etc.
+end
+`
+
+!
+
+### Clicking buttons
+
+If a mouse button is released and the mouse is over the on-screen button then the button has been clicked, and for now the name of the button is printed.
+
+Checking if the mouse is over a button is reused from drawing the button, so this is made into a function and is moved into *love.load*.
+
+The X and Y positions and width and height of buttons are also reused from drawing the buttons, so these are also moved into *love.load*.
+
+`
+function love.load()
+    -- etc.
+
+    |buttonY = 230|
+    |buttonHeight = 25|
+
+    |buttonHitX = 10|
+    |buttonHitWidth = 53|
+
+    |buttonStandX = 70|
+    |buttonStandWidth = 53|
+
+    |buttonPlayAgainX = 10|
+    |buttonPlayAgainWidth = 113|
+
+    |function isMouseInButton(buttonX, buttonWidth)|
+        |return| love.mouse.getX() >= buttonX
+        and love.mouse.getX() < buttonX + buttonWidth
+        and love.mouse.getY() >= buttonY
+        and love.mouse.getY() < buttonY + buttonHeight
+    |end|
+end
+
+function love.draw()
+    -- etc.
+
+    local function drawButton(text, buttonX, buttonWidth, textOffsetX)
+        |-- Removed: local buttonY = 230|
+
+        -- etc.
+    end
+
+    drawButton('Hit!', |buttonHitX|, |buttonHitWidth|, 16)
+    drawButton('Stand', |buttonStandX|, |buttonStandWidth|, 8)
+    --drawButton('Play again', |buttonPlayAgainX|, |buttonPlayAgainWidth|, 24)
+end
+
+function love.mousereleased()
+    if isMouseInButton(buttonHitX, buttonHitWidth) then
+        print('Hit!')
+    elseif isMouseInButton(buttonStandX, buttonStandWidth) then
+        print('Stand')
+    --elseif isMouseInButton(buttonPlayAgainX, playAgainWidth) then
+    --    print('Play again')
+    end
+end
+`
+
+### Showing play again button after round is over
+
+The hit and stand buttons are shown while the round is in progress, and the play again button is shown when the round is over.
+
+`
+function love.draw()
+    -- etc.
+
+    |if roundOver then|
+        drawButton('Play again', buttonPlayAgainX, buttonPlayAgainWidth, 24)
+    |else|
+        drawButton('Hit!', buttonHitX, buttonHitWidth, 16)
+        drawButton('Stand', buttonStandX, buttonStandWidth, 8)
+    |end|
+end
+`
+
+### Using buttons
+
+The code from *love.keypressed* is moved to *love.mousepressed*, and instead of using the keys it uses the on-screen buttons.
+
+`
+function love.|mousereleased|()
+    if not roundOver then
+        if |isMouseInButton(buttonHitX, buttonHitWidth)| then
+            takeCard(playerHand)
+            if getTotal(playerHand) > 21 then
+                roundOver = true
+            end
+        elseif |isMouseInButton(buttonStandX, buttonStandWidth)| then
+            roundOver = true
+        end
+
+        if roundOver then
+            while getTotal(dealerHand) < 17 do
+                takeCard(dealerHand)
+            end
+        end
+    elseif |isMouseInButton(buttonPlayAgainX, buttonY, buttonPlayAgainWidth, buttonHeight)| then
+        love.load()
+    end
+end
+`
+
+### Resetting
+
+Only some variables need to be reset when the play again button is clicked, so a function is made.
+
+`
+function love.load()
+    love.graphics.setBackgroundColor(255, 255, 255)
+
+	images = {}
+	for nameIndex, name in ipairs({
+        -- etc.
+	}) do
+        -- etc.
+	end
+
+    function takeCard(hand)
+        -- etc.
+    end
+
+    function getTotal(hand)
+        -- etc.
+    end
+
+    buttonY = 230
+    buttonHeight = 25
+
+    buttonHitX = 10
+    buttonHitWidth = 53
+
+    buttonStandX = 70
+    buttonStandWidth = 53
+
+    buttonPlayAgainX = 10
+    buttonPlayAgainWidth = 113
+
+    function isMouseInButton(x, y, width, height)
+        -- etc.
+    end
+
+    |function reset()|
+        deck = {}
+        for suitIndex, suit in ipairs({'heart', 'spade', 'club', 'diamond'}) do
+            for rank = 1, 13 do
+                table.insert(deck, {suit = suit, rank = rank})
+            end
+        end
+        
+        playerHand = {}
+        takeCard(playerHand)
+        takeCard(playerHand)
+
+        dealerHand = {}
+        takeCard(dealerHand)
+        takeCard(dealerHand)
+
+        handOver = false
+    end
+
+    |reset()|
+end
+
+function love.mousereleased()
+    -- etc.
+
+    elseif isMouseInButton(buttonPlayAgainX, buttonY, buttonPlayAgainWidth, buttonHeight) then
+        |reset()|
+    end
+end
+`
+
+## Final code
+
+`
+function love.load()
+    love.graphics.setBackgroundColor(255, 255, 255)
+
+    images = {}
+    for nameIndex, name in ipairs({
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+        'pip_heart', 'pip_diamond', 'pip_club', 'pip_spade',
+        'mini_heart', 'mini_diamond', 'mini_club', 'mini_spade',
+        'card', 'card_face_down',
+        'face_jack', 'face_queen', 'face_king',
+    }) do
+        images[name] = love.graphics.newImage('images/'..name..'.png')
+    end
+
+    function takeCard(hand)
+        table.insert(hand, table.remove(deck, love.math.random(#deck)))
+    end
+
+    function getTotal(hand)
+        local total = 0
+        local hasAce = false
+
+        for cardIndex, card in ipairs(hand) do
+            if card.rank > 10 then
+                total = total + 10
+            else
+                total = total + card.rank
+            end
+
+            if card.rank == 1 then
+                hasAce = true
+            end
+        end
+
+        if hasAce and total <= 11 then
+            total = total + 10
+        end
+
+        return total
+    end
+
+    buttonY = 230
+    buttonHeight = 25
+
+    buttonHitX = 10
+    buttonHitWidth = 53
+
+    buttonStandX = 70
+    buttonStandWidth = 53
+
+    buttonPlayAgainX = 10
+    buttonPlayAgainWidth = 113
+
+    function isMouseInButton(buttonX, buttonWidth)
+        return love.mouse.getX() >= buttonX
+        and love.mouse.getX() < buttonX + buttonWidth
+        and love.mouse.getY() >= buttonY
+        and love.mouse.getY() < buttonY + buttonHeight
+    end
+
+    function reset()
+        deck = {}
+        for suitIndex, suit in ipairs({'club', 'diamond', 'heart', 'spade'}) do
+            for rank = 1, 13 do
+                table.insert(deck, {suit = suit, rank = rank})
+            end
+        end
+
+        playerHand = {}
+        takeCard(playerHand)
+        takeCard(playerHand)
+
+        dealerHand = {}
+        takeCard(dealerHand)
+        takeCard(dealerHand)
+
+        roundOver = false
+    end
+
+    reset()
+end
+
+function love.draw()
+    local output = {}
+
+    table.insert(output, 'Player hand:')
+    for cardIndex, card in ipairs(playerHand) do
+        table.insert(output, 'suit: '..card.suit..', rank: '..card.rank)
+    end
+
+    love.graphics.print(table.concat(output, '\n'), 15, 15)
+
+    if roundOver then
+        table.insert(output, '')
+
+        local function hasHandWon(thisHand, otherHand)
+            return getTotal(thisHand) <= 21
+            and (
+                getTotal(otherHand) > 21
+                or getTotal(thisHand) > getTotal(otherHand)
+            )
+        end
+
+        if hasHandWon(playerHand, dealerHand) then
+            table.insert(output, 'Player wins')
+        elseif hasHandWon(dealerHand, playerHand) then
+            table.insert(output, 'Dealer wins')
+        else
+            table.insert(output, 'Draw')
+        end
+    end
+
+    local function drawCard(card, x, y)
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.draw(images.card, x, y)
+
+        if card.suit == 'heart' or card.suit == 'diamond' then
+            love.graphics.setColor(228, 15, 100)
+        else
+            love.graphics.setColor(50, 50, 50)
+        end
+        
+        local cardWidth = 53
+        local cardHeight = 73
+
+        local function drawCorner(image, offsetX, offsetY)
+            love.graphics.draw(
+                image,
+                x + offsetX,
+                y + offsetY
+            )
+            love.graphics.draw(
+                image,
+                x + cardWidth - offsetX,
+                y + cardHeight - offsetY,
+                0,
+                -1
+            )
+        end
+
+        drawCorner(images[card.rank], 3, 4)
+        drawCorner(images['mini_'..card.suit], 3, 14)
+
+        if card.rank > 10 then
+            local faceImage
+            if card.rank == 11 then
+                faceImage = images.face_jack
+            elseif card.rank == 12 then
+                faceImage = images.face_queen
+            elseif card.rank == 13 then
+                faceImage = images.face_king
+            end
+            love.graphics.setColor(255, 255, 255)
+            love.graphics.draw(faceImage, x + 12, y + 11)
+        else
+            local function drawPip(offsetX, offsetY, mirrorX, mirrorY)
+                local pipImage = images['pip_'..card.suit]
+                local pipWidth = 11
+                love.graphics.draw(
+                    pipImage,
+                    x + offsetX,
+                    y + offsetY
+                )
+                if mirrorX then
+                    love.graphics.draw(
+                        pipImage,
+                        x + cardWidth - offsetX - pipWidth,
+                        y + offsetY
+                    )
+                end
+                if mirrorY then
+                    love.graphics.draw(
+                        pipImage,
+                        x + offsetX + pipWidth,
+                        y + cardHeight - offsetY,
+                        0,
+                        -1
+                    )
+                end
+                if mirrorX and mirrorY then
+                    love.graphics.draw(
+                        pipImage,
+                        x + cardWidth - offsetX,
+                        y + cardHeight - offsetY,
+                        0,
+                        -1
+                    )
+                end
+            end
+
+            local xLeft = 11
+            local xMid = 21
+            local yTop = 7
+            local yThird = 19
+            local yQtr = 23
+            local yMid = 31
+
+            if card.rank == 1 then
+                drawPip(xMid, yMid)
+            elseif card.rank == 2 then
+                drawPip(xMid, yTop, false, true)
+            elseif card.rank == 3 then
+                drawPip(xMid, yTop, false, true)
+                drawPip(xMid, yMid)
+            elseif card.rank == 4 then
+                drawPip(xLeft, yTop, true, true)
+            elseif card.rank == 5 then
+                drawPip(xLeft, yTop, true, true)
+                drawPip(xMid, yMid)
+            elseif card.rank == 6 then
+                drawPip(xLeft, yTop, true, true)
+                drawPip(xLeft, yMid, true)
+            elseif card.rank == 7 then
+                drawPip(xLeft, yTop, true, true)
+                drawPip(xLeft, yMid, true)
+                drawPip(xMid, yThird)
+            elseif card.rank == 8 then
+                drawPip(xLeft, yTop, true, true)
+                drawPip(xLeft, yMid, true)
+                drawPip(xMid, yThird, false, true)
+            elseif card.rank == 9 then
+                drawPip(xLeft, yTop, true, true)
+                drawPip(xLeft, yQtr, true, true)
+                drawPip(xMid, yMid)
+            elseif card.rank == 10 then
+                drawPip(xLeft, yTop, true, true)
+                drawPip(xLeft, yQtr, true, true)
+                drawPip(xMid, 16, false, true)
+            end
+        end
+    end
+
+    local cardSpacing = 60
+    local marginX = 10
+
+    for cardIndex, card in ipairs(dealerHand) do
+        local dealerMarginY = 30
+        if not roundOver and cardIndex == 1 then
+            love.graphics.draw(images.card_face_down, marginX, dealerMarginY)
+        else
+            drawCard(card, ((cardIndex - 1) * cardSpacing) + marginX, dealerMarginY)
+        end
+    end
+
+    for cardIndex, card in ipairs(playerHand) do
+        drawCard(card, ((cardIndex - 1) * cardSpacing) + marginX, 140)
+    end
+
+    love.graphics.setColor(0, 0, 0)
+
+    if roundOver then
+        love.graphics.print('Total: '..getTotal(dealerHand), marginX, 10)
+    else
+        love.graphics.print('Total: ?', marginX, 10)
+    end
+
+    love.graphics.print('Total: '..getTotal(playerHand), marginX, 120)
+    
+    if roundOver then
+        local function hasHandWon(thisHand, otherHand)
+            return getTotal(thisHand) <= 21
+            and (
+                getTotal(otherHand) > 21
+                or getTotal(thisHand) > getTotal(otherHand)
+            )
+        end
+
+        local function drawWinner(message)
+            love.graphics.print(message, marginX, 268)
+        end
+
+        if hasHandWon(playerHand, dealerHand) then
+            drawWinner('Player wins')
+        elseif hasHandWon(dealerHand, playerHand) then
+            drawWinner('Dealer wins')
+        else
+            drawWinner('Draw')
+        end
+    end
+
+    local function drawButton(text, buttonX, buttonWidth, textOffsetX)
+        local buttonY = 230
+        local buttonHeight = 25
+
+        if love.mouse.getX() >= buttonX
+        and love.mouse.getX() < buttonX + buttonWidth
+        and love.mouse.getY() >= buttonY
+        and love.mouse.getY() < buttonY + buttonHeight then
+            love.graphics.setColor(255, 202, 75)
+        else
+            love.graphics.setColor(255, 127, 57)
+        end
+        love.graphics.rectangle('fill', buttonX, buttonY, buttonWidth, buttonHeight)
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.print(text, buttonX + textOffsetX, buttonY + 6)
+    end
+
+    if roundOver then
+        drawButton('Play again', buttonPlayAgainX, buttonPlayAgainWidth, 24)
+    else
+        drawButton('Hit!', buttonHitX, buttonHitWidth, 16)
+        drawButton('Stand', buttonStandX, buttonStandWidth, 8)
+    end
+end
+
+function love.mousereleased()
+    if not roundOver then
+        if isMouseInButton(buttonHitX, buttonHitWidth) then
+            takeCard(playerHand)
+            if getTotal(playerHand) > 21 then
+                roundOver = true
+            end
+        elseif isMouseInButton(buttonStandX, buttonStandWidth) then
+            roundOver = true
+        end
+
+        if roundOver then
+            while getTotal(dealerHand) < 17 do
+                takeCard(dealerHand)
+            end
+        end
+    elseif isMouseInButton(buttonPlayAgainX, buttonY, buttonPlayAgainWidth, buttonHeight) then
+        reset()
+    end
+end
+`

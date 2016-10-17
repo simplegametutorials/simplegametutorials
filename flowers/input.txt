@@ -1,0 +1,1118 @@
+# Flowers
+
+## <a href="flowers.love">Download flowers.love</a>
+
+!
+
+## Rules
+
+The game starts with a grid of covered cells. Under some of them are flowers. The game is over when a flower is uncovered.
+
+Left clicking a cell uncovers it, and if none of its adjacent cells contain flowers, it uncovers all its adjacent cells, and for those cells, if none of <i>their</i> adjacent cells contain flowers, it uncovers all its adjacent cells, and so on.
+
+Right clicking a cell toggles between the cell having a flag, a question mark, or nothing. Flags prevent a cell from being uncovered with a left click. Question marks are visual markers which don't affect behavior.
+
+## Controls
+
+& *Left click* & Uncover a cell
+& *Right click* & Cycle a covered cell through having a flag, a question mark, or nothing
+
+## Overview
+
+The cells are represented by tables containing a boolean value indicating whether or not there is a flower under it, and a string value representing which of four states the cell is in: covered, covered with a flag, covered with a question mark, or uncovered.
+
+The cells which have flowers are chosen randomly. The first cell clicked is excluded from the possible options.
+
+When a cell is clicked, its position added to the "uncover stack".
+
+While there is anything left on the uncover stack...
+
+- A position is removed from the end of the stack.
+- This position is set to *uncovered*.
+- If there are no flowers surrounding this position, the surrounding *covered* and *question marked* positions are added to the uncover stack.
+
+The cells are assembled from the following images.
+
+!
+
+## Coding
+
+### Loading images
+
+All of the images needed for the game are loaded into a table.
+
+`
+function love.load()
+    images = {}
+    for _, image in ipairs({
+        1, 2, 3, 4, 5, 6, 7, 8,
+        'uncovered', 'covered_highlighted', 'covered', 'flower', 'flag', 'question',
+    }) do
+        images[image] = love.graphics.newImage('images/'..image..'.png')
+    end
+end
+`
+
+### Drawing tiles
+
+The covered cell image is drawn for every cell.
+
+`
+function love.draw()
+    for y = 1, 14 do
+        for x = 1, 19 do
+            local cellSize = 18
+            love.graphics.draw(images.covered, (x - 1) * cellSize, (y - 1) * cellSize)
+        end
+    end
+end
+`
+
+!
+
+### Selecting cells
+
+The cell under the mouse is updated every frame.
+
+This needs the cell size, so this is moved from *love.draw* to *love.load*.
+
+For now, this position is drawn as text.
+
+`
+function love.load()
+    -- etc.
+    
+    |cellSize = 18|
+end
+
+function love.update()
+    selectedX = math.floor(love.mouse.getX() / cellSize) + 1
+    selectedY = math.floor(love.mouse.getY() / cellSize) + 1
+end
+
+function love.draw()
+    -- etc.
+
+    -- Removed: local cellSize = 18
+
+    -- Temporary
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print('selected x: '..selectedX..' selected y: '..selectedY)
+    love.graphics.setColor(255, 255, 255)
+end
+`
+
+!
+
+### Keeping selected cell within grid
+
+If the mouse is greater than the grid's X or Y cell count (i.e. it is off the right or bottom of the grid) the selected postiion is set to the last cell in that direction.
+
+The grid's X and Y cell count is reused from drawing the cells, so variables are made for them.
+
+`
+function love.load()
+    -- etc.
+
+    gridXCount = 19
+    gridYCount = 14
+end
+
+function love.update()
+    selectedX = math.floor(love.mouse.getX() / cellSize) + 1
+    selectedY = math.floor(love.mouse.getY() / cellSize) + 1
+
+    |if selectedX > gridXCount then|
+    |    selectedX = gridXCount|
+    |end|
+    |if selectedY > gridYCount then|
+    |    selectedY = gridYCount|
+    |end|
+end
+
+function love.draw()
+    for y = 1, |gridYCount| do
+        for x = 1, |gridXCount| do
+
+        -- etc.
+end
+`
+
+!
+
+### Highlighting cells
+
+The selected cell is a drawn with a different highlighted image.
+
+`
+function love.draw()
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+            |local image|
+
+            |if x == selectedX and y == selectedY then|
+            |    image = images.covered_highlighted|
+            |else|
+            |    image = images.covered|
+            |end|
+
+            love.graphics.draw(|image|, (x - 1) * cellSize, (y - 1) * cellSize)
+        end
+    end
+end
+`
+
+!
+
+### Change cell image when left mouse button is down
+
+When the left mouse button is down the selected cell is drawn as an uncovered cell.
+
+`
+function love.draw()
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+            local image
+
+            if x == selectedX and y == selectedY then
+                |if love.mouse.isDown(1) then|
+                |    image = images.uncovered|
+                |else|
+                    image = images.covered_highlighted
+                |end|
+            else
+                image = images.covered
+            end
+
+            love.graphics.draw(image, (x - 1) * cellSize, (y - 1) * cellSize)
+        end
+    end
+end
+`
+
+!
+
+### Drawing flowers
+
+A grid is created to store the state of the cells. Since each cell will have two values which need to be stored (whether it has a flower, and whether it is uncovered, has a flag, a question mark, or nothing) each cell is represented by a table.
+
+If a cell's *'flower'* key is true, the flower image is drawn over the cell image.
+
+`
+function love.load()
+    -- etc.
+
+    grid = {}
+    for y = 1, gridYCount do
+        grid[y] = {}
+        for x = 1, gridXCount do
+            grid[y][x] = {
+                flower = false,
+            }
+        end
+    end
+
+    -- Temporary
+    grid[1][1].flower = true
+    grid[1][2].flower = true
+end
+ 
+function love.draw()
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+            -- etc.
+            
+            |if grid[y][x].flower then|
+            |    love.graphics.draw(images.flower, (x - 1) * cellSize, (y - 1) * cellSize)|
+            |end|
+        end
+    end
+end
+`
+
+!
+
+### Simplifying code
+
+The code for drawing covered cells and drawing the flower is the same except for the image to draw, so a function is created with the image and the needed X and Y values as parameters.
+
+`
+function love.draw()
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+            |local function drawCell(image, x, y)|
+                love.graphics.draw(image, (x - 1) * cellSize, (y - 1) * cellSize)
+            |end|
+            
+            if x == selectedX and y == selectedY then
+                if love.mouse.isDown(1) then
+                    |drawCell(images.uncovered, x, y)|
+                else
+                    |drawCell(images.covered_highlighted, x, y)|
+                end
+            else
+                |drawCell(images.covered, x, y)|
+            end
+
+            if grid[y][x].flower then
+                |drawCell(images.flower, x, y)|
+            end
+        end
+    end
+end
+`
+
+### Toggling flowers
+
+For testing, clicking the right mouse button will toggle a cell's flower.
+
+`
+function love.mousereleased(mouseX, mouseY, button)
+    if button == 2 then
+        grid[selectedY][selectedX].flower = not grid[selectedY][selectedX].flower
+    end
+end
+`
+
+### Showing surrounding flower count
+
+To find the surrounding flower count, each position in the 8 directions around each cell is looped through, and if there is a cell at this position (i.e. the position on the grid is not nil) and there is a flower at this cell then 1 is added to the surrounding flower count.
+
+If the surrounding flower count is greater than 0, the appropriate number image is drawn over the cell.
+
+`
+function love.draw()
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+            local function drawCell(image, x, y)
+                love.graphics.draw(image, (x - 1) * cellSize, (y - 1) * cellSize)
+            end
+
+            if x == selectedX and y == selectedY then
+                if love.mouse.isDown(1) then
+                    drawCell(images.uncovered, x, y)
+                else
+                    drawCell(images.covered_highlighted, x, y)
+                end
+            else
+                drawCell(images.covered, x, y)
+            end
+
+            |local surroundingFlowerCount = 0|
+
+            |for dy = -1, 1 do|
+            |    for dx = -1, 1 do|
+            |        if not (dy == 0 and dx == 0)|
+            |        and grid[y + dy]|
+            |        and grid[y + dy][x + dx]|
+            |        and grid[y + dy][x + dx].flower then|
+            |            surroundingFlowerCount = surroundingFlowerCount + 1|
+            |        end|
+            |    end|
+            |end|
+
+            if grid[y][x].flower then
+                drawCell(images.flower, x, y)
+            |elseif surroundingFlowerCount > 0 then|
+            |    drawCell(images[surroundingFlowerCount], x, y)|
+            end
+        end
+    end
+end
+`
+
+!
+
+### Random flower placement
+
+A table is created with very X and Y position in the grid.
+
+Random positions are repeatedly removed from this table and the cell at this postiion is set to have a flower.
+
+To test this, any key calls *love.load*.
+
+`
+function love.load()
+    -- etc.
+
+    local possibleFlowerPositions = {}
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+            table.insert(possibleFlowerPositions, {x = x, y = y})
+        end
+    end
+
+    for flowerIndex = 1, 40 do
+        local position = table.remove(possibleFlowerPositions, love.math.random(#possibleFlowerPositions))
+        grid[position.y][position.x].flower = true
+    end
+end
+
+function love.keypressed()
+    -- Temporary
+    love.load()
+end
+`
+
+!
+
+### Uncovering cells
+
+The cell tables are given a new key for the state of the cell as a string. For now, this is whether the cell is covered or uncovered.
+
+For now, when a cell is left clicked its state is set to *'uncovered'*.
+
+If a cell's state is *'uncovered'* the uncovered image is drawn instead of the covered images.
+
+`
+function love.load()
+    -- etc.
+
+    grid = {}
+    for y = 1, gridYCount do
+        grid[y] = {}
+        for x = 1, gridXCount do
+            grid[y][x] = {
+                flower = false,
+                |state = 'covered', -- 'covered', 'uncovered'|
+            }
+        end
+    end
+end
+
+function love.mousereleased(mouseX, mouseY, button)
+    if button == 1 then
+        grid[selectedY][selectedX].state = 'uncovered'
+    end
+end
+
+function love.draw()
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+            -- etc.
+
+            |if grid[y][x].state == 'uncovered' then|
+            |    drawCell(images.uncovered, x, y)|
+            |else|
+                if x == selectedX and y == selectedY then
+                    if love.mouse.isDown(1) then
+                        drawCell(images.uncovered, x, y)
+                    else
+                        drawCell(images.covered_highlighted, x, y)
+                    end
+                else
+                    drawCell(images.covered, x, y)
+                end
+            |end|
+
+            -- etc.
+        end
+    end
+end
+`
+
+!
+
+### Flood fill: uncover stack
+
+Instead of uncovering a single cell, a stack of cells is created to uncover.
+
+While there are positions in the uncover stack, a position is removed from it and the cell at this position on the grid is uncovered.
+
+This stacks starts with just the selected position. More positions will be added to it later, but for now it will just contain the selected position, so it will only uncover the selected cell like before.
+
+`
+function love.mousereleased(mouseX, mouseY, button)
+    if button == 1 then
+        local stack = {
+            {
+                x = selectedX,
+                y = selectedY,
+            }
+        }
+
+        while #stack > 0 do
+            local current = table.remove(stack)
+            local x = current.x
+            local y = current.y
+
+            grid[y][x].state = 'uncovered'
+        end
+    end
+end
+`
+
+### Flood fill: adding to the stack
+
+Each position in the 8 directions around each cell is looped through, and if there is a cell at this position (i.e. the position on the grid is not nil) and it is covered, then, for now, it added to the uncover stack.
+
+This results in all of the cells becoming uncovered.
+
+`
+function love.mousereleased(mouseX, mouseY, button)
+    if button == 1 then
+        local stack = {
+            {
+                x = selectedX,
+                y = selectedY,
+            }
+        }
+
+        while #stack > 0 do
+            local current = table.remove(stack)
+            local x = current.x
+            local y = current.y
+
+            grid[y][x].state = 'uncovered'
+
+            |for dy = -1, 1 do|
+            |    for dx = -1, 1 do|
+            |        if not (dx == 0 and dy == 0)|
+            |        and grid[y + dy]|
+            |        and grid[y + dy][x + dx]|
+            |        and grid[y + dy][x + dx].state == 'covered' then|
+            |            table.insert(|
+            |                stack, {|
+            |                    x = x + dx,|
+            |                    y = y + dy|
+            |                }|
+            |            )|
+            |        end|
+            |    end|
+            |end|
+        end
+    end
+end
+`
+
+!
+
+### Flood fill: using surrounding flower count
+
+The surrounding cells of a position removed from the uncover stack are only added to the stack if none of the surrounding cells have flowers.
+
+Finding the number of surrounding flowers is reused from drawing this number, so a function is made.
+
+`
+function love.load()
+    -- etc.
+
+    |function getSurroundingFlowerCount(x, y)|
+        local surroundingFlowerCount = 0
+
+        for dy = -1, 1 do
+            for dx = -1, 1 do
+                if not (dy == 0 and dx == 0)
+                and grid[y + dy]
+                and grid[y + dy][x + dx]
+                and grid[y + dy][x + dx].flower
+                then
+                    surroundingFlowerCount = surroundingFlowerCount + 1
+                end
+            end
+        end
+
+        |return surroundingFlowerCount|
+    |end|
+end
+
+function love.draw()
+            -- etc.
+
+            if grid[y][x].flower then
+                drawCell(images.flower, x, y)
+            elseif |getSurroundingFlowerCount(x, y)| > 0 then
+                drawCell(images[|getSurroundingFlowerCount(x, y)|], x, y)
+            end
+        end
+    end
+end
+
+function love.mousereleased(mouseX, mouseY, button)
+    if button == 1 then
+        local stack = {
+            {
+                x = selectedX,
+                y = selectedY,
+            }
+        }
+
+        while #stack > 0 do
+            local current = table.remove(stack)
+            local x = current.x
+            local y = current.y
+
+            grid[y][x].state = 'uncovered'
+
+            |if getSurroundingFlowerCount(x, y) == 0 then|
+                for dy = -1, 1 do
+                    for dx = -1, 1 do
+                        if not (dx == 0 and dy == 0)
+                        and grid[y + dy]
+                        and grid[y + dy][x + dx]
+                        and grid[y + dy][x + dx].state == 'covered' then
+                            table.insert(
+                                stack, {
+                                    x = x + dx,
+                                    y = y + dy
+                                }
+                            )
+                        end
+                    end
+                end
+            |end|
+        end
+    end
+end
+`
+
+!
+
+### Drawing flags and question marks
+
+A cell's state can also be a flag or a question mark.
+
+If a cell's state is a flag/question mark, the flag/question mark image is drawn over the cell.
+
+To test this, the state of two cells are changed to have a flag and to have a question mark.
+
+`
+function love.load()
+    -- etc.
+
+    grid = {}
+    for y = 1, gridYCount do
+        grid[y] = {}
+        for x = 1, gridXCount do
+            grid[y][x] = {
+                flower = false,
+                state = 'covered', -- 'covered', 'uncovered', |'flag', 'question'|
+            }
+        end
+    end
+
+    |-- Temporary|
+    |grid[1][1].state = 'flag'|
+    |grid[1][2].state = 'question'|
+
+    -- etc.
+end
+
+function love.draw()
+            -- etc.
+
+            if grid[y][x].flower then
+                drawCell(images.flower, x, y)
+            elseif getSurroundingFlowerCount(x, y) > 0 then
+                drawCell(images[getSurroundingFlowerCount(x, y)], x, y)
+            end
+
+            |if grid[y][x].state == 'flag' then|
+            |    drawCell(images.flag, x, y)|
+            |elseif grid[y][x].state == 'question' then|
+            |    drawCell(images.question, x, y)|
+            |end|
+        end
+    end
+end
+`
+
+!
+
+### Cycling flags and question marks
+
+Right clicking on a cell cycles its state through having nothing, a flag, and a question mark.
+
+`
+function love.mousereleased(mouseX, mouseY, button)
+    if button == 1 then
+        -- etc.
+
+    elseif button == 2 then
+        if grid[selectedY][selectedX].state == 'covered' then
+            grid[selectedY][selectedX].state = 'flag'
+        elseif grid[selectedY][selectedX].state == 'flag' then
+            grid[selectedY][selectedX].state = 'question'
+        elseif grid[selectedY][selectedX].state == 'question' then
+            grid[selectedY][selectedX].state = 'covered'
+        end
+    end
+end
+`
+
+### Prevent clicking on flags
+
+If a cell has a flag it can't be uncovered by a left click.
+
+`
+function love.mousereleased(mouseX, mouseY, button)
+    if button == 1 |and grid[selectedY][selectedX].state ~= 'flag'| then
+        -- etc.
+    end
+end
+`
+
+### Question marks don't stop fill
+
+Positions are added to the uncover stack if the cell's state is covered or a question mark (but not a flag).
+
+`
+function love.mousereleased(mouseX, mouseY, button)
+                        -- etc.
+
+                        if not (dx == 0 and dy == 0)
+                        and grid[y + dy]
+                        and grid[y + dy][x + dx]
+                        and |(|
+                            grid[y + dy][x + dx].state == 'covered'
+                            |or grid[y + dy][x + dx].state == 'question'|
+                        |)| then
+                            table.insert(stack, {
+                                    x = x + dx,
+                                    y = y + dy
+                                }
+                            )
+                        
+                        -- etc.
+end
+`
+
+### Change cell image when left mouse button is down over flag
+
+If the left mouse button is down when the mouse is on a cell with a flag, the cell is drawn with the covered image.
+
+`
+function love.draw()
+                -- etc. 
+
+                if x == selectedX and y == selectedY then
+                    if love.mouse.isDown(1) then
+                        |if grid[y][x].state == 'flag' then|
+                        |    drawCell(images.covered, x, y)|
+                        |else|
+                            drawCell(images.uncovered, x, y)
+                        |end|
+                    else
+                        drawCell(images.covered_highlighted, x, y)
+                    end
+                    
+                -- etc.
+end
+`
+
+### Game over
+
+If a flower is uncovered the game is over.
+
+A variable is made to store whether the game is over or not.
+
+If the game is over clicking cells does nothing.
+
+`
+function love.load()
+    -- etc.
+
+    gameOver = false
+end
+
+function love.mousereleased(mouseX, mouseY, button)
+    |if not gameOver then|
+        if button == 1 and grid[selectedY][selectedX].state ~= 'flag' then
+            |if grid[selectedY][selectedX].flower then|
+            |    grid[selectedY][selectedX].state = 'uncovered'|
+            |    gameOver = true|
+            |else|
+                local stack = {
+                    {
+                        x = selectedX,
+                        y = selectedY,
+                    }
+                }
+
+                -- etc.
+            |end|
+        end
+    |end|
+end
+`
+
+### Game won
+
+If there are no cells which are covered and don't have a flower, then the game is won.
+
+`
+function love.mousereleased(mouseX, mouseY, button)
+    if not gameOver then
+        if button == 1 and grid[selectedY][selectedX].state ~= 'flag' then
+            -- etc.
+
+            if grid[selectedY][selectedX].flower then
+                -- etc.
+            else
+                -- etc.
+
+                |local complete = true|
+
+                |for y = 1, gridYCount do|
+                |    for x = 1, gridXCount do|
+                |        if grid[y][x].state ~= 'uncovered' and not grid[y][x].flower then|
+                |            complete = false|
+                |        end|
+                |    end|
+                |end|
+
+                |if complete then|
+                |    gameOver = true|
+                |end|
+            end
+        end
+    end
+end
+`
+
+### New game on next click
+
+When the mouse is clicked when the game is over, the game is reset.
+
+For now, *love.load* is called to reset the game.
+
+`
+function love.mousereleased(mouseX, mouseY, button)
+    if not gameOver then
+        -- etc.
+    |else|
+    |    love.load()|
+    end
+end
+`
+
+### Don't highlight when game over
+
+When the game is over the mouse no longer highlights cells.
+
+`
+function love.draw()
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+
+            -- etc.
+
+            if grid[y][x].state == 'uncovered' then
+                drawCell(images.uncovered, x, y)
+            else
+                if x == selectedX and y == selectedY |and not gameOver| then
+
+            -- etc.
+end
+`
+
+### Hide flowers until game is over
+
+The flowers aren't drawn until the game is over.
+
+`
+function love.draw()
+            -- etc.
+
+            if grid[y][x].flower |and gameOver| the
+                drawCell(images.flower, x, y)
+
+            -- etc.
+end
+`
+
+!
+
+### Hide numbers for covered cells
+
+If a cell is not uncovered then its surrounding flower count is not shown.
+
+`
+function love.draw()
+            -- etc.
+
+            if grid[y][x].flower and gameOver then
+                drawCell(images.flower, x, y)
+            elseif getSurroundingFlowerCount(x, y) > 0 |and grid[y][x].state == 'uncovered'| then
+                drawCell(images[getSurroundingFlowerCount(x, y)], x, y)
+            end
+
+            -- etc.
+end
+`
+
+!
+
+### Preventing clicking on flower on the first click
+
+So that the first click doesn't uncover a flower, the code for placing flowers is moved so that it runs when the mouse is clicked, and the cell under the mouse cursor is not added to the possible flower positions.
+
+A variable is created to store whether a click is the first click of the game.
+
+`
+function love.load()
+    -- etc.
+
+    firstClick = true
+end
+
+function love.mousereleased(mouseX, mouseY, button)
+    if not gameOver then
+        if button == 1 and grid[selectedY][selectedX].state ~= 'flag' then
+            |if firstClick then|
+                |firstClick = false|
+
+                local possibleFlowerPositions = {}
+                for y = 1, gridYCount do
+                    for x = 1, gridXCount do
+                        |if not (x == selectedX and y == selectedY) then|
+                            table.insert(possibleFlowerPositions, {x = x, y = y})
+                        |end|
+                    end
+                end
+
+                for flowerIndex = 1, 40 do
+                    local position = table.remove(possibleFlowerPositions, love.math.random(#possibleFlowerPositions))
+                    grid[position.y][position.x].flower = true
+                end
+            |end|
+
+            if grid[selectedY][selectedX].flower then
+                grid[selectedY][selectedX].state = 'uncovered'
+                gameOver = true
+            else
+
+            -- etc.
+end
+`
+
+### Resetting
+
+When the game is over only some variables need to be reset, so a function is made.
+
+`
+function love.load()
+    images = {}
+    for _, image in ipairs({
+        -- etc.
+    }) do
+        -- etc.
+    end
+    
+    cellSize = 18
+    
+    gridXCount = 19
+    gridYCount = 14
+
+    function getSurroundingFlowerCount(x, y)
+        -- etc.
+    end
+
+    |function reset()|
+        grid = {}
+        for y = 1, gridYCount do
+            grid[y] = {}
+            for x = 1, gridXCount do
+                grid[y][x] = {
+                    flower = false,
+                    state = 'covered', -- 'covered', 'uncovered', 'flag', 'question'
+                }
+            end
+        end
+
+        gameOver = false
+        firstClick = true
+    |end|
+
+    |reset()|
+end
+
+function love.mousereleased(mouseX, mouseY, button)
+    if not gameOver then
+        -- etc.
+    else
+        |reset()|
+    end
+end
+`
+
+## Final code
+
+`
+function love.load()
+    images = {}
+    for _, image in ipairs({
+        1, 2, 3, 4, 5, 6, 7, 8,
+        'uncovered', 'covered_highlighted', 'covered', 'flower', 'flag', 'question',
+    }) do
+        images[image] = love.graphics.newImage('images/'..image..'.png')
+    end
+    
+    cellSize = 18
+    
+    gridXCount = 19
+    gridYCount = 14
+
+    function getSurroundingFlowerCount(x, y)
+        local surroundingFlowerCount = 0
+
+        for dy = -1, 1 do
+            for dx = -1, 1 do
+                if not (dy == 0 and dx == 0)
+                and grid[y + dy]
+                and grid[y + dy][x + dx]
+                and grid[y + dy][x + dx].flower then
+                    surroundingFlowerCount = surroundingFlowerCount + 1
+                end
+            end
+        end
+
+        return surroundingFlowerCount
+    end
+
+    function reset()
+        grid = {}
+        for y = 1, gridYCount do
+            grid[y] = {}
+            for x = 1, gridXCount do
+                grid[y][x] = {
+                    flower = false,
+                    state = 'covered', -- 'covered', 'uncovered', 'flag', 'question'
+                }
+            end
+        end
+
+        gameOver = false
+        firstClick = true
+    end
+
+    reset()
+end
+
+function love.update()
+    selectedX = math.floor(love.mouse.getX() / cellSize) + 1
+    selectedY = math.floor(love.mouse.getY() / cellSize) + 1
+
+    if selectedX > gridXCount then
+        selectedX = gridXCount
+    end
+    if selectedY > gridYCount then
+        selectedY = gridYCount
+    end
+end
+
+function love.draw()
+    for y = 1, gridYCount do
+        for x = 1, gridXCount do
+            local function drawCell(image, x, y)
+                love.graphics.draw(image, (x - 1) * cellSize, (y - 1) * cellSize)
+            end
+
+            if grid[y][x].state == 'uncovered' then
+                drawCell(images.uncovered, x, y)
+            else
+                if x == selectedX and y == selectedY and not gameOver then
+                    if love.mouse.isDown(1) then
+                        if grid[y][x].state == 'flag' then
+                            drawCell(images.covered, x, y)
+                        else
+                            drawCell(images.uncovered, x, y)
+                        end
+                    else
+                        drawCell(images.covered_highlighted, x, y)
+                    end
+                else
+                    drawCell(images.covered, x, y)
+                end
+            end
+            
+            if grid[y][x].flower and gameOver then
+                drawCell(images.flower, x, y)
+            elseif getSurroundingFlowerCount(x, y) > 0 and grid[y][x].state == 'uncovered' then
+                drawCell(images[getSurroundingFlowerCount(x, y)], x, y)
+            end
+
+            if grid[y][x].state == 'flag' then
+                drawCell(images.flag, x, y)
+            elseif grid[y][x].state == 'question' then
+                drawCell(images.question, x, y)
+            end
+        end
+    end
+end
+
+function love.mousereleased(mouseX, mouseY, button)
+    if not gameOver then
+        if button == 1 and grid[selectedY][selectedX].state ~= 'flag' then
+            if firstClick then
+                firstClick = false
+
+                local possibleFlowerPositions = {}
+                for y = 1, gridYCount do
+                    for x = 1, gridXCount do
+                        if not (x == selectedX and y == selectedY) then
+                            table.insert(possibleFlowerPositions, {x = x, y = y})
+                        end
+                    end
+                end
+
+                for flowerIndex = 1, 40 do
+                    local position = table.remove(possibleFlowerPositions, love.math.random(#possibleFlowerPositions))
+                    grid[position.y][position.x].flower = true
+                end
+            end
+
+            if grid[selectedY][selectedX].flower then
+                grid[selectedY][selectedX].state = 'uncovered'
+                gameOver = true
+            else
+                local stack = {
+                    {
+                        x = selectedX,
+                        y = selectedY,
+                    }
+                }
+
+                while #stack > 0 do
+                    local current = table.remove(stack)
+                    local x = current.x
+                    local y = current.y
+
+                    grid[y][x].state = 'uncovered'
+
+                    if getSurroundingFlowerCount(x, y) == 0 then
+                        for dy = -1, 1 do
+                            for dx = -1, 1 do
+                                if not (dx == 0 and dy == 0)
+                                and grid[y + dy]
+                                and grid[y + dy][x + dx]
+                                and (
+                                    grid[y + dy][x + dx].state == 'covered'
+                                    or grid[y + dy][x + dx].state == 'question'
+                                ) then
+                                    table.insert(
+                                        stack, {
+                                            x = x + dx,
+                                            y = y + dy
+                                        }
+                                    )
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        elseif button == 2 then
+            if grid[selectedY][selectedX].state == 'covered' then
+                grid[selectedY][selectedX].state = 'flag'
+            elseif grid[selectedY][selectedX].state == 'flag' then
+                grid[selectedY][selectedX].state = 'question'
+            elseif grid[selectedY][selectedX].state == 'question' then
+                grid[selectedY][selectedX].state = 'covered'
+            end
+        end
+    else
+        reset()
+    end
+end
+`
