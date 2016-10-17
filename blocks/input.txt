@@ -56,7 +56,7 @@ When a rotate button is pressed, the piece changes to its next rotation variatio
 
 When the drop button is pressed, the piece moves down until the next position would overlap an inert block or be outside the playing area, at which point it has come to rest.
 
-When the piece comes to rest, meaning that if it moved down it would overlap an inert piece of be outside the playing area, the blocks of the pieces are added to the inert pieces, and the next piece is created.
+When the piece comes to rest, meaning that if it moved down it would overlap an inert piece outside the playing area, the blocks of the pieces are added to the inert pieces, and the next piece is created.
 
 A sequence of one of each of the seven pieces in a random order is created, and the next piece is taken from this sequence. Once all of the pieces have been taken, a new random sequence is created.
 
@@ -673,7 +673,7 @@ end
 
 ### Checking left of playing area
 
-If any block is not empty and block's X position is less than 1 (i.e. off the left of the playing area) the function returns false.
+If any block is not empty and its X position is less than 1 (i.e. off the left of the playing area) the function returns false.
 
 Otherwise the function returns true.
 
