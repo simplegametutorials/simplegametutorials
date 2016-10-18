@@ -42,7 +42,7 @@ function love.draw()
     |table.insert(output, 'distance y: '..distanceY)|
 
     |love.graphics.setColor(255, 255, 255)|
-    |love.graphics.print(output, table.concat(output, '\n'))|
+    |love.graphics.print(table.concat(output, '\n'))|
 
     love.graphics.setColor(255, 255, 255)
     love.graphics.circle('fill', |eyeX|, |eyeY|, 50)
@@ -62,8 +62,7 @@ The square root of the distance on the X axis squared plus the distance on the Y
 
 `
 function love.draw()
-    local distanceX = love.mouse.getX() - eyeX
-    local distanceY = love.mouse.getY() - eyeY
+    local distance = math.sqrt(distanceX^2 + distanceY^2)
     
     -- etc.
 
@@ -86,6 +85,7 @@ function love.draw()
     local angle = math.atan2(distanceY, distanceX)
 
     -- etc.
+
     table.insert(output, 'angle: '..angle)
 
     -- etc.

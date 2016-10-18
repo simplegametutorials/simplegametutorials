@@ -1,4 +1,3 @@
-local t
 local mouse = love.graphics.newImage('mouse.png')
 local function drawBackground()
     love.graphics.setColor(0, 0, 0)
@@ -18,23 +17,24 @@ end
 local mouseX = 387
 local mouseY = 132
 
+local t
 t = {
     function ()
         drawBackground()
 
-        function drawEye(eyeX, eyeY)
+        local function drawEye(eyeX, eyeY)
             local distanceX = mouseX - eyeX
             local distanceY = mouseY - eyeY
             local distance = math.sqrt(distanceX^2 + distanceY^2)
-            local angle = math.atan2(distanceX, distanceY)
+            local angle = math.atan2(distanceY, distanceX)
 
             local eyeMaxPupilDistance = 30
             if distance > eyeMaxPupilDistance then
                 distance = eyeMaxPupilDistance
             end
 
-            local pupilX = eyeX + (math.sin(angle) * distance)
-            local pupilY = eyeY + (math.cos(angle) * distance)
+            local pupilX = eyeX + (math.cos(angle) * distance)
+            local pupilY = eyeY + (math.sin(angle) * distance)
 
             love.graphics.setColor(255, 255, 255)
             love.graphics.circle('fill', eyeX, eyeY, 50)
@@ -48,81 +48,42 @@ t = {
 
         drawMouse(mouseX, mouseY)
     end,
-    --[[
-    function()
+    function ()
         drawBackground()
 
-        local eyeX = 200
-        local eyeY = 200
-
-        local distanceX = mouseX - eyeX
-        local distanceY = mouseY - eyeY
-        local distance = math.sqrt(distanceX^2 + distanceY^2)
-        local angle = math.atan2(distanceX, distanceY)
-
         love.graphics.setColor(255, 255, 255)
-        --love.graphics.print('distance x: '..distanceX, 15, 15)
-        --love.graphics.print('distance y: '..distanceY, 15, 30)
-        --love.graphics.print('distance: '..distance, 15, 45)
-        --love.graphics.print('angle: '..angle, 15, 60)
-
-        
-        local eyeMaxPupilDistance = 30
-        if distance > eyeMaxPupilDistance then
-            distance = eyeMaxPupilDistance
-        end
-
-        local pupilX = eyeX + (math.sin(angle) * distance)
-        local pupilY = eyeY + (math.cos(angle) * distance)
-
-        love.graphics.setColor(255, 255, 255)
-        love.graphics.circle('fill', eyeX, eyeY, 50)
+        love.graphics.circle('fill', 200, 200, 50)
 
         love.graphics.setColor(0, 0, 100)
-        love.graphics.circle('fill', pupilX, pupilY, 15)
+        love.graphics.circle('fill', 200, 200, 15)
+    end,
+    function ()
+        drawBackground()
+
+        local eyeX = 200
+        local eyeY = 200
+
+        local distanceX = mouseX - eyeX
+        local distanceY = mouseY - eyeY
+
+        local output = {}
+
+        table.insert(output, 'distance x: '..distanceX)
+        table.insert(output, 'distance y: '..distanceY)
+
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.print(table.concat(output, '\n'))
+
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.circle('fill', 200, 200, 50)
 
         love.graphics.setColor(0, 0, 100)
-        love.graphics.setLineWidth(1)
-
-        love.graphics.setColor(0, 255, 255)
-        love.graphics.line(eyeX, eyeY, mouseX, mouseY)
-        love.graphics.line(mouseX, mouseY, mouseX, eyeY)
-        love.graphics.line(eyeX, eyeY, mouseX, eyeY)
-
-        love.graphics.setColor(255, 255, 255)
-        love.graphics.printf('x', eyeX, eyeY + 3, mouseX - eyeX, 'center')
-
-        love.graphics.setColor(255, 255, 255)
-        love.graphics.print('y', mouseX + 6, eyeY - 38)
-        love.graphics.setColor(255, 0, 0)
-        love.graphics.line(eyeX, eyeY, pupilX, pupilY)
+        love.graphics.circle('fill', 200, 200, 15)
 
         drawMouse(mouseX, mouseY)
     end,
-    --]]
-    function()
+    function ()
         drawBackground()
-        drawEye()
-    end,
-    function()
-        drawBackground()
-        drawEye()
-
-        local eyeX = 200
-        local eyeY = 200
-
-        local distanceX = mouseX - eyeX
-        local distanceY = mouseY - eyeY
-
-        love.graphics.setColor(255, 255, 255)
-        love.graphics.print('distance x: '..distanceX, 15, 15)
-        love.graphics.print('distance y: '..distanceY, 15, 30)
-
-        drawMouse(mouseX, mouseY)
-    end,
-    function()
-        drawBackground()
-        drawEye()
 
         local eyeX = 200
         local eyeY = 200
@@ -131,62 +92,24 @@ t = {
         local distanceY = mouseY - eyeY
         local distance = math.sqrt(distanceX^2 + distanceY^2)
 
-        love.graphics.setColor(255, 255, 255)
-        love.graphics.print('distance x: '..distanceX, 15, 15)
-        love.graphics.print('distance y: '..distanceY, 15, 30)
-        love.graphics.print('distance: '..distance, 15, 45)
+        local output = {}
 
-        drawMouse(mouseX, mouseY)
-    end,
-    function()
-        drawBackground()
-        drawEye()
-
-        local eyeX = 200
-        local eyeY = 200
-
-        local distanceX = mouseX - eyeX
-        local distanceY = mouseY - eyeY
-        local distance = math.sqrt(distanceX^2 + distanceY^2)
-        local angle = math.atan2(distanceX, distanceY)
+        table.insert(output, 'distance x: '..distanceX)
+        table.insert(output, 'distance y: '..distanceY)
+        table.insert(output, 'distance: '..distance)
 
         love.graphics.setColor(255, 255, 255)
-        love.graphics.print('distance x: '..distanceX, 15, 15)
-        love.graphics.print('distance y: '..distanceY, 15, 30)
-        love.graphics.print('distance: '..distance, 15, 45)
-        love.graphics.print('angle: '..angle, 15, 60)
-
-        drawMouse(mouseX, mouseY)
-    end,
-    function()
-        drawBackground()
-
-        local eyeX = 200
-        local eyeY = 200
-
-        local distanceX = mouseX - eyeX
-        local distanceY = mouseY - eyeY
-        local distance = math.sqrt(distanceX^2 + distanceY^2)
-        local angle = math.atan2(distanceX, distanceY)
+        love.graphics.print(table.concat(output, '\n'))
 
         love.graphics.setColor(255, 255, 255)
-        love.graphics.print('distance x: '..distanceX, 15, 15)
-        love.graphics.print('distance y: '..distanceY, 15, 30)
-        love.graphics.print('distance: '..distance, 15, 45)
-        love.graphics.print('angle: '..angle, 15, 60)
-
-        local pupilX = eyeX + (math.sin(angle) * distance)
-        local pupilY = eyeY + (math.cos(angle) * distance)
-
-        love.graphics.setColor(255, 255, 255)
-        love.graphics.circle('fill', eyeX, eyeY, 50)
+        love.graphics.circle('fill', 200, 200, 50)
 
         love.graphics.setColor(0, 0, 100)
-        love.graphics.circle('fill', pupilX, pupilY, 15)
+        love.graphics.circle('fill', 200, 200, 15)
 
         drawMouse(mouseX, mouseY)
     end,
-    function()
+    function ()
         drawBackground()
 
         local eyeX = 200
@@ -195,25 +118,53 @@ t = {
         local distanceX = mouseX - eyeX
         local distanceY = mouseY - eyeY
         local distance = math.sqrt(distanceX^2 + distanceY^2)
-        local angle = math.atan2(distanceX, distanceY)
+        local angle = math.atan2(distanceY, distanceX)
+
+        local output = {}
+
+        table.insert(output, 'distance x: '..distanceX)
+        table.insert(output, 'distance y: '..distanceY)
+        table.insert(output, 'distance: '..distance)
+        table.insert(output, 'angle: '..angle)
 
         love.graphics.setColor(255, 255, 255)
-        love.graphics.print('distance x: '..distanceX, 15, 15)
-        love.graphics.print('distance y: '..distanceY, 15, 30)
-        love.graphics.print('distance: '..distance, 15, 45)
-        love.graphics.print('angle: '..angle, 15, 60)
-
-        
-        local eyeMaxPupilDistance = 30
-        if distance > eyeMaxPupilDistance then
-            distance = eyeMaxPupilDistance
-        end
-
-        local pupilX = eyeX + (math.sin(angle) * distance)
-        local pupilY = eyeY + (math.cos(angle) * distance)
+        love.graphics.print(table.concat(output, '\n'))
 
         love.graphics.setColor(255, 255, 255)
-        love.graphics.circle('fill', eyeX, eyeY, 50)
+        love.graphics.circle('fill', 200, 200, 50)
+
+        love.graphics.setColor(0, 0, 100)
+        love.graphics.circle('fill', 200, 200, 15)
+
+        drawMouse(mouseX, mouseY)
+    end,
+    function ()
+        drawBackground()
+
+        local eyeX = 200
+        local eyeY = 200
+
+        local distanceX = mouseX - eyeX
+        local distanceY = mouseY - eyeY
+        local distance = math.sqrt(distanceX^2 + distanceY^2)
+        local angle = math.atan2(distanceY, distanceX)
+        local pupilX = eyeX + (math.cos(angle) * distance)
+        local pupilY = eyeY + (math.sin(angle) * distance)
+
+        local output = {}
+
+        table.insert(output, 'distance x: '..distanceX)
+        table.insert(output, 'distance y: '..distanceY)
+        table.insert(output, 'distance: '..distance)
+        table.insert(output, 'angle: '..angle)
+        table.insert(output, 'cos(angle): '..math.cos(angle))
+        table.insert(output, 'sin(angle): '..math.sin(angle))
+
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.print(table.concat(output, '\n'))
+
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.circle('fill', 200, 200, 50)
 
         love.graphics.setColor(0, 0, 100)
         love.graphics.circle('fill', pupilX, pupilY, 15)
@@ -223,19 +174,58 @@ t = {
     function ()
         drawBackground()
 
-        function drawEye(eyeX, eyeY)
+        local eyeX = 200
+        local eyeY = 200
+
+        local distanceX = mouseX - eyeX
+        local distanceY = mouseY - eyeY
+        local distance = math.sqrt(distanceX^2 + distanceY^2)
+        local angle = math.atan2(distanceY, distanceX)
+
+        local eyeMaxPupilDistance = 30
+        if distance > eyeMaxPupilDistance then
+            distance = eyeMaxPupilDistance
+        end
+
+        local pupilX = eyeX + (math.cos(angle) * distance)
+        local pupilY = eyeY + (math.sin(angle) * distance)
+
+        local output = {}
+
+        table.insert(output, 'distance x: '..distanceX)
+        table.insert(output, 'distance y: '..distanceY)
+        table.insert(output, 'distance: '..distance)
+        table.insert(output, 'angle: '..angle)
+        table.insert(output, 'cos(angle): '..math.cos(angle))
+        table.insert(output, 'sin(angle): '..math.sin(angle))
+
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.print(table.concat(output, '\n'))
+
+        love.graphics.setColor(255, 255, 255)
+        love.graphics.circle('fill', 200, 200, 50)
+
+        love.graphics.setColor(0, 0, 100)
+        love.graphics.circle('fill', pupilX, pupilY, 15)
+
+        drawMouse(mouseX, mouseY)
+    end,
+    function ()
+        drawBackground()
+
+        local function drawEye(eyeX, eyeY)
             local distanceX = mouseX - eyeX
             local distanceY = mouseY - eyeY
             local distance = math.sqrt(distanceX^2 + distanceY^2)
-            local angle = math.atan2(distanceX, distanceY)
+            local angle = math.atan2(distanceY, distanceX)
 
             local eyeMaxPupilDistance = 30
             if distance > eyeMaxPupilDistance then
                 distance = eyeMaxPupilDistance
             end
 
-            local pupilX = eyeX + (math.sin(angle) * distance)
-            local pupilY = eyeY + (math.cos(angle) * distance)
+            local pupilX = eyeX + (math.cos(angle) * distance)
+            local pupilY = eyeY + (math.sin(angle) * distance)
 
             love.graphics.setColor(255, 255, 255)
             love.graphics.circle('fill', eyeX, eyeY, 50)
@@ -248,6 +238,7 @@ t = {
         drawEye(330, 200)
 
         drawMouse(mouseX, mouseY)
-    end,
+    end
 }
+
 return t
