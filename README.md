@@ -17,16 +17,20 @@ The markup for **input.txt** is:
 * Lines starting with #, ##, ###, #### become h1, h2, h3, h4
 * \*Asterisks for bold\*
 * & Amperands for a two column table & This is the second column
-* Code within lines of ` and using | to surround highlighted code. For example:
+* Code is within lines of \` and uses | to surround highlighted code. For example:
+```
 `
 function test() {
     |a = 'This line will be highlighted.'|
 end
 `
+```
 * Console output within lines of ~. For example:
+```
 ~
 This is console output.
 ~
+```
 * The exclamation point (!) creates a place for an image.
 * Lines in a list begin with "- ".
 * For everything else normal HTML should work, \<i\>like for italics\</i\>.
