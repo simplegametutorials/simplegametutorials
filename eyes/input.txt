@@ -83,7 +83,7 @@ The angle in radians between the mouse cursor and the center of the eye is calcu
 function love.draw()
     -- etc.
 
-    local angle = math.atan2(distanceX, distanceY)
+    local angle = math.atan2(distanceY, distanceX)
 
     -- etc.
     table.insert(output, 'angle: '..angle)
@@ -96,25 +96,25 @@ end
 
 ### Moving pupil
 
-The sine/cosine of the X/Y positions give the ratio between the X/Y positions and the straight-line distance.
+The cosine/sine of the X/Y positions give the ratio between the X/Y positions and the straight-line distance.
 
-For example, when the mouse is directly below the eye, all of the straight-line distance goes into the Y axis, so the cosine is 1 and the sine is 0.
+For example, when the mouse is directly below the eye, all of the straight-line distance goes into the Y axis, so the cosine is 0 and the sine is 1.
 
-For another example, when the sine is 0.5, the X distance is 0.5 (i.e. half) of the straight-line distance, and the Y distance is around 0.86 of the straight-line distance.
+For another example, when the sine is 0.5, the Y distance is 0.5 (i.e. half) of the straight-line distance, and the X distance is around 0.86 of the straight-line distance.
 
-The pupil is moved by the sine/cosine of the angle multiplied by the distance, which brings the pupil to the mouse position.
+The pupil is moved by the cosine/sine of the angle multiplied by the distance, which brings the pupil to the mouse position.
 
 `
 function love.draw()
     -- etc.
 
-    |local pupilX = eyeX + (math.sin(angle) * distance)|
-    |local pupilY = eyeY + (math.cos(angle) * distance)|
+    |local pupilX = eyeX + (math.cos(angle) * distance)|
+    |local pupilY = eyeY + (math.sin(angle) * distance)|
 
     -- etc.
 
-    |table.insert(output, 'sin(angle): '..math.sin(angle))|
     |table.insert(output, 'cos(angle): '..math.cos(angle))|
+    |table.insert(output, 'sin(angle): '..math.sin(angle))|
 
     -- etc.
 
@@ -138,8 +138,8 @@ function love.draw()
     |    distance = eyeMaxPupilDistance|
     |end|
 
-    local pupilX = eyeX + (math.sin(angle) * distance)
-    local pupilY = eyeY + (math.cos(angle) * distance)
+    local pupilX = eyeX + (math.cos(angle) * distance)
+    local pupilY = eyeY + (math.sin(angle) * distance)
 
     -- etc.
 end
@@ -157,15 +157,15 @@ function love.draw()
         local distanceX = love.mouse.getX() - eyeX
         local distanceY = love.mouse.getY() - eyeY
         local distance = math.sqrt(distanceX^2 + distanceY^2)
-        local angle = math.atan2(distanceX, distanceY)
+        local angle = math.atan2(distanceY, distanceX)
 
         local eyeMaxPupilDistance = 30
         if distance > eyeMaxPupilDistance then
             distance = eyeMaxPupilDistance
         end
 
-        local pupilX = eyeX + (math.sin(angle) * distance)
-        local pupilY = eyeY + (math.cos(angle) * distance)
+        local pupilX = eyeX + (math.cos(angle) * distance)
+        local pupilY = eyeY + (math.sin(angle) * distance)
 
         love.graphics.setColor(255, 255, 255)
         love.graphics.circle('fill', eyeX, eyeY, 50)
