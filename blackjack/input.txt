@@ -895,7 +895,7 @@ end
 
 ### Drawing ace
 
-If the card is an ace a pip drawn in the middle of the card.
+If the card is an ace a pip is drawn in the middle of the card.
 
 `
 function love.draw()
@@ -1590,7 +1590,7 @@ The color of the rectangle changes when the mouse cursor is over it.
 The cursor is over the button when...
 - the mouse's X position is to the right of the button's left edge
 - the mouse's X position is to the left of the button's right edge (i.e less than the position of the button plus the width of the button)
-- the mouse's X position is below the button's top edge
+- the mouse's Y position is below the button's top edge
 - the mouse's Y position is above the button's bottom edge (i.e. less than the position of the button plus the height of the button)
 
 The button height is reused from drawing the button, so a variable is made.
@@ -1624,7 +1624,7 @@ end
 
 ### Clicking buttons
 
-If a mouse button is released and the mouse is over the on-screen button then the button has been clicked, and for now the name of the button is printed.
+If a mouse button is released and the mouse is over the on-screen button then the button has been clicked, for now the name of the button is printed.
 
 Checking if the mouse is over a button is reused from drawing the button, so this is made into a function and is moved into *love.load*.
 
