@@ -106,7 +106,7 @@ end
 
 ### Keeping selected cell within grid
 
-If the mouse is greater than the grid's X or Y cell count (i.e. it is off the right or bottom of the grid) the selected postiion is set to the last cell in that direction.
+If the mouse is greater than the grid's X or Y cell count (i.e. it is off the right or bottom of the grid) the selected position is set to the last cell in that direction.
 
 The grid's X and Y cell count is reused from drawing the cells, so variables are made for them.
 
@@ -327,7 +327,7 @@ end
 
 A table is created with very X and Y position in the grid.
 
-Random positions are repeatedly removed from this table and the cell at this postiion is set to have a flower.
+Random positions are repeatedly removed from this table and the cell at this position is set to have a flower.
 
 To test this, any key calls *love.load*.
 
