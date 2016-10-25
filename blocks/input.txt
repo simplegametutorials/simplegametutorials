@@ -34,7 +34,7 @@ The game ends when the stack of blocks reaches the top of the playing area and t
 
 A grid stores the inert blocks which have already fallen.
 
-The state of a cell can be empty or filled with a block of a certain color. The string *' '* (a space) represents an empty cell, and the strings *'i'*, *'j'*, *'l'*, *'o'*, *'s'*, *'t'* and *'z'* represent blocks of different colors.
+The state of a cell can be empty or filled with a block of a certain color. The string `' '` (a space) represents an empty cell, and the strings `'i'`, `'j'`, `'l'`, `'o'`, `'s'`, `'t'` and `'z'` represent blocks of different colors.
 
 !
 
@@ -1143,7 +1143,7 @@ end
 
 If a newly created piece is in an unmovable position the game is over.
 
-For now, *love.load* is called to reset the game to its initial state.
+For now, `love.load` is called to reset the game to its initial state.
 
 `
 function love.update(dt)

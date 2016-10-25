@@ -74,7 +74,7 @@ end
 
 The cell under the mouse is updated every frame.
 
-This needs the cell size, so this is moved from *love.draw* to *love.load*.
+This needs the cell size, so this is moved from `love.draw` to `love.load`.
 
 For now, this position is drawn as text.
 
@@ -196,7 +196,7 @@ end
 
 A grid is created to store the state of the cells. Since each cell will have two values which need to be stored (whether it has a flower, and whether it is uncovered, has a flag, a question mark, or nothing) each cell is represented by a table.
 
-If a cell's *'flower'* key is true, the flower image is drawn over the cell image.
+If a cell's `'flower'` key is true, the flower image is drawn over the cell image.
 
 `
 function love.load()
@@ -329,7 +329,7 @@ A table is created with very X and Y position in the grid.
 
 Random positions are repeatedly removed from this table and the cell at this position is set to have a flower.
 
-To test this, any key calls *love.load*.
+To test this, any key calls `love.load`.
 
 `
 function love.load()
@@ -360,9 +360,9 @@ end
 
 The cell tables are given a new key for the state of the cell as a string. For now, this is whether the cell is covered or uncovered.
 
-For now, when a cell is left clicked its state is set to *'uncovered'*.
+For now, when a cell is left clicked its state is set to `'uncovered'`.
 
-If a cell's state is *'uncovered'* the uncovered image is drawn instead of the covered images.
+If a cell's state is `'uncovered'` the uncovered image is drawn instead of the covered images.
 
 `
 function love.load()
@@ -774,7 +774,7 @@ end
 
 When the mouse is clicked when the game is over, the game is reset.
 
-For now, *love.load* is called to reset the game.
+For now, `love.load` is called to reset the game.
 
 `
 function love.mousereleased(mouseX, mouseY, button)

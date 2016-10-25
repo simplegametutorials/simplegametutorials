@@ -90,7 +90,7 @@ end
 
 ### Moving the bird
 
-The bird's Y position is made into a variable and every frame it increases by 30 multiplied by *dt*, making the bird move down 30 pixels per second.
+The bird's Y position is made into a variable and every frame it increases by 30 multiplied by `dt`, making the bird move down 30 pixels per second.
 
 `
 function love.load()
@@ -115,7 +115,7 @@ end
 
 Instead of moving at a constant speed, the number added to the bird's Y position also increases over time.
 
-The bird's speed is made into a variable which starts at 0, and every frame it increases by 516 multiplied by *dt*.
+The bird's speed is made into a variable which starts at 0, and every frame it increases by 516 multiplied by `dt`.
 
 `
 function love.load()
@@ -222,9 +222,9 @@ end
 
 The pipe's space position is set to a random number between 0 (the top of the playing area) and the playing area height minus the space height (so that the bottom of the space would be touching the bottom of the playing area).
 
-The pipe's space position should be set only once, not every frame, so it is moved into *love.load*. Setting the pipe's space position requires the space's height, so this is also moved into *love.load*.
+The pipe's space position should be set only once, not every frame, so it is moved into `love.load`. Setting the pipe's space position requires the space's height, so this is also moved into `love.load`.
 
-To test this, pressing any key calls *love.load* to create a new random space position.
+To test this, pressing any key calls `love.load` to create a new random space position.
 
 `
 function love.load()
@@ -310,9 +310,9 @@ end
 
 When the pipe goes out of the playing area, its X position is reset and it gets a new random space position.
 
-Determining if the pipe has gone out of the playing area requires knowing the pipe's width, which is reused from drawing the pipe, so the pipe's width is moved into *love.load*.
+Determining if the pipe has gone out of the playing area requires knowing the pipe's width, which is reused from drawing the pipe, so the pipe's width is moved into `love.load`.
 
-Setting the initial X position of the pipe and its random space position is reused from *love.load*, so a function is made.
+Setting the initial X position of the pipe and its random space position is reused from `love.load`, so a function is made.
 
 `
 function love.load()
@@ -359,9 +359,9 @@ The bird is colliding with the top pipe segment if...
 - the top edge of the bird is above the bottom edge of the pipe segment (i.e. the bird is not completely below the pipe segment)
 ... then the bird is colliding with the top pipe segment.
 
-For now, *love.load* is called when the bird and pipe collide.
+For now, `love.load` is called when the bird and pipe collide.
 
-The bird's X position and width are reused from drawing the bird, so they are moved into *love.load*.
+The bird's X position and width are reused from drawing the bird, so they are moved into `love.load`.
 
 `
 function love.load()
@@ -492,11 +492,11 @@ end
 
 ### Randomizing space position for two pipes
 
-Because each pipe has an individual X position, setting the X position is removed from the *resetPipe* function, leaving only the random space position. The function is renamed to reflect this.
+Because each pipe has an individual X position, setting the X position is removed from the `resetPipe` function, leaving only the random space position. The function is renamed to reflect this.
 
-Instead of creating a global *pipeSpaceY* variable, the function returns a new space position.
+Instead of creating a global `pipeSpaceY` variable, the function returns a new space position.
 
-Because the variables *pipeX*, *pipeSpaceY* and *resetPipe* no longer exist, the parts of *love.update* which use them are commented out.
+Because the variables `pipeX`, `pipeSpaceY` and `resetPipe` no longer exist, the parts of `love.update` which use them are commented out.
 
 To test the random space positions, the pipes get new space positions when a key is pressed.
 

@@ -8,6 +8,7 @@ io.stdout:setvbuf('no')
 love.filesystem.setIdentity('tutorials')
 mode = arg[2]
 name = arg[3]
+title = arg[4]
 
 realBackground = {0, 0, 0, 0}
 
@@ -41,10 +42,7 @@ elseif mode == 'images' then
             local isBackground = true
             for y = 0, screenshot:getHeight() - 1 do
                 local r, g, b, a = screenshot:getPixel(x, y)
-                if not (r == background[1]
-                    and g == background[2]
-                    and b == background[3]
-                    and a == background[4]) then
+                if not (r == background[1] and g == background[2] and b == background[3] and a == background[4]) then
                     isBackground = false
                     break
                 end
@@ -91,14 +89,17 @@ elseif mode == 'images' then
         end
 
         local imagedata = love.image.newImageData(
-        right - left,
-        bottom - top)
+            right - left,
+            bottom - top
+        )
+
         imagedata:paste(
-        screenshot,
-        0, 0,
-        left, top,
-        right - left,
-        bottom - top)
+            screenshot,
+            0, 0,
+            left, top,
+            right - left,
+            bottom - top
+        )
 
         return imagedata
     end
@@ -228,7 +229,7 @@ elseif mode == 'images' then
     end
 elseif mode == 'html' then
     s = [[<html><head><title>]]
-    ..name:gsub("^%l", string.upper)..' Tutorial'..
+    ..(title or (name:gsub("^%l", string.upper)..' Tutorial'))..
     [[</title>
     <style>
     body {
@@ -239,40 +240,32 @@ elseif mode == 'html' then
         max-width: 600px;
         line-height: 1.4;
     }
-    td {padding-right:10px}
-
-    .name {color:#770099}
-    .name {color:#aa0066}
-    .call {color:#bb5500}
-    .literal {color:#006666}
-    .comment {color:#006666; background:#ffffaa}
-
-    .name {color:#B137A2}
-    .call {color:#b16918}
-    .literal {color:#2D9999}
-    .highlight {background:#fcf9db}
-
+    td {
+        padding-right:10px
+    }
+    .code {
+        font-family: Consolas, Monaco, Inconsolata, monospace;
+        border-left: solid 5px #e7e7e7;
+        color: #444;
+        padding-left: 12px;
+    }
+    .inlinecode {
+        font-family: Consolas, Monaco, Inconsolata, monospace;
+        color: #444;
+    }
+    .console {
+        font-family: Consolas, Monaco, Inconsolata, monospace;
+        padding: 16px;
+        background: #444;
+        color: #eee;
+        width: 700px;
+    }
     .name {color:#d09}
     .call {color:#d60}
     .literal {color:#088}
     .comment {color:#444; background:#eee}
     .highlight {background:#ffc}
     .highlight .comment, .comment .highlight {background:#f0edd3}
-
-    td {padding-right:10px}
-    .code {
-        font-family: Consolas;
-        border-left: solid 5px #e7e7e7;
-        color: #444;
-        padding-left: 12px;
-    }
-    .console {
-        font-family: Consolas;
-        padding: 16px;
-        background: #444;
-        color: #eee;
-        width: 700px;
-    }
     </style>
     </head>
     <body>
@@ -296,35 +289,30 @@ elseif mode == 'html' then
     function highlight(s)
         local function noSpans(s, a)
             return s
-            :gsub('<span class="name">', '')
-            :gsub('<span class="literal">', '')
-            :gsub('<span class="call">', '')
-            :gsub('<span class="comment">', '')
-            :gsub('</span>', '')
-        end
-        local function noSpans2(s, a)
-            return s
             :gsub('<span class=@name@>', '')
             :gsub('<span class=@literal@>', '')
             :gsub('<span class=@call@>', '')
             :gsub('<span class=@comment@>', '')
             :gsub('</span>', '')
         end
+        local name = '[%a_][%a%d_%.%:]*'
         local function f(s)
-            return s:gsub('[%a_]+[%a%d_%.%:]*', function(s) if not keywords[s:match('%a+')] then return '<span class=@name@>'..s..'</span>' end end)
-            :gsub('<span class=@name@>([%a_%.%:]+)%.%.</span>', function(s) return '<span class=@name@>'..s..'</span>..' end)
-            :gsub([[%b'']], function(s) return s:gsub('<span class=@name@>', ''):gsub('</span>', '') end)
-            --:gsub([[%b""]], function(s) return s:gsub('<span class=@name@>', ''):gsub('</span>', '') end)
-
-            :gsub('([%a_%.]+)%(', function(s) if not keywords[s:match('%a+')] then return '<span class=@call@>'..s..'</span>(' end end)
+            return s
+            :gsub(name, function(s) if not keywords[s:match('%a+')] then return '<span class=@name@>'..s..'</span>' end end)
+            :gsub('<span class=@name@>('..name..')%.%.</span>', function(s) return '<span class=@name@>'..s..'</span>..' end)
+            :gsub('('..name..')%(', function(s) if not keywords[s:match('%a+')] then return '<span class=@call@>'..s..'</span>(' end end)
             :gsub('function <span class=@name@>', 'function <span class=@literal@>')
-            :gsub('<span class=@name@>[%a_%.]+</span>%(', function(s) return '<span class=@call@>'..s:gsub('<span class=@name@>', '') end)
-            :gsub([[%'<span class=@name@>[%a_%.%:]+</span>%']], function(s) return '\''..s:gsub('\' <span class=@name@>', ' '):gsub('\'<span class=@name@>', ''):gsub('</span> \'', ' '):gsub('</span>\'', '')..'\'' end)
-            :gsub([[%'[ ]?<span class=@name@>[%a_%.]+</span>[ ]?%']], function(s) return '\''..s:gsub('\' <span class=@name@>', ' '):gsub('\'<span class=@name@>', ''):gsub('</span> \'', ' '):gsub('</span>\'', '')..'\'' end)
-            :gsub('([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%] ])([%d%.]+)([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%] \n])', function(a, b, c) return a..'<span class=@literal@>'..b..'</span>'..c end)
+            :gsub('<span class=@name@>'..name..'</span>%(', function(s) return '<span class=@call@>'..s:gsub('<span class=@name@>', '') end)
 
-            :gsub([[%b'']], function(s) return '<span class=@literal@>'..noSpans2(s)..'</span>' end)
-            --:gsub([[%b""]], function(s) return '<span class=@literal@>'..s..'</span>' end)
+            :gsub([[%'<span class=@name@>]]..name..[[*</span>%']], function(s) return '\''..s:gsub('\' <span class=@name@>', ' '):gsub('\'<span class=@name@>', ''):gsub('</span> \'', ' '):gsub('</span>\'', '')..'\'' end)
+            :gsub([[%'[ ]?<span class=@name@>]]..name..[[+</span>[ ]?%']], function(s) return '\''..s:gsub('\' <span class=@name@>', ' '):gsub('\'<span class=@name@>', ''):gsub('</span> \'', ' '):gsub('</span>\'', '')..'\'' end)
+
+            :gsub([[%"<span class=@name@>]]..name..[[*</span>%"]], function(s) return "\""..s:gsub("\" <span class=@name@>", " "):gsub("\"<span class=@name@>", ""):gsub("</span> \"", " "):gsub("</span>\"", "").."\"" end)
+            :gsub([[%"[ ]?<span class=@name@>]]..name..[[+</span>[ ]?%"]], function(s) return "\""..s:gsub("\" <span class=@name@>", " "):gsub("\"<span class=@name@>", ""):gsub("</span> \"", " "):gsub("</span>\"", "").."\"" end)
+
+            :gsub('([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%] ])([%d%.]+)([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%] \n])', function(a, b, c) return a..'<span class=@literal@>'..b..'</span>'..c end)
+            :gsub([[%b'']], function(s) return '<span class=@literal@>'..noSpans(s)..'</span>' end)
+            :gsub([[%b""]], function(s) return '<span class=@literal@>'..noSpans(s)..'</span>' end)
             :gsub('true', function(s) return '<span class=@literal@>'..s..'</span>' end)
             :gsub('false', function(s) return '<span class=@literal@>'..s..'</span>' end)
 
@@ -333,13 +321,11 @@ elseif mode == 'html' then
             function(s)
                 local a, z = s:match('(.*)(%-%-.*)')
                 if z then
-                    return a..'<span class=@comment@>'..noSpans2(z)..'</span>'
+                    return a..'<span class=@comment@>'..noSpans(z)..'</span>'
                 end
             end)
             :gsub('(<span class=@comment@>)(%s*)', function(a, b) return b..a end)
 
-            :gsub('<span class=@', '<span class="')
-            :gsub('@>', '">')
         end
         s = f(s)
 
@@ -366,6 +352,8 @@ elseif mode == 'html' then
                 end
             end
             output = output..'\n'..line
+            :gsub('<span class=@', '<span class="')
+            :gsub('@>', '">')
         end
         output = output:gsub([[%b||]], function(s) return '<span class="highlight">'..s..'</span>' end):gsub('|', '')
 
@@ -388,14 +376,11 @@ elseif mode == 'html' then
         h4 = line:match('^####%s(.+)')
         li = line:match('^- (.+)')
         link = line:match('^%%(.+)')
-        code = line:match('^%`')
-        console = line:match('^%~')
+        code = line:match('^%`$')
+        console = line:match('^%~$')
         image = line:match('^%!$')
         td1, td2 = line:match('^%&%s+(.-)%s+%&%s+(.+)')
 
-        if not code and not inCode then
-            line = line:gsub('%*[^%*]+%*', function(s) return '<b>'..s:sub(2, -2)..'</b>' end)
-        end
 
         if code then
             if inCode then
@@ -427,6 +412,7 @@ elseif mode == 'html' then
         elseif li and not list then
             list = true
             a('<ul>')
+            li = li:gsub('%*[^%*]+%*', function(s) return '<b>'..s:sub(2, -2)..'</b>' end)
             a('li', li)
         elseif h1 then
             a('h1', h1)
@@ -437,6 +423,7 @@ elseif mode == 'html' then
         elseif h4 then
             a('h4', h4)
         elseif li then
+            li = li:gsub('%*[^%*]+%*', function(s) return '<b>'..s:sub(2, -2)..'</b>' end)
             a('li', li)
         elseif image then
             a('<img src="'..imageNumber..'.png">')
@@ -465,14 +452,17 @@ elseif mode == 'html' then
             a('</table>')
             inTable = false
         elseif line ~= '' then
+            line = line:gsub('%b``', function(s) return '<span class="inlinecode">'..highlight(s)..'</span>' end):gsub('`', '')
+            line = line:gsub('%*[^%*]+%*', function(s) return '<b>'..s:sub(2, -2)..'</b>' end)
             a('p', line)
         end
     end
 
-    a('</body></html')
+    a('</body></html>')
 
     function love.run()
         love.filesystem.createDirectory(name)
+        s = s:gsub('LOVE', 'L&Ouml;VE')
         love.filesystem.write(name..'/index.html', s)
     end
 end

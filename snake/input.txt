@@ -96,7 +96,7 @@ end
 
 The snake moves once every 0.15 seconds.
 
-A timer variable starts at 0 and increases by *dt* each frame.
+A timer variable starts at 0 and increases by `dt` each frame.
 
 When it is at or above 0.15, it is reset by taking 0.15 from it (leaving any residual time in the timer variable is the timer has gone slightly above 0.15, so the timing is more accurate than setting the timer to 0), and this is when the snake will move.
 
@@ -349,7 +349,7 @@ end
 
 If the next position would be off the grid, it is wrapped around to the position on the other side.
 
-The grid X/Y count is reused from drawing the background, so they are moved to *love.load*.
+The grid X/Y count is reused from drawing the background, so they are moved to `love.load`.
 
 `
 function love.load()
@@ -549,7 +549,7 @@ The snake is looped through, and if any of its segments except for the last one 
 
 The last segment isn't checked because it will be removed within the same tick.
 
-For now, *love.load* is called to reset the game when the snake crashes into itself.
+For now, `love.load` is called to reset the game when the snake crashes into itself.
 
 `
 function love.update(dt)
@@ -585,7 +585,7 @@ end
 
 A variable is used to store whether or not the snake is alive, and is set to false when the snake has crashed.
 
-If the snake is dead, the timer waits for 2 seconds before calling *love.load*.
+If the snake is dead, the timer waits for 2 seconds before calling `love.load`.
 
 `
 function love.load()

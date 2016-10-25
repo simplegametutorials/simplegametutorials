@@ -76,7 +76,7 @@ end
 
 ### Getting angle between cursor and eye
 
-The angle in radians between the mouse cursor and the center of the eye is calculated using *math.atan2*.
+The angle in radians between the mouse cursor and the center of the eye is calculated using `math.atan2`.
 
 `
 function love.draw()

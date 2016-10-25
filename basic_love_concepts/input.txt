@@ -1,0 +1,219 @@
+# Basic LOVE concepts
+
+LOVE's homepage is: <a href="https://love2d.org/">https://love2d.org/</a>
+
+The current LOVE version at the time this document was last updated is 0.10.1.
+
+LOVE uses <a href="http://luajit.org/extensions.html">LuaJIT 2.0</a>. You don't need to install this or any other Lua version to use LOVE.
+
+## What LOVE can run on
+
+LOVE projects can be run on Windows, Linux, Mac, Android, iOS and (unofficially) <a href="https://github.com/TannerRogalsky/love.js">web browsers</a>.
+
+## What LOVE provides
+
+LOVE provides a way of displaying graphics, playing sound, and getting user input, among other things.
+
+LOVE doesn't provide things which can be written in Lua code, unless it would be too slow.
+
+For example, LOVE doesn't provide anything specifically for animations, because animations can be made with Lua code that uses what LOVE provides.
+
+However, LOVE does provide a particle system and a physics system, because they are significantly faster than if they were made with Lua code.
+
+## Running LOVE projects
+
+A LOVE project is a directory or zip file containing a *main.lua* file and any other files used.
+
+A project can be run via the command line by *love.exe path_to_love_project* on Windows, *love path_to_love_project* on Linux, or *open -n -a love path_to_love_project* on Mac.
+
+Or, it can be run by dragging and dropping the LOVE project on to *love.exe* on Windows or *love.app* on Mac.
+
+Zip files with the extension *.love* will be opened automatically by LOVE. Files with the extension *.love* can be renamed to have the extension *.zip* and unzipped.
+
+For more information on running LOVE projects, see this page: <a href="https://love2d.org/wiki/Getting_Started">https://love2d.org/wiki/Getting_Started</a>
+
+## Distribution
+
+LOVE projects can be made into *.exe* files for Windows, *.app* files for Mac, and so on. For more information, see this page: <a href="https://love2d.org/wiki/Game_Distribution">https://love2d.org/wiki/Game_Distribution</a>
+
+## Control flow
+
+When a LOVE project is run, LOVE runs *conf.lua* and the function `love.conf` (if they exist), then runs *main.lua*, then runs the function `love.run`, then closes.
+
+A default `love.run` function is used if it isn't overwritten by the project's code, and this default is what calls the rest of the callbacks mentioned below.
+
+For more information on `love.run`, see this page: <a href="https://love2d.org/wiki/love.run">https://love2d.org/wiki/love.run</a>
+
+*main.lua* is intended for the main code.
+
+## Callbacks
+
+Control flow in LOVE uses callbacks.
+
+LOVE's callbacks are functions which you create and LOVE runs at specific times.
+
+For example, `love.load` is run once LOVE has loaded.
+
+Every frame, `love.update` is run, which is intended for updating the state of the program, then `love.draw` is run, which is intended for drawing to the screen.
+
+`love.update` is given the time since it was last run in seconds as a parameter.
+
+`love.keypressed` is run when a key on the keyboard is pressed, and is given which key it was as a parameter.
+
+For example:
+
+`
+function love.load()
+    randomNumber = love.math.random()
+    totalTime = 0
+    x = 15
+end
+
+function love.update(dt)
+    totalTime = totalTime + dt
+    x = x + (10 * dt)
+end
+
+function love.draw()
+    love.graphics.print('The random number is '..randomNumber, 15, 15)
+    love.graphics.print('The program has been running for '..totalTime..' seconds', 15, 30)
+    love.graphics.print('This text is moving right at 10 pixels per second', x, 45)
+end
+
+function love.keypressed(key)
+    if key == 'r' then
+        randomNumber = love.math.random()
+    elseif key == 'x' then
+        x = 15
+    end
+end
+`
+
+LOVE has around 35 callbacks.
+
+For information on all of the callbacks, see this page: <a href="https://love2d.org/wiki/love#Callbacks">https://love2d.org/wiki/love#Callbacks</a>
+
+## Configuration
+
+`love.conf` is a callback defined in *conf.lua* which is called before modules are loaded and before *main.lua* is run.
+
+It can set the initial window properties and disable modules among other things.
+
+For more information on configuration, see this page: <a href="https://love2d.org/wiki/Config_Files">https://love2d.org/wiki/Config_Files</a>
+
+## Functions
+
+LOVE provides functions which you can call to do things.
+
+`love.graphics.print` is an example of a function, so is `love.math.random`.
+
+LOVE has around 255 functions.
+
+For information on all of the functions, see each module's page: <a href="https://love2d.org/wiki/love#Modules">https://love2d.org/wiki/love#Modules</a>
+
+## Convenience functions
+
+Some functions provide a quicker way of doing something which could be done in another way.
+
+For example, this code creates a new Font with `love.graphics.newFont` and sets the internal state to use this font with `love.graphics.setFont`.
+
+`
+function love.load()
+    love.graphics.setFont(love.graphics.newFont('font.ttf', 20))
+end
+`
+
+`love.graphics.setNewFont` is a convenience function which does the same thing.
+
+`
+function love.load()
+    love.graphics.setNewFont('font.ttf', 20)
+end
+`
+
+## Internal state
+
+LOVE has state in a running program which affects the behavior of the program and can be changed/retrieved by functions. Functions for changing state often start with *set* and functions for retrieving state often start with *get*.
+
+For example, `love.graphics.setColor` changes the state of the drawing color, and `love.graphics.getColor` retrieves it.
+
+`
+function love.draw()
+    love.graphics.setColor(255, 255, 255)
+    red, green, blue = love.graphics.getColor()
+    love.graphics.print(
+        'The color state currently has a red value of '..red..
+        ' and a green value of '..green..
+        ' and a blue value of '..blue,
+        15, 15
+    )
+
+    love.graphics.setColor(255, 51, 133)
+    red, green, blue = love.graphics.getColor()
+    love.graphics.print(
+        'The color state currently has a red value of '..red..
+        ' and a green value of '..green..
+        ' and a blue value of '..blue,
+        15, 30
+    )
+end
+`
+
+## Objects
+
+Objects are returned by "constructor" functions, and can be used by other functions to do things. Constructor functions generally start with *new*.
+
+For example, *Image* objects are returned by `love.graphics.newImage`. They can be drawn to the screen with `love.graphics.draw`.
+
+`
+function love.load()
+    image1 = love.graphics.newImage('image1.png')
+    image2 = love.graphics.newImage('image2.png')
+end
+
+function love.draw()
+    love.graphics.draw(image1, 15, 15)
+    love.graphics.draw(image2, 15, 100)
+end
+`
+
+LOVE has around 47 object types, 22 of which are in the *physics* module.
+
+For information on all of the objects, see each module's page: <a href="https://love2d.org/wiki/love#Modules">https://love2d.org/wiki/love#Modules</a>
+
+## Object state and functions
+
+Objects have their own individual state.
+
+Objects have functions which change or retrieve the object's state, or have external effects based on the object's state.
+
+For example, `Image:setFilter` changes the way an *Image* looks when it is drawn scaled, and `Image:getFilter` retrieves it.
+
+`
+function love.load()
+    image1 = love.graphics.newImage('image1.png')
+end
+
+function love.draw()
+    image1:setFilter('linear')
+    love.graphics.print('The image filter is '..image1:getFilter(), 15, 15)
+    love.graphics.draw(image1, 15, 35, 0, 2)
+
+    image1:setFilter('nearest')
+    love.graphics.print('The image filter is '..image1:getFilter(), 15, 115)
+    love.graphics.draw(image1, 15, 135, 0, 2)
+end
+`
+
+LOVE has around 518 object functions, 232 of which are in the *physics* module.
+
+## Modules
+
+LOVE's internal code is divided into modules.
+
+Modules can be disabled in `love.conf`.
+
+LOVE's functions are within tables named after the module they are in. For example, `love.graphics.newImage` is in the *graphics* module.
+
+LOVE has around 17 modules.
+

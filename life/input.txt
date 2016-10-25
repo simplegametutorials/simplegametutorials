@@ -139,7 +139,7 @@ This is calculated by taking the mouse position and dividing it by the cell size
 
 For example, if the mouse is at position 17 on the X axis and the cell size is 5, dividing 17 by 5 gives 3.4, flooring 3.4 gives 3, and adding 1 gives 4, meaning that the mouse is in cell 4 on the X axis.
 
-The cell size is needed to calculate this, so it moved into *love.load*.
+The cell size is needed to calculate this, so it moved into `love.load`.
 
 The square at this position is set to the selected color.
 
@@ -299,7 +299,7 @@ Changing the grid after a step of time requires knowing how many alive neighbors
 
 For now, right clicking a cell will print out how many alive neighbors it has.
 
-*grid[selectedY + dy]* is checked to see if it exists before *grid[selectedY + dy][selectedX + dx]*, because if *selectedY + dy* is not on the grid, then *grid[selectedY + dy]* will return nil, and *grid[selectedY + dy][selectedX + dx]* will error because the *[selectedX + dx]* part is trying to index nil.
+`grid[selectedY + dy]` is checked to see if it exists before `grid[selectedY + dy][selectedX + dx]`, because if `selectedY + dy` is not on the grid, then `grid[selectedY + dy]` will return nil, and `grid[selectedY + dy][selectedX + dx]` will error because the `[selectedX + dx]` part is trying to index nil.
 
 `
 function love.mousepressed(mouseX, mouseY, button)
@@ -418,7 +418,7 @@ end
 
 ### Turning key repeat on
 
-Key repeat is turned on so holding a key down will call *love.keypressed* repeatedly.
+Key repeat is turned on so holding a key down will call `love.keypressed` repeatedly.
 
 `
 function love.load()

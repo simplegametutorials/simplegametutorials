@@ -219,9 +219,9 @@ end
 
 ### Only move on Y axis if possible
 
-If *grid[emptyY - 1]* is nil (i.e. *emptyY* is 1 so *emptyY - 1* is 0), then *grid[empty - 1][emptyX]* will cause an error because the *[emptyX]* part is trying to index nil.
+If `grid[emptyY - 1]` is nil (i.e. `emptyY` is 1 so `emptyY - 1` is 0), then `grid[empty - 1][emptyX]` will cause an error because the `[emptyX]` part is trying to index nil.
 
-To prevent this, moving is only possible if *grid[emptyY - 1]* is a non-nil value.
+To prevent this, moving is only possible if `grid[emptyY - 1]` is a non-nil value.
 
 `
 function love.keypressed(key)
@@ -292,9 +292,9 @@ end
 
 ### Only move on X axis if possible.
 
-If *grid[newEmptyY][newEmptyX]* is nil (for example when *newEmptyX* is 0), then *grid[emptyY][emptyX]* will be assigned nil, and *love.graphics.print* will error when it is given nil instead of a number.
+If `grid[newEmptyY][newEmptyX]` is nil (for example when `newEmptyX` is 0), then `grid[emptyY][emptyX]` will be assigned nil, and `love.graphics.print` will error when it is given nil instead of a number.
 
-To prevent this, moving is only possible if *grid[newEmptyY][newEmptyX]* is a non-nil value.
+To prevent this, moving is only possible if `grid[newEmptyY][newEmptyX]` is a non-nil value.
 
 `
 function love.keypressed(key)
@@ -445,7 +445,7 @@ end
 
 After a move is made, the pieces are looped through, and if none of the pieces are not equal to the number they were initially given (i.e. they are all in the positions they were initially) then the game is complete.
 
-For now, *love.load* is called to start a new game.
+For now, `love.load` is called to start a new game.
 
 `
 function love.keypressed(key)

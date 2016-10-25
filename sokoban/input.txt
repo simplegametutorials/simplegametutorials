@@ -331,7 +331,7 @@ end
 
 ### Moving player to empty location
 
-If the player's current position is the cell type *player* (i.e. not *playerOnStorage*) and the adjacent cell type is *empty*, then the player's position becomes *empty* and the adjacent position becomes *player*.
+If the player's current position is the cell type `player` (i.e. not `playerOnStorage`) and the adjacent cell type is `empty`, then the player's position becomes `empty` and the adjacent position becomes `player`.
 
 `
 function love.keypressed(key)
@@ -349,7 +349,7 @@ end
 
 ### Moving player to storage
 
-If the adjacent position is *storage* then the new adjacent position becomes *playerOnStorage*.
+If the adjacent position is `storage` then the new adjacent position becomes `playerOnStorage`.
 
 Currently the player can move on to storage, but not off storage.
 
@@ -375,9 +375,9 @@ end
 
 ### Simplifying code
 
-The new adjacent position is changed based on what *adjacent* is, so a table is made which returns the next adjacent cell type when indexed by the current adjacent cell type.
+The new adjacent position is changed based on what `adjacent` is, so a table is made which returns the next adjacent cell type when indexed by the current adjacent cell type.
 
-Indexing by anything other than the values *empty* or *storage* will be result in nil, so it can also be used to check if the player can move at all.
+Indexing by anything other than the values `empty` or `storage` will be result in nil, so it can also be used to check if the player can move at all.
 
 `
 function love.keypressed(key)
@@ -399,7 +399,7 @@ end
 
 ### Moving player from storage
 
-If the player is on storage, then the player's current position is set to *storage*.
+If the player is on storage, then the player's current position is set to `storage`.
 
 `
 function love.keypressed(key)
@@ -447,7 +447,7 @@ end
 
 The cell beyond the adjacent cell is stored in a variable.
 
-If the adjacent cell is a box and the beyond cell is empty, the adjacent position is set to *player* and the beyond position is set to *box*.
+If the adjacent cell is a box and the beyond cell is empty, the adjacent position is set to `player` and the beyond position is set to `box`.
 
 `
 function love.keypressed(key)
@@ -481,7 +481,7 @@ end
 
 ### Pushing box on to storage
 
-If the beyond position is *storage* then the new beyond position becomes *boxOnStorage*.
+If the beyond position is `storage` then the new beyond position becomes `boxOnStorage`.
 
 `
 function love.keypressed(key)
@@ -538,7 +538,7 @@ end
 
 ### Pushing box on storage
 
-If the adjacent cell is a box on storage, then the adjacent position is set to *boxOnStorage*.
+If the adjacent cell is a box on storage, then the adjacent position is set to `boxOnStorage`.
 
 `
 function love.keypressed(key)
@@ -656,7 +656,7 @@ end
 
 When the *r* key is pressed the level is reset.
 
-The code for copying the current level to the level table is reused from *love.load*, so a function is made.
+The code for copying the current level to the level table is reused from `love.load`, so a function is made.
 
 `
 function love.load()
