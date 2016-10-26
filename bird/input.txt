@@ -66,7 +66,7 @@ A blue rectangle is drawn for the background.
 
 `
 function love.draw()
-	love.graphics.setColor(0, 0, 100)
+	love.graphics.setColor(35, 92, 118)
 	love.graphics.rectangle('fill', 0, 0, 300, 388)
 end
 `
@@ -81,7 +81,7 @@ A yellow rectangle is drawn for the bird.
 function love.draw()
     -- etc.
 
-	love.graphics.setColor(255, 255, 0)
+	love.graphics.setColor(224, 214, 68)
 	love.graphics.rectangle('fill', 62, 200, 30, 25)
 end
 `
@@ -104,7 +104,7 @@ end
 function love.draw()
 	-- etc.
 
-	love.graphics.setColor(255, 255, 0)
+	love.graphics.setColor(224, 214, 68)
 	love.graphics.rectangle('fill', 62, |birdY|, 30, 25)
 end
 `
@@ -166,12 +166,12 @@ function love.load()
 end
 
 function love.draw()
-	love.graphics.setColor(0, 0, 100)
+	love.graphics.setColor(35, 92, 118)
 	love.graphics.rectangle('fill', 0, 0, |playingAreaWidth|, |playingAreaHeight|)
 	
 	-- etc.
 
-	|love.graphics.setColor(0, 150, 0)|
+	|love.graphics.setColor(94, 201, 72)|
 	|love.graphics.rectangle('fill', playingAreaWidth, 0, 54, playingAreaHeight)|
 end
 `
@@ -198,7 +198,7 @@ function love.draw()
 	|local pipeSpaceY = 150|
 	|local pipeSpaceHeight = 100|
 
-	love.graphics.setColor(0, 150, 0)
+	love.graphics.setColor(94, 201, 72)
 	love.graphics.rectangle(
 		'fill',
 		playingAreaWidth,
@@ -391,7 +391,7 @@ end
 function love.draw()
 	-- etc.
 
-	love.graphics.setColor(255, 255, 0)
+	love.graphics.setColor(224, 214, 68)
 	love.graphics.rectangle('fill', |birdX|, birdY, |birdWidth|, 25)
 
 	-- etc.
@@ -436,7 +436,7 @@ end
 function love.draw()
 	-- etc.
 
-	love.graphics.setColor(255, 255, 0)
+	love.graphics.setColor(224, 214, 68)
 	love.graphics.rectangle('fill', birdX, birdY, birdWidth, |birdHeight|)
 
 	-- etc.
@@ -466,7 +466,7 @@ function love.draw()
     -- etc.
 
     |local function drawPipe(pipeX, pipeSpaceY)|
-      love.graphics.setColor(0, 150, 0)
+      love.graphics.setColor(94, 201, 72)
       love.graphics.rectangle(
           'fill',
           pipeX,
@@ -929,14 +929,14 @@ function love.update(dt)
 end
 
 function love.draw()
-    love.graphics.setColor(0, 0, 100)
+    love.graphics.setColor(35, 92, 118)
     love.graphics.rectangle('fill', 0, 0, playingAreaWidth, playingAreaHeight)
 
-    love.graphics.setColor(255, 255, 0)
+    love.graphics.setColor(224, 214, 68)
     love.graphics.rectangle('fill', birdX, birdY, birdWidth, birdHeight)
     
     local function drawPipe(pipeX, pipeSpaceY)
-        love.graphics.setColor(0, 150, 0)
+        love.graphics.setColor(94, 201, 72)
         love.graphics.rectangle(
             'fill',
             pipeX,

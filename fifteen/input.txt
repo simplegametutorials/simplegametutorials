@@ -441,7 +441,7 @@ end
 
 !
 
-### Check for complete
+### Check if complete
 
 After a move is made, the pieces are looped through, and if none of the pieces are not equal to the number they were initially given (i.e. they are all in the positions they were initially) then the game is complete.
 

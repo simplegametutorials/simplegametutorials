@@ -59,7 +59,7 @@ If position adjacent to the player is a box and the position beyond the box is m
 
 The grid is looped through and if there are no boxes left which aren't on storage locations then the level is complete.
 
-## Code
+## Coding
 
 ### Drawing a level
 

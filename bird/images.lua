@@ -2,9 +2,9 @@ local t
 local playingAreaWidth = 300
 local playingAreaHeight = 388
 local pipeSpaceHeight = 100
-local backgroundColor = {0, 0, 100}
-local birdColor = {255, 255, 0}
-local pipeColor = {0, 150, 0}
+local backgroundColor = {35, 92, 118}
+local birdColor = {224, 214, 68}
+local pipeColor = {94, 201, 72}
 local scoreColor = {255, 255, 255}
 local birdX = 62
 local birdY = 200

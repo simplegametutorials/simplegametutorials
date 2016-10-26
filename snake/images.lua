@@ -2,12 +2,13 @@ local font = love.graphics.newFont('SourceCodePro-Regular.ttf', 15)
 local cellXCount = 20
 local cellYCount = 15
 local cellSize = 15
-local colorDead = {140, 140, 140}
-local colorAlive = {165, 255, 81}
-local colorFood = {255, 50, 50}
+local colorDead = {126, 126, 126}
+local colorAlive = {153, 255, 81}
+local colorFood = {255, 76, 76}
+local colorBackground = {71, 71, 71}
 
 local function drawBackground()
-    love.graphics.setColor(100, 100, 100)
+    love.graphics.setColor(colorBackground)
     love.graphics.rectangle(
         'fill',
         0,

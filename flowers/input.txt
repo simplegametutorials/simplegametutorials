@@ -23,7 +23,7 @@ The cells are represented by tables containing a boolean value indicating whethe
 
 The cells which have flowers are chosen randomly. The first cell clicked is excluded from the possible options.
 
-When a cell is clicked, its position added to the "uncover stack".
+When a cell is clicked, its position is added to the "uncover stack" table.
 
 While there is anything left on the uncover stack...
 
@@ -31,7 +31,7 @@ While there is anything left on the uncover stack...
 - This position is set to *uncovered*.
 - If there are no flowers surrounding this position, the surrounding *covered* and *question marked* positions are added to the uncover stack.
 
-The cells are assembled from the following images.
+The cells are drawn by assembling from the following images.
 
 !
 
