@@ -8,7 +8,7 @@ LOVE uses <a href="http://luajit.org/extensions.html">LuaJIT 2.0</a>. You don't 
 
 ## What LOVE can run on
 
-LOVE projects can be run on Windows, Linux, Mac, Android, iOS and (unofficially) <a href="https://github.com/TannerRogalsky/love.js">web browsers</a>.
+LOVE projects can be run on Windows, Linux, Mac OS X, Android, iOS and (unofficially) <a href="https://github.com/TannerRogalsky/love.js">web browsers</a>.
 
 ## What LOVE provides
 
@@ -24,9 +24,9 @@ However, LOVE does provide a particle system and a physics system, because they 
 
 A LOVE project is a directory or zip file containing a *main.lua* file and any other files used.
 
-A project can be run via the command line by *love.exe path_to_love_project* on Windows, *love path_to_love_project* on Linux, or *open -n -a love path_to_love_project* on Mac.
+A project can be run via the command line by *love.exe path_to_love_project* on Windows, *love path_to_love_project* on Linux, or *open -n -a love path_to_love_project* on Mac OS X.
 
-Or, it can be run by dragging and dropping the LOVE project on to *love.exe* on Windows or *love.app* on Mac.
+Or, it can be run by dragging and dropping the LOVE project on to *love.exe* on Windows or *love.app* on Mac OS X.
 
 Zip files with the extension *.love* will be opened automatically by LOVE. Files with the extension *.love* can be renamed to have the extension *.zip* and unzipped.
 
@@ -34,7 +34,7 @@ For more information on running LOVE projects, see this page: <a href="https://l
 
 ## Distribution
 
-LOVE projects can be made into *.exe* files for Windows, *.app* files for Mac, and so on. For more information, see this page: <a href="https://love2d.org/wiki/Game_Distribution">https://love2d.org/wiki/Game_Distribution</a>
+LOVE projects can be made into *.exe* files for Windows, *.app* files for Mac OS X, and so on. For more information, see this page: <a href="https://love2d.org/wiki/Game_Distribution">https://love2d.org/wiki/Game_Distribution</a>
 
 ## Control flow
 
