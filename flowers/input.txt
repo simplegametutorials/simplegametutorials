@@ -6,11 +6,11 @@
 
 ## Rules
 
-The game starts with a grid of covered cells. Under some of them are flowers. The game is over when a flower is uncovered.
+The game starts with a grid of covered cells. Under some of the cells are flowers. The game is over when a flower is uncovered.
 
-Left clicking a cell uncovers it, and if none of its adjacent cells contain flowers, it uncovers all its adjacent cells, and for those cells, if none of <i>their</i> adjacent cells contain flowers, it uncovers all its adjacent cells, and so on.
+Left clicking a cell uncovers it, and if none of its adjacent cells contain flowers, they are also uncovered, and for <i>those</i> uncovered cells, if none of <i>their</i> adjacent cells contain flowers, they are also uncovered, and so on.
 
-Right clicking a cell toggles between the cell having a flag, a question mark, or nothing. Flags prevent a cell from being uncovered with a left click. Question marks are visual markers which don't affect behavior.
+Right clicking a cell toggles between the cell having a flag, a question mark, or nothing. Flags prevent a cell from being uncovered with a left click. Question marks are visual markers which don't affect the game.
 
 ## Controls
 
@@ -19,7 +19,7 @@ Right clicking a cell toggles between the cell having a flag, a question mark, o
 
 ## Overview
 
-The cells are represented by tables containing a boolean value indicating whether or not there is a flower under it, and a string value representing which of four states the cell is in: covered, covered with a flag, covered with a question mark, or uncovered.
+The cells are represented by tables containing a boolean value indicating whether or not there is a flower under it, and a string value indicating which of four states the cell is in: covered, covered with a flag, covered with a question mark, or uncovered.
 
 The cells which have flowers are chosen randomly. The first cell clicked is excluded from the possible options.
 
@@ -31,7 +31,7 @@ While there is anything left on the uncover stack...
 - This position is set to *uncovered*.
 - If there are no flowers surrounding this position, the surrounding *covered* and *question marked* positions are added to the uncover stack.
 
-The cells are drawn by assembling from the following images.
+The cells are drawn by assembling the following images:
 
 !
 
@@ -72,9 +72,9 @@ end
 
 ### Selecting cells
 
-The cell under the mouse is updated every frame.
+The cell position under the mouse is updated every frame.
 
-This needs the cell size, so this is moved from `love.draw` to `love.load`.
+This needs the cell size, so it is moved from `love.draw` to `love.load`.
 
 For now, this position is drawn as text.
 
@@ -194,7 +194,7 @@ end
 
 ### Drawing flowers
 
-A grid is created to store the state of the cells. Since each cell will have two values which need to be stored (whether it has a flower, and whether it is uncovered, has a flag, a question mark, or nothing) each cell is represented by a table.
+A grid is created to store the state of the cells. Because each cell will have two values which need to be stored (whether it has a flower, and whether it is uncovered, has a flag, a question mark, or nothing) each cell is represented by a table.
 
 If a cell's `'flower'` key is true, the flower image is drawn over the cell image.
 
@@ -264,7 +264,7 @@ end
 
 ### Toggling flowers
 
-For testing, clicking the right mouse button will toggle a cell's flower.
+For testing, right clicking a cell will toggle its flower.
 
 `
 function love.mousereleased(mouseX, mouseY, button)
@@ -325,9 +325,9 @@ end
 
 ### Random flower placement
 
-A table is created with very X and Y position in the grid.
+A table is created containing every X and Y position in the grid.
 
-Random positions are repeatedly removed from this table and the cell at this position is set to have a flower.
+Random positions are repeatedly removed from this table and the cells at these positions are set to have a flower.
 
 To test this, any key calls `love.load`.
 
@@ -621,7 +621,7 @@ end
 
 ### Cycling flags and question marks
 
-Right clicking on a cell cycles its state through having nothing, a flag, and a question mark.
+Right clicking a cell cycles its state through having nothing, a flag, and a question mark.
 
 `
 function love.mousereleased(mouseX, mouseY, button)
@@ -640,7 +640,7 @@ function love.mousereleased(mouseX, mouseY, button)
 end
 `
 
-### Prevent clicking on flags
+### Prevent uncovering flags
 
 If a cell has a flag it can't be uncovered by a left click.
 
@@ -706,7 +706,7 @@ If a flower is uncovered the game is over.
 
 A variable is made to store whether the game is over or not.
 
-If the game is over clicking cells does nothing.
+For now, if the game is over clicking cells does nothing.
 
 `
 function love.load()

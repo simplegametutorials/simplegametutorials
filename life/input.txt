@@ -6,12 +6,12 @@
 
 ## Rules
 
-There is a grid of cells, which are either alive of dead.
+There is a grid of cells, which are either alive or dead.
 
 After a step of time:
 
-- Alive cells with exactly two or three alive neighbors live on
-- Dead cells with exactly three alive neighbors become alive
+- Alive cells with exactly two or three alive neighbors live on.
+- Dead cells with exactly three alive neighbors become alive.
 
 All other cells die.
 
@@ -25,13 +25,13 @@ Create an initial configuration of cells, hold a key to step forward in time, an
 
 ## Overview
 
-The cells are stored as a grid of boolean values, true for alive and false for dead.
+The cells are stored as a grid of boolean values, `true` for alive and `false` for dead.
 
 !
 
 When time steps forward, a new grid is created, and whether the cells of this new grid are alive or dead is based on the current grid.
 
-After the new grid has been created, the current grid is replaced with the new grid.
+After the new grid is complete, the current grid is replaced with the new grid.
 
 ## Coding
 
@@ -137,11 +137,9 @@ The cell position that the mouse cursor is over is stored.
 
 This is calculated by taking the mouse position and dividing it by the cell size, flooring this number, then adding 1 to it.
 
-For example, if the mouse is at position 17 on the X axis and the cell size is 5, dividing 17 by 5 gives 3.4, flooring 3.4 gives 3, and adding 1 gives 4, meaning that the mouse is in cell 4 on the X axis.
+For example, if the mouse is at position 17 on the X axis and the cell size is 5, dividing 17 by 5 gives 3.4, flooring 3.4 gives 3, and adding 1 gives 4, meaning that the mouse is over cell 4 on the X axis.
 
-The cell size is needed to calculate this, so it moved into `love.load`.
-
-The square at this position is set to the selected color.
+The cell size is needed to calculate this, so it is moved into `love.load`.
 
 For now, this position is drawn to the screen as text.
 
@@ -172,7 +170,7 @@ end
 
 ### Highlighting cells
 
-The square under the mouse cursor is set to the selected color.
+The square under the mouse cursor is set to the highlighted color.
 
 `
 function love.draw()
@@ -205,7 +203,7 @@ end
 
 A grid is created to store the cells.
 
-Each cell is represented by a boolean value: true for alive, false for dead.
+Each cell is represented by a boolean value: `true` for alive, `false` for dead.
 
 If the cell is alive, the alive color is used to draw the cell.
 
@@ -260,7 +258,7 @@ end
 
 !
 
-### Set cells alive with left mouse button
+### Set cells to alive with left mouse button
 
 If the left mouse button is down, the selected cell is set to alive.
 
@@ -276,7 +274,7 @@ end
 
 !
 
-### Only set cell alive when mouse is within grid
+### Only set cell to alive when mouse is within grid
 
 Setting the cell to alive is only possible if the selected X/Y position is within the grid.
 
@@ -295,11 +293,11 @@ end
 
 ### Getting number of neighbors
 
-Changing the grid after a step of time requires knowing how many alive neighbors each cell has.
+Updating the grid after a step of time requires knowing how many alive neighbors each cell has.
 
 For now, right clicking a cell will print out how many alive neighbors it has.
 
-`grid[selectedY + dy]` is checked to see if it exists before `grid[selectedY + dy][selectedX + dx]`, because if `selectedY + dy` is not on the grid, then `grid[selectedY + dy]` will return nil, and `grid[selectedY + dy][selectedX + dx]` will error because the `[selectedX + dx]` part is trying to index nil.
+`grid[selectedY + dy]` is checked to see if it exists before `grid[selectedY + dy][selectedX + dx]`, because if `selectedY + dy` is not on the grid, then `grid[selectedY + dy]` will return `nil`, and `grid[selectedY + dy][selectedX + dx]` will error because the `[selectedX + dx]` part is trying to index `nil`.
 
 `
 function love.mousepressed(mouseX, mouseY, button)

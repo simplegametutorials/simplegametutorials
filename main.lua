@@ -315,6 +315,7 @@ elseif mode == 'html' then
             :gsub([[%b""]], function(s) return '<span class=@literal@>'..noSpans(s)..'</span>' end)
             :gsub('true', function(s) return '<span class=@literal@>'..s..'</span>' end)
             :gsub('false', function(s) return '<span class=@literal@>'..s..'</span>' end)
+            :gsub('nil', function(s) return '<span class=@literal@>'..s..'</span>' end)
 
             :gsub('function <span class=@literal@>', 'function <span class=@name@>')
             :gsub('[^\n]+\n',
@@ -381,7 +382,6 @@ elseif mode == 'html' then
         image = line:match('^%!$')
         td1, td2 = line:match('^%&%s+(.-)%s+%&%s+(.+)')
 
-
         if code then
             if inCode then
                 inCode = false
@@ -433,6 +433,10 @@ elseif mode == 'html' then
         elseif td1 then
             td1 = td1:gsub('%*[^%*]+%*', function(s) return '<b>'..s:sub(2, -2)..'</b>' end)
             td2 = td2:gsub('%*[^%*]+%*', function(s) return '<b>'..s:sub(2, -2)..'</b>' end)
+
+            td1 = td1:gsub('%b``', function(s) return '<span class="inlinecode">'..highlight(s)..'</span>' end):gsub('`', '')
+            td2 = td2:gsub('%b``', function(s) return '<span class="inlinecode">'..highlight(s)..'</span>' end):gsub('`', '')
+
             local image = td1:match('^%!$')
             if image then
                 if not inTable then

@@ -34,12 +34,12 @@ Boxes can only be moved if there is a free space beyond it, not a wall or anothe
 
 The different states a cell can be in are represented by the following strings:
 
-& *'@'* & Player
-& *'+'* & Player on storage
-& *'$'* & Box
-& *'&#42;'* & Box on storage
-& *'.'* & Storage
-& *'#'* & Wall
+& `'@'` & Player
+& `'+'` & Player on storage
+& `'$'` & Box
+& `'&#42;'` & Box on storage
+& `'.'` & Storage
+& `'#'` & Wall
 
 The level is stored as a grid of these strings.
 
@@ -183,7 +183,7 @@ end
 
 ### Naming cell types
 
-So we don't have to remember what string means what cell type, the cell type strings are stored in variables.
+So we don't have to remember which string refers to which cell type, the cell type strings are stored in variables.
 
 `
 function love.load()
@@ -377,7 +377,7 @@ end
 
 The new adjacent position is changed based on what `adjacent` is, so a table is made which returns the next adjacent cell type when indexed by the current adjacent cell type.
 
-Indexing by anything other than the values `empty` or `storage` will be result in nil, so it can also be used to check if the player can move at all.
+Indexing by anything other than the values `empty` or `storage` will be result in `nil`, so it can also be used to check if the player can move to the adjacent position.
 
 `
 function love.keypressed(key)
@@ -423,7 +423,7 @@ end
 
 ### Simplifying code
 
-A table is made which returns the next cell for the player's previous position type when indexed by the current player cell type.
+A table is made which returns the next cell type for the player's previous position when indexed by the current player cell type.
 
 `
 function love.keypressed(key)
@@ -446,6 +446,8 @@ end
 ### Pushing box on to empty location
 
 The cell beyond the adjacent cell is stored in a variable.
+
+`level[playerY + dy + dy]` is checked to see if it is not `nil` before it is indexed by `[playerX + dx + dx]`. The adjacent position isn't checked in the same way because there is always a border of walls around each level, so `level[playerY + dy]` can never be `nil`.
 
 If the adjacent cell is a box and the beyond cell is empty, the adjacent position is set to `player` and the beyond position is set to `box`.
 

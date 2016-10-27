@@ -1432,8 +1432,6 @@ local function loadLevel()
     return level
 end
 
-love.graphics.setNewFont('SourceCodePro-Regular.ttf', 12)
-
 local function drawTable(t)
     love.graphics.push('all')
     local blockDrawSize = squareSize
@@ -1517,7 +1515,6 @@ local function drawTable4(t)
     love.graphics.print('}', -20, 0)
     love.graphics.pop()
 end
-
 
 local function move(level, key)
     if key == 'up' or key == 'down' or key == 'left' or key == 'right' then
@@ -1734,6 +1731,7 @@ return {
     end,
     --]]
     function()
+        love.graphics.setNewFont('SourceCodePro-Regular.ttf')
         drawTable2(levels[1], true)
     end,
     function()

@@ -98,7 +98,7 @@ The snake moves once every 0.15 seconds.
 
 A timer variable starts at 0 and increases by `dt` each frame.
 
-When it is at or above 0.15, it is reset by taking 0.15 from it (leaving any residual time in the timer variable is the timer has gone slightly above 0.15, so the timing is more accurate than setting the timer to 0), and this is when the snake will move.
+When it is at or above 0.15, it is reset by taking 0.15 from it (leaving any residual time in the timer variable if the timer has gone slightly above 0.15, so the timing is more accurate than setting the timer to 0), and this is when the snake will move.
 
 `
 function love.load()
@@ -164,7 +164,7 @@ end
 
 The snake's current direction is stored in a variable, and is changed using the arrow keys.
 
-The snake's next head position is based on the direction.
+The snake's next head position is based on this direction.
 
 `
 function love.load()
@@ -239,7 +239,7 @@ end
 
 ### Using direction queue
 
-Currently, the snake can still go backwards if another direction and then the opposite direction is pressed within a single tick. For example, if the snake has moved right, and then the player presses down then left before the next tick, the snake will move left.
+Currently, the snake can still go backwards if another direction and then the opposite direction is pressed within a single tick. For example, if the snake moved right on the last tick, and then the player presses down then left before the next tick, the snake will move left on the next tick.
 
 Also, the player may want to give multiple directions within a single tick. In the above example, the player may have wanted the snake to move down for the next tick, and then left on the tick after.
 
@@ -247,7 +247,7 @@ A direction queue is created. The first item in the queue is the direction the s
 
 If the direction queue has more than one item, the first item is removed from it on every tick.
 
-When a key is pressed, the direction is added on to the end of the direction queue.
+When a key is pressed, the direction is added to the end of the direction queue.
 
 The last item of the direction queue (i.e. the last direction pressed) is checked to see if it's not in the opposite direction of the new direction before adding the new direction to the direction queue.
 
@@ -318,7 +318,7 @@ end
 
 !
 
-### Preventing adding double direction to the direction queue
+### Preventing adding direction to the direction queue twice
 
 If the last direction is the same direction as the new direction, the new direction is not added to the direction queue.
 
@@ -429,7 +429,7 @@ end
 
 ### Simplifying code
 
-The code for drawing the a segment of a snake and drawing the food is the same, so a function is made.
+The code for drawing a snake's segment and drawing the food is the same, so a function is made.
 
 `
 function love.draw()
@@ -537,8 +537,7 @@ function love.load()
             end
         end
 
-        local roll = love.math.random(#possibleFoodPositions)
-        foodPosition = possibleFoodPositions[roll]
+        foodPosition = possibleFoodPositions[love.math.random(#possibleFoodPositions)]
     end
 
     moveFood()
@@ -585,7 +584,7 @@ end
 
 ### Pausing after the snake has crashed
 
-A variable is used to store whether or not the snake is alive, and is set to false when the snake has crashed.
+A variable is used to store whether or not the snake is alive, and is set to `false` when the snake has crashed.
 
 If the snake is dead, the timer waits for 2 seconds before calling `love.load`.
 
@@ -639,7 +638,7 @@ end
 
 !
 
-### Resetting when game over
+### Resetting
 
 When the game is over only some variables need to be reset, so a function is made.
 
@@ -680,8 +679,7 @@ function love.load()
             end
         end
 
-        local roll = love.math.random(1, #possibleFoodPositions)
-        foodPosition = possibleFoodPositions[roll]
+        foodPosition = possibleFoodPositions[love.math.random(1, #possibleFoodPositions)]
     end
 
     moveFood()
@@ -735,8 +733,7 @@ function love.load()
             end
         end
 
-        local roll = love.math.random(1, #possibleFoodPositions)
-        foodPosition = possibleFoodPositions[roll]
+        foodPosition = possibleFoodPositions[love.math.random(1, #possibleFoodPositions)]
     end
 
     moveFood()

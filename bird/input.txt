@@ -24,7 +24,7 @@ The bird's Y position moves down by a certain speed each frame. Each frame this 
 
 When a key is pressed the bird's speed is set to a high number in the up direction.
 
-The pipes have the same width and the same height of the space between the segments.
+The pipes share the same width and the same height of the space between the segments.
 
 !
 
@@ -153,7 +153,7 @@ end
 
 ### Drawing a pipe
 
-For now, a solid rectangle is drawn for the pipe, with its left edge next to the playing area's right edge.
+For now, a solid rectangle is drawn for the pipe, with its left edge touching the playing area's right edge.
 
 The width and height of the playing area are reused from drawing the background, so these are made into variables.
 
@@ -184,7 +184,7 @@ Instead of drawing one rectangle, two rectangles are drawn for the upper and low
 
 The top rectangle's height is set to where the "space" between the two segments starts. For now, this is 150.
 
-The bottom rectangle starts at the Y position of the top rectangle's height plus amount of space between them (which is 100).
+The bottom rectangle starts at the Y position of the top rectangle's height plus the amount of space between them (which is 100).
 
 The bottom rectangle's height is the playing area's height, minus the height of what is "already there" (the top rectangle and the space).
 
@@ -359,7 +359,7 @@ The bird is colliding with the top pipe segment if...
 - the top edge of the bird is above the bottom edge of the pipe segment (i.e. the bird is not completely below the pipe segment)
 ... then the bird is colliding with the top pipe segment.
 
-For now, `love.load` is called when the bird and pipe collide.
+For now, `love.load` is called to reset the game when the bird and pipe collide.
 
 The bird's X position and width are reused from drawing the bird, so they are moved into `love.load`.
 
@@ -404,7 +404,7 @@ The bird is colliding with the bottom pipe segment if...
 - the bird is overlapping the pipe on the X axis (as checked for with the top pipe segment), and...
 - the bottom edge of the bird is above the top edge of the pipe segment (i.e. the bird is not completely above the pipe segment)
 ... then the bird is colliding with the bottom pipe segment.
-The bird's X height is reused from drawing the bird's rectangle, so it is made into a global variable.
+The bird's X height is reused from drawing the bird, so it is moved into `love.load`.
 
 `
 function love.load()
@@ -492,7 +492,7 @@ end
 
 ### Randomizing space position for two pipes
 
-Because each pipe has an individual X position, setting the X position is removed from the `resetPipe` function, leaving only the random space position. The function is renamed to reflect this.
+Because each pipe has an individual X position, setting the X position is removed from the `resetPipe` function, leaving only the random space position. The function is renamed to `newPipeSpaceY` to reflect this.
 
 Instead of creating a global `pipeSpaceY` variable, the function returns a new space position.
 
@@ -564,7 +564,7 @@ end
 
 ### Moving two pipes
 
-The code which moves the pipe is uncommented and turned into a function which takes a pipe's X and space positions, and returns the updated positions.
+The code which moves the pipe is uncommented and turned into a function which takes a pipe's X position and space position, and returns the updated positions.
 
 When a pipe goes off the playing area it is set to the right of the playing area.
 
@@ -632,7 +632,7 @@ end
 
 ### Bird colliding with pipe
 
-The code for the checking if the bird and pipe have collided is uncommented and turned into a function which takes a pipe's X and space positions and returns a boolean value.
+The code for the checking if the bird and pipe have collided is uncommented and turned into a function which takes a pipe's X position and space position and returns a boolean value.
 
 The function is called for both pipes.
 
@@ -702,7 +702,7 @@ end
 
 ### Updating score after passing first pipe
 
-If the bird's left edge if to the right of the pipe's right edge, then 1 is added to the score.
+If the bird's left edge is to the right of the pipe's right edge, then 1 is added to the score.
 
 Currently, this happens every frame instead of once, and only the first pipe is checked.
 

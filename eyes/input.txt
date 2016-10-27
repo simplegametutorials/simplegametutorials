@@ -26,7 +26,7 @@ end
 
 The distance between the center of the eye and the mouse cursor is displayed.
 
-The X and Y position of the eye is reused from drawing the eye, so variables are made for these.
+The X and Y positions of the eye are reused from drawing the eye, so variables are made for these.
 
 `
 function love.draw()
@@ -56,7 +56,7 @@ end
 
 ### Getting straight-line distance between cursor and eye
 
-The distance in a straight-line is calculated using the Pythagorean theorem.
+The distance in a straight line is calculated using the Pythagorean theorem.
 
 The square root of the distance on the X axis squared plus the distance on the Y axis squared is the distance in a straight line.
 

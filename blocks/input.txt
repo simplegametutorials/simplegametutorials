@@ -18,7 +18,7 @@ The type of the next piece that will fall is shown above the playing area.
 
 When an unbroken row of blocks is formed the row disappears and all the blocks above it move down one row.
 
-The game ends when the stack of blocks reaches the top of the playing area and the next piece would overlap a block already on the stack.
+The game ends when a piece has fallen and the next piece would immediately overlap a previously fallen block.
 
 ## Controls
 
@@ -42,7 +42,7 @@ All the different types of pieces are stored with their rotated variations.
 
 !
 
-The currently falling piece is stored as a number representing which type of piece it is, a number representing which rotation variation it is at, and number representing its X and Y position on the playing area.
+The currently falling piece is stored as a number representing which type of piece it is, a number representing which rotation variation it is at, and a number representing its X and Y position on the playing area.
 
 ### Basic logic
 
@@ -56,7 +56,7 @@ When a rotate button is pressed, the piece changes to its next rotation variatio
 
 When the drop button is pressed, the piece moves down until the next position would overlap an inert block or be outside the playing area, at which point it has come to rest.
 
-When the piece comes to rest, meaning that if it moved down it would overlap an inert piece outside the playing area, the blocks of the pieces are added to the inert pieces, and the next piece is created.
+When the piece comes to rest, the blocks of the piece are added to the inert blocks, and the next piece is created.
 
 A sequence of one of each of the seven pieces in a random order is created, and the next piece is taken from this sequence. Once all of the pieces have been taken, a new random sequence is created.
 
@@ -86,7 +86,7 @@ end
 
 !
 
-### Colors
+### Setting colors
 
 The background color and block color are set.
 
@@ -115,9 +115,9 @@ end
 
 !
 
-### Inert blocks
+### Storing inert blocks
 
-The grid for the inert blocks is created and every cell is set to ' ' (a string containing the space character), representing an empty cell.
+The grid for the inert blocks is created and every cell is set to `' '` (a string containing the space character), representing an empty cell.
 
 The width and height of the grid in blocks is reused from drawing the blocks, so they are made into variables.
 
@@ -150,7 +150,7 @@ end
 
 When the blocks of the grid are drawn, the color is set based on what is stored in the inert grid.
 
-To test the inert blocks, some cells are set to values representing blocks of varying colors.
+To test, some cells are set to values representing blocks of different colors.
 
 `
 function love.load()
@@ -201,7 +201,7 @@ end
 
 ### Storing the piece structures
 
-Each rotation of a piece structure is stored as a 4 by 4 grid.
+Each rotation of a piece structure is stored as a 4 by 4 grid of strings.
 
 `
 {
@@ -372,7 +372,7 @@ end
 
 ### Storing the current piece
 
-The currently falling piece is represented by a number indicating which type it is, and a number indicating which rotation it is at.
+The currently falling piece is represented by a number indicating which type it is (which will be used to index the table of piece structures), and a number indicating which rotation it is at (which will be used to index the table of rotations).
 
 `
 function love.load()
@@ -427,7 +427,7 @@ end
 
 ### Simplifying code
 
-The code for drawing the inert blocks and drawing the falling piece's blocks is the same, so a function is made.
+The code for drawing an inert block and drawing a falling piece's block is the same, so a function is made.
 
 `
 function love.draw()
@@ -475,13 +475,13 @@ end
 
 ### Rotation
 
-When the *x* key is pressed, the piece rotation number is increased by 1, rotating the piece clockwise.
+When the *x* key is pressed, the piece's rotation number is increased by 1, rotating the piece clockwise.
 
-If the rotation number is greater than the number of rotation positions (i.e. greater than the last position), the rotation number is set to 1 (i.e. the first position).
+If the rotation number is greater than the number of rotation positions (i.e. greater than the last rotation position), the rotation number is set to 1 (i.e. the first rotation position).
 
 Likewise, when the *z* key is pressed, the piece rotation number is decreased by 1, rotating the piece counter-clockwise.
 
-If the rotation number is less than 1 (i.e. less than the first position), the rotation number is set to the the number of rotation positions (i.e. the last position).
+If the rotation number is less than 1 (i.e. less than the first rotation position), the rotation number is set to the number of rotation positions (i.e. the last rotation position).
 
 `
 function love.keypressed(key)
@@ -587,11 +587,11 @@ function love.load()
     -- etc.
 
     timer = 0
-    timerLimit = 0.5
 end
 
 function love.update(dt)
     timer = timer + dt
+    local timerLimit = 0.5
     if timer >= timerLimit then
         timer = timer - timerLimit
 
@@ -604,13 +604,13 @@ end
 
 ### Confining movement
 
-To prevent the piece from moving off the left or right of the screen when it is moved or rotated, each of its blocks is checked to see if they are within the playing area before it is moved/rotated.
+To prevent the piece from moving off the left or right of the screen when it is moved or rotated, each of its blocks are checked to see if they are within the playing area before the piece is moved or rotated.
 
 Because this checking will be done in multiple places, it will be written as a function. This function is given the position and rotation to check, and returns true or false depending on whether the piece can move or rotate.
 
 To begin with, this function will always return true, so moving and rotating is still always possible.
 
-The code is changed from immediately setting positions/rotations, to creating variables for the changed values, and if the checking function returns true, the actual position/rotation is set.
+The code is changed from immediately setting positions/rotations, to creating variables for the changed values, and if the checking function returns true, the actual position/rotation is set to the changed values.
 
 `
 function love.load()
@@ -623,6 +623,7 @@ end
 
 function love.update(dt)
     timer = timer + dt
+    local timerLimit = 0.5
     if timer >= timerLimit then
         timer = timer - timerLimit
 
@@ -645,7 +646,7 @@ function love.keypressed(key)
         |end|
 
     elseif key == 'z' then
-        |local testRotation| = |pieceRotation| - 1
+        |local testRotation| = pieceRotation - 1
         if |testRotation| < 1 then
             |testRotation| = #pieceStructures[pieceType]
         end
@@ -795,8 +796,8 @@ To test this, an inert block is manually set.
 function love.load()
     -- etc.
 
-    -- Temporary
-    inert[8][5] = 'z'
+    |-- Temporary|
+    |inert[8][5] = 'z'|
 
     function canPieceMove(testX, testY, testRotation)
         for y = 1, pieceYCount do
@@ -822,7 +823,7 @@ end
 
 ### Simplifying code
 
-The calculated block positions to test are reused, so these can be stored in variables.
+The calculated block positions to test are reused, so these are stored in variables.
 
 `
 function love.load()
@@ -873,6 +874,7 @@ If the timer ticks and the piece can't move down, the piece is reset to its init
 `
 function love.update(dt)
     timer = timer + dt
+    local timerLimit = 0.5
     if timer >= timerLimit then
         timer = timer - timerLimit
 
@@ -909,6 +911,7 @@ end
 
 function love.update(dt)
     timer = timer + dt
+    local timerLimit = 0.5
     if timer >= timerLimit then
         timer = timer - timerLimit
 
@@ -1015,6 +1018,7 @@ The piece's blocks are looped through, and if the block isn't empty then the ine
 `
 function love.update(dt)
     timer = timer + dt
+    local timerLimit = 0.5
     if timer >= timerLimit then
         timer = timer - timerLimit
 
@@ -1042,7 +1046,19 @@ end
 
 When the piece is dropped the timer is set immediately to the limit so that adding the piece to the inert pieces and creating the new piece happen immediately.
 
+The timer limit is reused from `love.update`, so it is moved into `love.load`.
+
 `
+function love.load()
+    -- etc.
+
+    timerLimit = 0.5
+end
+
+function love.update(dt)
+    -- Removed: local timerLimit = 0.5
+end
+
 function love.keypressed(key)
     -- etc.
 
@@ -1059,7 +1075,7 @@ end
 
 Each row of the inert blocks is looped through, and if none of the columns of the row contain an empty block the row is complete.
 
-For now, the complete row is printed out.
+For now, the complete row numbers are printed out.
 
 `
 function love.update(dt)
@@ -1126,7 +1142,6 @@ function love.update(dt)
                     |    for removeX = 1, gridXCount do|
                     |        inert[removeY][removeX] = inert[removeY - 1][removeX]|
                     |    end|
-                    |    |
                     |end|
                 
                     |for removeX = 1, gridXCount do|

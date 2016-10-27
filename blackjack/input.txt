@@ -10,7 +10,9 @@ The dealer and player are both dealt two cards. The dealer's first card is hidde
 
 The player can hit (i.e. take another card) or stand (i.e. stop taking cards).
 
-If total of the player's hand goes over 21 they have gone bust and can't take more cards.
+If the total value of the player's hand goes over 21 they have gone bust and can't take more cards.
+
+Face cards (king, queen and jack) have a value of 10, and aces have a value of 11 unless this would make the total value of the hand go above 21, in which case they have a value of 1.
 
 After the player has stood or gone bust, the dealer takes cards until the total of their hand is 17 or over.
 
@@ -27,9 +29,9 @@ The deck initially contains one of every card.
 
 !
 
-The player's and the dealer's hands are tables, and cards are removed from the deck at random positions and inserted into their hands when they take cards.
+The player's and dealer's hands are tables, and cards are removed from the deck at random positions and inserted into their hands when they take cards.
 
-The cards are assembled from the following images, sometimes with the images colored or flipped horizontally or vertically.
+The cards are assembled from the following images, with the images colored or flipped horizontally or vertically as necessary:
 
 !
 
@@ -146,7 +148,7 @@ Total number of cards in deck: 50
 
 For now, information about the state of the game will be displayed as text.
 
-A table is created for the output strings, and is concatenated is drawn to the screen.
+A table is created for the output strings, and is concatenated then drawn to the screen.
 
 `
 function love.draw()
@@ -163,7 +165,7 @@ end
 
 !
 
-### Dealing dealer's hand
+### Dealing the dealer's hand
 
 A table is created for the dealer's hand and two random cards from the deck are inserted into it.
 
@@ -229,7 +231,7 @@ For now, the keyboard is used for input instead of on-screen buttons.
 
 When the *h* key is pressed the player takes a card from the deck.
 
-Since *takeCard* is used in *love.keypressed* it is made global.
+Since `takeCard` is used in `love.keypressed` it is made global.
 
 `
 function love.load()
@@ -249,11 +251,11 @@ end
 
 !
 
-### Total
+### Getting total value of hand
 
 For each hand, the rank of each card is added together to get the total value of the hand.
 
-Currently this does not account for face cards or the value of aces sometimes being 11.
+Currently this does not account for face cards having a value of 10 or the value of aces sometimes being 11.
 
 `
 function love.draw()
@@ -346,13 +348,9 @@ end
 
 !
 
-### Standing and displaying winner
+### Standing
 
 When the *s* key is pressed the player stands and, for now, the round is over.
-
-The total of the player's hand is compared to the total of the dealer's hand and the winner is displayed.
-
-Currently this does not account for busts (i.e. hands with a value of over 21).
 
 The player can hit only when the round is not over.
 
@@ -363,6 +361,22 @@ function love.load()
     roundOver = false
 end
 
+function love.keypressed(key)
+    if key == 'h' |and not roundOver| then
+        takeCard(playerHand)
+    |elseif key == 's' then|
+    |    roundOver = true|
+    end
+end
+`
+
+### Displaying winner
+
+When the round is over, the total of the player's hand is compared to the total of the dealer's hand and the winner is displayed.
+
+Currently this does not account for busts (i.e. hands with a value of over 21).
+
+`
 function love.draw()
     -- etc.
 
@@ -380,14 +394,6 @@ function love.draw()
 
     -- etc.
 end
-
-function love.keypressed(key)
-    if key == 'h' |and not roundOver| then
-        takeCard(playerHand)
-    |elseif key == 's' then|
-    |    roundOver = true|
-    end
-end
 `
 
 !
@@ -395,8 +401,8 @@ end
 ### Winner accounting for bust
 
 The player or dealer wins if they haven't gone bust, and...
-- their hand has a greater total than that of their opponent, or...
-- their opponent has gone bust.
+- their opponent has gone bust, or...
+- their hand has a greater total than that of their opponent.
 
 `
 function love.load()
@@ -468,7 +474,7 @@ end
 
 ### Play again
 
-When a key is pressed when the round over, *love.load* is called to start another game.
+When a key is pressed and the round is over, for now `love.load` is called to start another game.
 
 `
 function love.keypressed(key)
@@ -484,11 +490,11 @@ function love.keypressed(key)
 end
 `
 
-### End round on bust or blackjack
+### End round on bust or 21
 
 If the player has gone bust or the value of their hand is already 21, the round is automatically over.
 
-Since this requires getting the total value of a hand, *getTotal* is moved into *love.load*.
+Since this requires getting the total value of a hand, `getTotal` is moved into `love.load`.
 
 `
 function love.load()
@@ -724,9 +730,11 @@ end
 
 ### Drawing bottom number
 
-The card's rank is drawn at the bottom right corner minus the same offset used when drawing the rank at the top of the card. The image is flipped both horizontally and vertically, which results in its bottom right corner (after flipping) being at the bottom right of the card.
+The card's rank is drawn at the bottom right corner minus the same offset added to the rank drawn at the top.
 
-To calculate this position, the card's width and height are needed (and they will also be used when drawing the suit and pips), and the offset from the corner is reused from drawing the top number, so variables are made for these.
+The image is flipped both horizontally and vertically.
+
+To calculate the image's X and Y positions, the card's width and height are needed (and they will also be used when drawing the suit and pips), and the offset from the corner is reused from drawing the top number, so variables are made for these.
 
 `
 function love.draw()
@@ -1204,9 +1212,9 @@ end
 
 ### Simplifying code
 
-Pips have an individual offset, and can be "mirrored" on the X and Y axis.
+Pips have an individual offsets, and can be "mirrored" on the X and Y axis.
 
-A function is made with the offset and whether to mirror on the X or Y axis as parameters.
+A function is made with the offsets and whether to mirror on the X or Y axis as parameters.
 
 `
 function love.draw()
@@ -1277,7 +1285,7 @@ end
 
 ### Drawing the rest of the ranks
 
-The rest of the ranks are drawn, with two new variables made for repeated Y positions.
+The rest of the ranks are drawn, with two new variables made for repeated Y offsets.
 
 `
 function love.draw()
@@ -1390,7 +1398,7 @@ end
 
 Until the round is over, the dealer's first card is hidden. Instead of drawing the card, another image is drawn for a face down card.
 
-The Y position of the face down is reused from drawing the dealer's other cards, so it is made into a variable.
+The Y position of the face down card is reused from drawing the dealer's other cards, so it is made into a variable.
 
 `
 function love.draw()
@@ -1500,8 +1508,6 @@ end
 
 The "play again" button is drawn occupying the same position as the other buttons, since it will only be visible when the round is over.
 
-The Y position and height of all three buttons are reused, so these are made into variables.
-
 `
 function love.draw()
     -- etc.
@@ -1531,7 +1537,9 @@ end
 
 The X and Y position of the text is based on the X and Y position of the buttons plus some offset.
 
-Each button's X position is used twice, so these are made into variables. The same Y position is used by all buttons.
+Each button's X position is used twice, so these are made into variables.
+
+The same Y position is used by all buttons, so this is made into a variable.
 
 `
 function love.draw()
@@ -1563,7 +1571,7 @@ end
 
 ### Simplifying code
 
-The only difference between the code for drawing each button is the button's text, X position, width and text offset on the X axis. A function is made with these as parameters.
+The only difference between the code for drawing each button is the button's text, X position, width, and text offset on the X axis. A function is made with these as parameters.
 
 `
 function love.draw()
@@ -1624,11 +1632,11 @@ end
 
 ### Clicking buttons
 
-If a mouse button is released and the mouse is over the on-screen button then the button has been clicked, for now the name of the button is printed.
+If a mouse button is released and the mouse is over a button then the button has been clicked, and for now the name of the button is printed.
 
-Checking if the mouse is over a button is reused from drawing the button, so this is made into a function and is moved into *love.load*.
+Checking if the mouse is over a button is reused from drawing the button, so it is made into a function and is moved into `love.load`.
 
-The X and Y positions and width and height of buttons are also reused from drawing the buttons, so these are also moved into *love.load*.
+The X and Y positions and width and height of buttons are also reused from drawing the buttons, so they are also moved into `love.load`.
 
 `
 function love.load()
@@ -1698,7 +1706,7 @@ end
 
 ### Using buttons
 
-The code from *love.keypressed* is moved to *love.mousepressed*, and instead of using the keys it uses the on-screen buttons.
+The code from `love.keypressed` is moved to `love.mousepressed`, and instead of using the keys it uses the on-screen buttons.
 
 `
 function love.|mousereleased|()

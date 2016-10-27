@@ -34,8 +34,7 @@ function love.load()
 			end
 		end
 
-		local roll = love.math.random(#possibleFoodPositions)
-		foodPosition = possibleFoodPositions[roll]
+		foodPosition = possibleFoodPositions[love.math.random(#possibleFoodPositions)]
 	end
 
 	moveFood()
@@ -109,7 +108,7 @@ end
 function love.draw()
 	local cellSize = 15
 
-	love.graphics.setColor(100, 100, 100)
+	love.graphics.setColor(71, 71, 71)
 	love.graphics.rectangle(
 		'fill',
 		0,
@@ -130,14 +129,14 @@ function love.draw()
 
 	for segmentIndex, segment in ipairs(snakeSegments) do
 		if snakeAlive then
-			love.graphics.setColor(165, 255, 81)
+			love.graphics.setColor(153, 255, 81)
 		else
-			love.graphics.setColor(140, 140, 140)
+			love.graphics.setColor(126, 126, 126)
 		end
 		drawCell(segment.x, segment.y)
 	end
 
-	love.graphics.setColor(255, 50, 50)
+	love.graphics.setColor(255, 76, 76)
 	drawCell(foodPosition.x, foodPosition.y)
 end
 

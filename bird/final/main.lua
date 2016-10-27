@@ -89,14 +89,14 @@ function love.update(dt)
 end
 
 function love.draw()
-	love.graphics.setColor(0, 0, 100)
+	love.graphics.setColor(35, 92, 118)
 	love.graphics.rectangle('fill', 0, 0, playingAreaWidth, playingAreaHeight)
 
-	love.graphics.setColor(255, 255, 0)
+	love.graphics.setColor(224, 214, 68)
 	love.graphics.rectangle('fill', birdX, birdY, birdWidth, birdHeight)
 
 	local function drawPipe(pipeX, pipeSpaceY)
-		love.graphics.setColor(0, 150, 0)
+		love.graphics.setColor(94, 201, 72)
 		love.graphics.rectangle(
 			'fill',
 			pipeX,
