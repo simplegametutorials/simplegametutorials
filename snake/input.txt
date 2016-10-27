@@ -120,7 +120,9 @@ end
 
 The next position of the snake's head is calculated by adding 1 to the current X position of the snake's head (i.e. the first element of the segments table). This new segment is added to the start of the segments table.
 
-The last element of the segments table is removed.
+The last element of the segments table (the snake's tail) is removed.
+
+The segments table is changed in `love.update`, so it is moved into `love.load`.
 
 `
 function love.load()

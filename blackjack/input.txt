@@ -1717,7 +1717,7 @@ function love.|mousereleased|()
                 takeCard(dealerHand)
             end
         end
-    elseif |isMouseInButton(buttonPlayAgainX, buttonY, buttonPlayAgainWidth, buttonHeight)| then
+    elseif |isMouseInButton(buttonPlayAgainX, buttonPlayAgainWidth)| then
         love.load()
     end
 end
@@ -1758,7 +1758,7 @@ function love.load()
     buttonPlayAgainX = 10
     buttonPlayAgainWidth = 113
 
-    function isMouseInButton(x, y, width, height)
+    function isMouseInButton(buttonX, buttonWidth)
         -- etc.
     end
 
@@ -1787,7 +1787,7 @@ end
 function love.mousereleased()
     -- etc.
 
-    elseif isMouseInButton(buttonPlayAgainX, buttonY, buttonPlayAgainWidth, buttonHeight) then
+    elseif isMouseInButton(buttonPlayAgainX, buttonPlayAgainWidth) then
         |reset()|
     end
 end
@@ -2117,7 +2117,7 @@ function love.mousereleased()
                 takeCard(dealerHand)
             end
         end
-    elseif isMouseInButton(buttonPlayAgainX, buttonY, buttonPlayAgainWidth, buttonHeight) then
+    elseif isMouseInButton(buttonPlayAgainX, buttonPlayAgainWidth) then
         reset()
     end
 end

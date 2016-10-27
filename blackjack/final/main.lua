@@ -319,7 +319,7 @@ function love.mousereleased()
 				takeCard(dealerHand)
 			end
 		end
-	elseif isMouseInButton(buttonPlayAgainX, buttonY, buttonPlayAgainWidth, buttonHeight) then
+	elseif isMouseInButton(buttonPlayAgainX, buttonPlayAgainWidth) then
 		reset()
 	end
 end
