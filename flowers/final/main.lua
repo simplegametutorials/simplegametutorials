@@ -1,6 +1,6 @@
 function love.load()
 	images = {}
-	for _, image in ipairs({
+	for imageIndex, image in ipairs({
 		1, 2, 3, 4, 5, 6, 7, 8,
 		'uncovered', 'covered_highlighted', 'covered', 'flower', 'flag', 'question',
 	}) do

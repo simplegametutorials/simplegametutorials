@@ -44,7 +44,7 @@ All of the images needed for the game are loaded into a table.
 `
 function love.load()
     images = {}
-    for _, image in ipairs({
+    for imageIndex, image in ipairs({
         1, 2, 3, 4, 5, 6, 7, 8,
         'uncovered', 'covered_highlighted', 'covered', 'flower', 'flag', 'question',
     }) do
@@ -893,7 +893,7 @@ When the game is over only some variables need to be reset, so a function is mad
 `
 function love.load()
     images = {}
-    for _, image in ipairs({
+    for imageIndex, image in ipairs({
         -- etc.
     }) do
         -- etc.
@@ -941,7 +941,7 @@ end
 `
 function love.load()
     images = {}
-    for _, image in ipairs({
+    for imageIndex, image in ipairs({
         1, 2, 3, 4, 5, 6, 7, 8,
         'uncovered', 'covered_highlighted', 'covered', 'flower', 'flag', 'question',
     }) do

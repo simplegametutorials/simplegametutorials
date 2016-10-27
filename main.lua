@@ -272,10 +272,10 @@ elseif mode == 'html' then
     ]]
 
     keywords = {}
-    for _, a in pairs{
+    for keywordIndex, keyword in pairs{
         "and", "break", "do", "else", "elseif", "end", "for", "function", "if", "local", "nil", "not", "or", "repeat", "return", "then", "until", "while", "true", "false", "in"
     } do
-        keywords[a] = true
+        keywords[keyword] = true
     end
 
     function a(t, z)
