@@ -1707,9 +1707,6 @@ return {
         drawLevel(level)
     end,
     function()
-        drawCell(1, 1, storage)
-    end,
-    function()
         drawCell(1, 1, player)
     end,
     function()
@@ -1720,6 +1717,9 @@ return {
     end,
     function()
         drawCell(1, 1, boxOnStorage)
+    end,
+    function()
+        drawCell(1, 1, storage)
     end,
     function()
         drawCell(1, 1, wall)
