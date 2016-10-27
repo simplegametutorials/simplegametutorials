@@ -39,7 +39,7 @@ This is console output.
 
 **images.lua** returns a table of functions which draw stuff. Each function in the table corresonds to each exclamation point in **input.txt**. For example the function at table index 2 will be placed at the position of the second exclamation point. The !s and the functions need to be "lined up".
 
-The up and down arrows move through the previews of the functions. The space bar outputs the currently displayed images to a file to be used by the HTML, and the *a* key loops through all of the functions and outputs them to files.
+The up and down arrows move through the previews of the functions. The space bar outputs the currently displayed images to a file to be used by the HTML, and the **a** key loops through all of the functions and outputs them to files.
 
 Any blank space around whatever is drawn is cropped away.
 
