@@ -2,7 +2,7 @@
 
 LOVE's homepage is: <a href="https://love2d.org/">https://love2d.org/</a>
 
-The current LOVE version at the time this document was last updated is 0.10.1.
+The current LOVE version at the time this document was last updated is 0.10.2.
 
 LOVE uses <a href="http://luajit.org/extensions.html">LuaJIT 2.0</a>. You don't need to install this or any other Lua version to use LOVE.
 

@@ -311,20 +311,11 @@ elseif mode == 'html' then
             :gsub([[%"[ ]?<span class=@name@>]]..name..[[+</span>[ ]?%"]], function(s) return "\""..s:gsub("\" <span class=@name@>", " "):gsub("\"<span class=@name@>", ""):gsub("</span> \"", " "):gsub("</span>\"", "").."\"" end)
 
             :gsub('([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%] ])([%d%.]+)([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%] \n])', function(a, b, c) return a..'<span class=@literal@>'..b..'</span>'..c end)
-            :gsub([[%b'']], function(s) return '<span class=@literal@>'..noSpans(s)..'</span>' end)
-            :gsub([[%b""]], function(s) return '<span class=@literal@>'..noSpans(s)..'</span>' end)
             :gsub('true', function(s) return '<span class=@literal@>'..s..'</span>' end)
             :gsub('false', function(s) return '<span class=@literal@>'..s..'</span>' end)
             :gsub('nil', function(s) return '<span class=@literal@>'..s..'</span>' end)
 
             :gsub('function <span class=@literal@>', 'function <span class=@name@>')
-            :gsub('[^\n]+\n',
-            function(s)
-                local a, z = s:match('(.*)(%-%-.*)')
-                if z then
-                    return a..'<span class=@comment@>'..noSpans(z)..'</span>'
-                end
-            end)
             :gsub('(<span class=@comment@>)(%s*)', function(a, b) return b..a end)
 
         end
@@ -337,11 +328,18 @@ elseif mode == 'html' then
         local inComment = false
         local output = ''
         for line in magiclines(s) do
+            line = line:gsub([[%b'']], function(s) return '<span class=@literal@>'..noSpans(s)..'</span>' end)
+                       :gsub([[%b""]], function(s) return '<span class=@literal@>'..noSpans(s)..'</span>' end)
             if not inComment then
                 local a, z = line:match('(.*)(%-%-%[%[.*)')
                 if z then
                     line = a .. '<span class="comment">'..noSpans(z)
                     inComment = true
+                else
+                    local a, z = line:match('(.*)(%-%-.*)')
+                    if z then
+                        line = a..'<span class=@comment@>'..noSpans(z)..'</span>'
+                    end
                 end
             else
                 local a, z = line:match('(.*%]%])(.*)')
@@ -355,6 +353,7 @@ elseif mode == 'html' then
             output = output..'\n'..line
             :gsub('<span class=@', '<span class="')
             :gsub('@>', '">')
+            :gsub([[%b||]], function(s) return '<span class="highlight">'..s..'</span>' end):gsub('|', '')
         end
         output = output:gsub([[%b||]], function(s) return '<span class="highlight">'..s..'</span>' end):gsub('|', '')
 
