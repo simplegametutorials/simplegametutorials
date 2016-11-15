@@ -809,7 +809,7 @@ function love.load()
 
 	-- etc.
 
-	function createButton( text, x, y, width, height,|callback|)
+	function createButton( text, x, y, width, height, |callback|)
 		-- Vertical centering
 		local _, lines = font:getWrap( text, width - 4 )
 		local numLines = #lines
