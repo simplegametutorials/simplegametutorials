@@ -102,7 +102,7 @@ function love.update( dt )
 end
 `
 
-Oi! That's not what we wanted. The problem is that the image is rotating about its x- and y-values, which are in the top-left corner of the image by default. In order to fix this, we need to offset the image by a certain amount to allow us to rotate it about its center. We can do this with the **offset x and y** parameters for love.graphics.draw. If we offset it by half the image's width and half the image's height we should be able to rotate it about its center.
+Oi! That's not what we wanted. The problem is that the image is rotating about its x- and y-values, which are in the top-left corner of the image by default. In order to fix this, we need to offset the image by a certain amount to allow us to rotate it about its center. We can do this with the *offset x and y* parameters for love.graphics.draw. If we offset it by half the image's width and half the image's height we should be able to rotate it about its center.
 
 `
 function love.load()
@@ -230,9 +230,9 @@ function love.load()
 	asteroidImage = love.graphics.newImage( 'asteroid.png' )
 	asteroidWidth, asteroidHeight = asteroidImage:getDimensions()
 
-	| shipImage = love.graphics.newImage( 'ship.png' ) |
-	| shipWidth, shipHeight = shipImage:getDimensions() |
-	| shipX, shipY = ( 300 - shipWidth ) / 2, 500 |
+	|shipImage = love.graphics.newImage( 'ship.png' )|
+	|shipWidth, shipHeight = shipImage:getDimensions()|
+	|shipX, shipY = ( 300 - shipWidth ) / 2, 500|
 
 	-- etc.
 end
@@ -240,9 +240,9 @@ end
 -- etc.
 
 function love.draw()
-	| -- | asteroid1:draw()
-	| -- | asteroid2:draw()
-	| -- | asteroid3:draw()
+	|--| asteroid1:draw()
+	|--| asteroid2:draw()
+	|--| asteroid3:draw()
 
 	-- We're not rotating the ship, so no need for offset
 	love.graphics.draw( shipImage, shipX, shipY )
@@ -312,7 +312,7 @@ end
 
 ### Collisions
 
-You should have seen more basic *AABB collision* (**axis-aligned bounding box**) earlier, in the bird tutorial. Here, we will implement a more robust AABB check in the update function for each asteroid to see if it is touching the ship.
+You should have seen more basic *AABB collision* (*axis-aligned bounding box*) earlier, in the bird tutorial. Here, we will implement a more robust AABB check in the update function for each asteroid to see if it is touching the ship.
 
 `
 function love.load()
@@ -361,17 +361,17 @@ function love.load()
 		return asteroid
 	end
 
-	asteroid1 = createAsteroid( 50, 0, | 0, 100, | math.pi / 4 )
-	asteroid2 = createAsteroid( 150, 0, | 0, 100, | -math.pi / 4 )
-	asteroid3 = createAsteroid( 250, 0, | 0, 100, | math.pi / 8 )
+	asteroid1 = createAsteroid( 50, 0, |0, 100,| math.pi / 4 )
+	asteroid2 = createAsteroid( 150, 0, |0, 100,| -math.pi / 4 )
+	asteroid3 = createAsteroid( 250, 0, |0, 100,| math.pi / 8 )
 
 	-- etc.
 end
 
 function love.draw()
-	| asteroid1:update( dt ) |
-	| asteroid2:update( dt ) |
-	| asteroid3:update( dt ) |
+	|asteroid1:update( dt )|
+	|asteroid2:update( dt )|
+	|asteroid3:update( dt )|
 	-- etc.
 end
 `
@@ -451,8 +451,8 @@ function love.load()
 				shipY = shipY + shipVelocityY * dt
 			end,
 			draw = function()
-				| -- We're not rotating the ship, so no need for offset |
-				| love.graphics.draw( shipImage, shipX, shipY ) |
+				|-- We're not rotating the ship, so no need for offset|
+				|love.graphics.draw( shipImage, shipX, shipY )|
 
 				asteroid1:draw()
 				asteroid2:draw()
@@ -526,7 +526,7 @@ function love.load()
 				self.rotation = self.rotation + self.rotationSpeed * dt
 
 				if AABB( self ) then
-					| state = 'lose' |
+					|state = 'lose'|
 				end
 			end,
 		}
@@ -553,14 +553,14 @@ function love.load()
 		lose = {
 			update = function( dt ) end,
 			draw = function()
-				| replay:draw() |
+				|replay:draw()|
 			end,
 			keypressed = function( key ) end,
 			keyreleased = function( key ) end,
 		}
 	}
 
-	state = | 'lose' |
+	state = |'lose'|
 
 	-- etc.
 	function createButton( text, x, y, width, height )
@@ -596,13 +596,13 @@ function love.load()
 	-- etc.
 
 	function createButton( text, x, y, width, height )
-		| -- Vertical centering |
-		| local _, lines = font:getWrap( text, width - 4 ) |
-		| local numLines = #lines |
-		| local fontHeight = font:getHeight( 'A' ) |
-		| local spaceBetweenLines = 2 |
-		| local textHeight = numLines * ( fontHeight + spaceBetweenLines ) - spaceBetweenLines |
-		| local textY = y + ( height - textHeight ) / 2 |
+		|-- Vertical centering|
+		|local _, lines = font:getWrap( text, width - 4 )|
+		|local numLines = #lines|
+		|local fontHeight = font:getHeight( 'A' )|
+		|local spaceBetweenLines = 2|
+		|local textHeight = numLines * ( fontHeight + spaceBetweenLines ) - spaceBetweenLines|
+		|local textY = y + ( height - textHeight ) / 2|
 
 		local button = {
 			text = text,
@@ -615,7 +615,7 @@ function love.load()
 				love.graphics.rectangle( 'fill', self.x, self.y, self.width, self.height )
 
 				love.graphics.setColor( 0, 0, 0 )
-				| love.graphics.printf( text, self.x + 2, textY, self.width - 4, 'center' ) |
+				|love.graphics.printf( text, self.x + 2, textY, self.width - 4, 'center' )|
 			end,
 		}
 
@@ -639,7 +639,7 @@ function love.load()
 			update = function( dt ) end,
 			draw = function()
 				replay:draw()
-				| quit:draw() |
+				|quit:draw()|
 			end,
 			keypressed = function( key ) end,
 			keyreleased = function( key ) end,
@@ -649,7 +649,7 @@ function love.load()
 	-- etc.
 
 	replay = createButton( 'Replay?', 2, 2, 50, 50 )
-	| quit = createButton( 'Quit?', 52, 52, 50, 50 ) |
+	|quit = createButton( 'Quit?', 52, 52, 50, 50 )|
 
 	-- etc.
 end
@@ -665,20 +665,20 @@ The buttons look great, but that's it right now. Not much use yet, are they? To 
 function love.load()
 	-- etc.
 
-	state = | 'playing' |
+	state = |'playing'|
 
 	-- etc.
 	
-	| function AABB( object1x, object1y, object1w, object1h, object2x, object2y, object2w, object2h ) |
-		| return ( object1x + object1w >= object2x and |
-			     | object1x <= object2x + object2w and |
-			     | object1y + object1h >= object2y and |
-			     | object1y <= object2y + object2h ) |
-	| end |
+	|function AABB( object1x, object1y, object1w, object1h, object2x, object2y, object2w, object2h )|
+		|return ( object1x + object1w >= object2x and|
+			    |object1x <= object2x + object2w and|
+			    |object1y + object1h >= object2y and|
+			    |object1y <= object2y + object2h )|
+	|end|
 
-	| function asteroidAABB( asteroid ) |
-		| return AABB( asteroid.x - asteroidWidth / 2, asteroid.y - asteroidHeight / 2, asteroidWidth, asteroidHeight, shipX, shipY, shipWidth, shipHeight ) |
-	| end |
+	|function asteroidAABB( asteroid )|
+		|return AABB( asteroid.x - asteroidWidth / 2, asteroid.y - asteroidHeight / 2, asteroidWidth, asteroidHeight, shipX, shipY, shipWidth, shipHeight )|
+	|end|
 
 	function createAsteroid( x, y, velocityX, velocityY, rotationSpeed )
 		local asteroid = {
@@ -693,7 +693,7 @@ function love.load()
 				self.y = self.y + self.velocityY * dt
 				self.rotation = self.rotation + self.rotationSpeed * dt
 
-				if | asteroidAABB( self ) | then
+				if |asteroidAABB( self )| then
 					state = 'lose'
 				end
 			end,
@@ -721,7 +721,7 @@ function love.load()
 	states = {
 		playing = {
 			-- etc.
-			| mousereleased = function( x, y, button ) end, |
+			|mousereleased = function( x, y, button ) end,|
 		},
 		lose = {
 			update = function( dt )
@@ -733,26 +733,26 @@ function love.load()
 			end,
 			keypressed = function( key ) end,
 			keyreleased = function( key ) end,
-			| mousereleased = function( x, y, button ) |
-				| if button == 1 then |
-					| local clickedButton = checkButtons( x, y ) |
-					| if clickedButton then |
-						| print( activeButtons[i].text ) |
-					| end |
-				| end |
-			| end, |
+			|mousereleased = function( x, y, button )|
+				|if button == 1 then|
+					|local clickedButton = checkButtons( x, y )|
+					|if clickedButton then|
+						|print( activeButtons[i].text )|
+					|end|
+				|end|
+			|end,|
 		}
 	}
 
-	| state = 'lose' |
+	|state = 'lose'|
 
 	-- etc.
 
-	| -- "object" is any table with values for "x", "y", "width", and "height" |
-	| function mouseAABB( mouseX, mouseY, object ) |
-		| -- screenButton to distinguish from mouse button |
-		| return AABB( object.x, object.y, object.width, object.height, mouseX, mouseY, 0, 0 ) |
-	| end |
+	|-- "object" is any table with values for "x", "y", "width", and "height"|
+	|function mouseAABB( mouseX, mouseY, object )|
+		|-- screenButton to distinguish from mouse button|
+		|return AABB( object.x, object.y, object.width, object.height, mouseX, mouseY, 0, 0 )|
+	|end|
 
 	-- etc.
 
@@ -800,7 +800,7 @@ function love.load()
 				if button == 1 then
 					local clickedButton = checkButtons( x, y )
 					if clickedButton then
-						| activeButtons[clickedButton].callback() |
+						|activeButtons[clickedButton].callback()|
 					end
 				end
 			end,
@@ -809,7 +809,7 @@ function love.load()
 
 	-- etc.
 
-	function createButton( text, x, y, width, height, | callback | )
+	function createButton( text, x, y, width, height,|callback|)
 		-- Vertical centering
 		local _, lines = font:getWrap( text, width - 4 )
 		local numLines = #lines
@@ -823,7 +823,7 @@ function love.load()
 			y = y,
 			width = width,
 			height = height,
-			| callback = callback, |
+			|callback = callback,|
 			draw = function( self )
 				love.graphics.setColor( 255, 255, 255 )
 				love.graphics.rectangle( 'fill', self.x, self.y, self.width, self.height )
@@ -838,8 +838,8 @@ function love.load()
 
 	-- etc.
 
-	replay = createButton( 'Replay?', 2, 2, 50, 50, | love.load | )
-	quit = createButton( 'Quit?', 52, 52, 50, 50, | love.event.quit | )
+	replay = createButton( 'Replay?', 2, 2, 50, 50, |love.load|)
+	quit = createButton( 'Quit?', 52, 52, 50, 50, |love.event.quit|)
 
 	-- etc.
 end
@@ -858,8 +858,8 @@ function love.load()
 
 		lose = {
 			update = function( dt )
-				| replay:update( dt ) |
-				| quit:update( dt ) |
+				|replay:update( dt )|
+				|quit:update( dt )|
 			end,
 
 			-- etc.
@@ -878,17 +878,17 @@ function love.load()
 			width = width,
 			height = height,
 			callback = callback,
-			| color = { 255, 255, 255 }, |
+			|color = { 255, 255, 255 },|
 			update = function( self, dt )
-				| local mouseX, mouseY = love.mouse.getPosition() |
-				| if mouseAABB( mouseX, mouseY, self ) then |
-					| self.color = { 125, 125, 125 } |
-				| else |
-					| self.color = { 255, 255, 255 } |
-				| end |
+				|local mouseX, mouseY = love.mouse.getPosition()|
+				|if mouseAABB( mouseX, mouseY, self ) then|
+					|self.color = { 125, 125, 125 }|
+				|else|
+					|self.color = { 255, 255, 255 }|
+				|end|
 			end,
 			draw = function( self )
-				| love.graphics.setColor( self.color ) |
+				|love.graphics.setColor( self.color )|
 				love.graphics.rectangle( 'fill', self.x, self.y, self.width, self.height )
 
 				love.graphics.setColor( 0, 0, 0 )
@@ -908,7 +908,7 @@ We now have the basic foundation for our game now. Now we can focus mostly on po
 `
 function love.load()
 	font = love.graphics.getFont()
-	| screenWidth, screenHeight = love.graphics.getDimensions() |
+	|screenWidth, screenHeight = love.graphics.getDimensions()|
 
 	states = {
 		playing = {
@@ -921,8 +921,8 @@ function love.load()
 				shipY = shipY + shipVelocityY * dt
 			end,
 			draw = function()
-				| love.graphics.setColor( 255, 255, 255 ) |
-				| love.graphics.print( 'Score: ' .. score, 2, 2 ) |
+				|love.graphics.setColor( 255, 255, 255 )|
+				|love.graphics.print( 'Score: ' .. score, 2, 2 )|
 
 				-- We're not rotating the ship, so no need for offset
 				love.graphics.draw( shipImage, shipX, shipY )
@@ -938,8 +938,8 @@ function love.load()
 
 	-- etc.
 
-	| score = 0 |
-	| state = 'play' |
+	|score = 0|
+	|state = 'play'|
 
 	-- etc.
 	
@@ -956,9 +956,9 @@ function love.load()
 				self.y = self.y + self.velocityY * dt
 				self.rotation = self.rotation + self.rotationSpeed * dt
 
-				| if self.y - asteroidWidth / 2 > screenHeight then |
-					| score = score + 50 |
-				| end |
+				|if self.y - asteroidWidth / 2 > screenHeight then|
+					|score = score + 50|
+				|end|
 
 				if asteroidAABB( self ) then
 					state = 'lose'
@@ -991,9 +991,9 @@ function love.load()
 			     object1y <= object2y + object2h )
 	end
 	
-	| function circleCircle( object1x, object1y, object1r, object2x, object2y, object2r ) |
-		| return math.sqrt( ( object1x - object2x ) ^ 2 + ( object1y - object2y ) ^ 2 ) <= object1r + object2r |
-	| end |
+	|function circleCircle( object1x, object1y, object1r, object2x, object2y, object2r )|
+		|return math.sqrt( ( object1x - object2x ) ^ 2 + ( object1y - object2y ) ^ 2 ) <= object1r + object2r|
+	|end|
 
 	function asteroidCollision( asteroid )
 		-- Since the asteroid is a square its radius is half the width (or height)
@@ -1020,7 +1020,7 @@ function love.load()
 					score = score + 50
 				end
 
-				if | asteroidCollision( self ) | then
+				if |asteroidCollision( self )| then
 					state = 'lose'
 				end
 			end,
@@ -1050,15 +1050,15 @@ function love.load()
 
 				drawAsteroids()
 
-				| if DEBUG then |
-					| love.graphics.setColor( 255, 0, 0 ) |
-					| love.graphics.circle( 'line', shipX + shipWidth - shipWidth / 3, shipY + shipHeight / 1.4, shipWidth / 6.5 ) |
-					| love.graphics.circle( 'line', shipX + shipWidth / 3, shipY + shipHeight / 1.4, shipWidth / 6.5 ) |
-					| love.graphics.circle( 'line', shipX + shipWidth / 2, shipY + shipHeight / 2.5, shipWidth / 5 ) |
-					| for i = 1, #asteroids do |
-						| love.graphics.circle( 'line', asteroids[i].x, asteroids[i].y, asteroidWidth / 2 ) |
-					| end |
-				| end |
+				|if DEBUG then|
+					|love.graphics.setColor( 255, 0, 0 )|
+					|love.graphics.circle( 'line', shipX + shipWidth - shipWidth / 3, shipY + shipHeight / 1.4, shipWidth / 6.5 )|
+					|love.graphics.circle( 'line', shipX + shipWidth / 3, shipY + shipHeight / 1.4, shipWidth / 6.5 )|
+					|love.graphics.circle( 'line', shipX + shipWidth / 2, shipY + shipHeight / 2.5, shipWidth / 5 )|
+					|for i = 1, #asteroids do|
+						|love.graphics.circle( 'line', asteroids[i].x, asteroids[i].y, asteroidWidth / 2 )|
+					|end|
+				|end|
 			end,
 			keypressed = function( key )
 				if ( key == 'left' or key == 'a' ) then
@@ -1067,7 +1067,7 @@ function love.load()
 				if ( key == 'right' or key == 'd' ) then
 					shipVelocityX = shipMoveSpeed
 				end
-				| if key == '`' then DEBUG = not DEBUG end |
+				|if key == '`' then DEBUG = not DEBUG end|
 			end,
 
 			-- etc.
@@ -1105,7 +1105,7 @@ function love.load()
 	states = {
 		playing = {
 			update = function( dt )
-				| updateAsteroids( dt ) |
+				|updateAsteroids( dt )|
 
 				shipX = shipX + shipVelocityX * dt
 				shipY = shipY + shipVelocityY * dt
@@ -1117,7 +1117,7 @@ function love.load()
 				-- We're not rotating the ship, so no need for offset
 				love.graphics.draw( shipImage, shipX, shipY )
 
-				| drawAsteroids() |
+				|drawAsteroids()|
 			end,
 
 			-- etc.
@@ -1127,24 +1127,24 @@ function love.load()
 
 	-- etc.
 
-	| -- asteroid1 = createAsteroid( 50, 0, 0, 100, math.pi / 4 ) |
-	| asteroids = { |
-		| createAsteroid( 50, 0, 0, 100, math.pi / 4 ), |
-        | createAsteroid( 150, 0, 0, 100, -math.pi / 4 ), |
-        | createAsteroid( 250, 0, 0, 100, math.pi / 8 ), |
-	| } |
+	|-- asteroid1 = createAsteroid( 50, 0, 0, 100, math.pi / 4 )|
+	|asteroids = {|
+		|createAsteroid( 50, 0, 0, 100, math.pi / 4 ),|
+		|createAsteroid( 150, 0, 0, 100, -math.pi / 4 ),|
+		|createAsteroid( 250, 0, 0, 100, math.pi / 8 ),|
+	|}|
 
-	| function updateAsteroids( dt ) |
-		| for i = 1, #asteroids do |
-			| asteroids[i]:update( dt ) |
-		| end |
-	| end |
+	|function updateAsteroids( dt )|
+		|for i = 1, #asteroids do|
+			|asteroids[i]:update( dt )|
+		|end|
+	|end|
  
-	| function drawAsteroids() |
-		| for i = 1,  #asteroids do |
-			| asteroids[i]:draw() |
-		| end |
-	| end |
+	|function drawAsteroids()|
+		|for i = 1,  #asteroids do|
+			|asteroids[i]:draw()|
+		|end|
+	|end|
 
 	-- etc.
 end
@@ -1152,13 +1152,13 @@ end
 
 ### Randomizing asteroids
 
-Asteroids just moving straight down the screen aren't really that fun or challenging. We want dynamic motion. To randomize the vector of the asteroid, remember back to how vectors work. They take an angle from 0 to 2 * pi starting from the positive x-axis. 
+Asteroids just moving straight down the screen aren't really that fun or challenging. We want dynamic motion. To randomize the vector of the asteroid, remember back to how vectors work. They take an angle from 0 to 2 &#42; pi starting from the positive x-axis. 
 
 Note that we are changing how we're representing the vector, but it's still the same thing. This is just so that the random values are easier to calculate.
 
-We only want angles that move downwards, however. Angles that produce "downward" motions are from pi to 2 * pi. But, some angles, such as pi, still result in almost no downward motion. In order to make asteroids always move down, we need the angle to be between pi / 3 to 2 / 3 * pi. Look up an image of the unit circle to get a better idea of what we're doing here, remembering that y **increases** as we go down. 
+We only want angles that move downwards, however. Angles that produce "downward" motions are from pi to 2 &#42; pi. But, some angles, such as pi, still result in almost no downward motion. In order to make asteroids always move down, we need the angle to be between pi / 3 to 2 / 3 &#42; pi. Look up an image of the unit circle to get a better idea of what we're doing here, remembering that y *increases* as we go down. 
 
-Also remember that love.math.random returns integers unless we supply it with no arguments. In order to get a number between pi / 3 and 2 / 3 * pi (neither of which are integers), we need to make a random number between 0 and 1, multiply that number by the difference between the max and the min, then add the minimum to it.
+Also remember that love.math.random returns integers unless we supply it with no arguments. In order to get a number between pi / 3 and 2 / 3 &#42; pi (neither of which are integers), we need to make a random number between 0 and 1, multiply that number by the difference between the max and the min, then add the minimum to it.
 
 For the rotation, the value can be between -pi / 4 and pi / 4, which are just two arbitrary values.
 
@@ -1190,7 +1190,7 @@ To make things seem more realistic, let's make the asteroids different sizes. No
 
 `
 function love.load()
-	| love.graphics.setDefaultFilter( 'nearest', 'nearest' ) |
+	|love.graphics.setDefaultFilter( 'nearest', 'nearest' )|
 	-- etc.
 
 	states = {
@@ -1201,7 +1201,7 @@ function love.load()
 				if DEBUG then
 					-- etc.
 					for i = 1, #asteroids do
-						love.graphics.circle( 'line', asteroids[i].x, asteroids[i].y, | asteroids[i].radius | )
+						love.graphics.circle( 'line', asteroids[i].x, asteroids[i].y, |asteroids[i].radius|)
 					end
 				end
 			end,
@@ -1213,14 +1213,14 @@ function love.load()
 	function asteroidCollision( asteroid )
 		-- Since the asteroid is a square its radius is half the width (or height)
 		-- This is also true of the ship, although its image is not offset
-		return circleCircle( asteroid.x, asteroid.y, | asteroid.radius |, shipX + shipWidth / 2, shipY + shipHeight / 2.5, shipWidth / 5 )
-			or circleCircle( asteroid.x, asteroid.y, | asteroid.radius |, shipX + shipWidth / 3, shipY + shipHeight / 1.4, shipWidth / 6.5 )
-			or circleCircle( asteroid.x, asteroid.y, | asteroid.radius |, shipX + shipWidth / 3 + shipWidth / 2, shipY + shipHeight / 1.4, shipWidth / 6.5 )
+		return circleCircle( asteroid.x, asteroid.y, |asteroid.radius|, shipX + shipWidth / 2, shipY + shipHeight / 2.5, shipWidth / 5 )
+			or circleCircle( asteroid.x, asteroid.y, |asteroid.radius|, shipX + shipWidth / 3, shipY + shipHeight / 1.4, shipWidth / 6.5 )
+			or circleCircle( asteroid.x, asteroid.y, |asteroid.radius|, shipX + shipWidth / 3 + shipWidth / 2, shipY + shipHeight / 1.4, shipWidth / 6.5 )
 	end
 
 	-- etc.
 
-	function createAsteroid( x, y, velocityX, velocityY, rotationSpeed, | radius | )
+	function createAsteroid( x, y, velocityX, velocityY, rotationSpeed, |radius|)
 		local asteroid = {
 			x = x,
 			y = y,
@@ -1228,20 +1228,20 @@ function love.load()
 			rotationSpeed = rotationSpeed,
 			velocityX = velocityX,
 			velocityY = velocityY,
-			| -- "or" allows a defualt value if `radius` isn't defined |
-			| radius = radius or asteroidWidth / 2, |
+			|-- "or" allows a defualt value if `radius` isn't defined|
+			|radius = radius or asteroidWidth / 2,|
 			update = function( self, dt )
 				self.x = self.x + self.velocityX * dt
 				self.y = self.y + self.velocityY * dt
 				self.rotation = self.rotation + self.rotationSpeed * dt
 
-				if self.y - | self.radius | > screenHeight then
+				if self.y - |self.radius|> screenHeight then
 					score = score + 50
 				end
-				if self.velocityX < 0 and self.x + | self.radius | < 0 then
-					self.x = self.x + screenWidth + | self.radius * 2 |
-				elseif self.velocityX > 0 and self.x - | self.radius | > screenWidth then
-					self.x = self.x - screenWidth - | self.radius * 2 |
+				if self.velocityX < 0 and self.x + |self.radius| < 0 then
+					self.x = self.x + screenWidth + |self.radius * 2|
+				elseif self.velocityX > 0 and self.x - |self.radius| > screenWidth then
+					self.x = self.x - screenWidth - |self.radius * 2|
 				end
 
 				if asteroidCollision( self ) then
@@ -1249,13 +1249,13 @@ function love.load()
 				end
 			end,
 		}
-		| -- Defined outside of the table so we can reference the radius |
-		| asteroid.scale = asteroid.radius / ( asteroidWidth / 2 ) |
+		|-- Defined outside of the table so we can reference the radius|
+		|asteroid.scale = asteroid.radius / ( asteroidWidth / 2 )|
 
 
 		-- Implicit `self` parameter with the colon syntax
 		function asteroid:draw()
-			love.graphics.draw( asteroidImage, self.x, self.y, self.rotation, | self.scale, self.scale |, asteroidWidth / 2, asteroidWidth / 2 )
+			love.graphics.draw( asteroidImage, self.x, self.y, self.rotation, |self.scale, self.scale|, asteroidWidth / 2, asteroidWidth / 2 )
 		end
 
 		return asteroid
@@ -1267,9 +1267,9 @@ function love.load()
 		local vectorX = vectorMagnitude * math.cos( vectorAngle )
 		local vectorY = vectorMagnitude * math.sin( vectorAngle )
 
-		| local radius = love.math.random( asteroidWidth / 3, 2 / 3 * asteroidWidth2 ) |
+		|local radius = love.math.random( asteroidWidth / 3, 2 / 3 * asteroidWidth2 )|
 
-		return createAsteroid( love.math.random( 0, screenWidth ), -asteroidHeight, vectorX, vectorY, love.math.random( -math.pi / 4, math.pi / 4 ), | radius | )
+		return createAsteroid( love.math.random( 0, screenWidth ), -asteroidHeight, vectorX, vectorY, love.math.random( -math.pi / 4, math.pi / 4 ), |radius|)
 	end
 end
 `
@@ -1300,11 +1300,11 @@ function love.load()
 				if self.y - self.radius > screenHeight then
 					score = score + 50
 				end
-				| if self.velocityX < 0 and self.x + asteroidWidth / 2 < 0 then |
-					| self.x = self.x + screenWidth + asteroidWidth |
-				| elseif self.velocityX > ) and self.x - asteroidWidth / 2 > screenWidth then |
-					| self.x = self.x - screenWidth - asteroidWidth |
-				| end |
+				|if self.velocityX < 0 and self.x + asteroidWidth / 2 < 0 then|
+					|self.x = self.x + screenWidth + asteroidWidth|
+				|elseif self.velocityX > ) and self.x - asteroidWidth / 2 > screenWidth then|
+					|self.x = self.x - screenWidth - asteroidWidth|
+				|end|
 
 				if asteroidCollision( self ) then
 					state = 'lose'
@@ -1337,7 +1337,7 @@ function love.load()
 				shipX = shipX + shipVelocityX * dt
 				shipY = shipY + shipVelocityY * dt
 
-				| destroyAsteroids() |
+				|destroyAsteroids()|
 			end,
 			-- etc.
 		}
@@ -1346,26 +1346,26 @@ function love.load()
 	
 	-- etc.
 
-	| toDestroy = {} |
-	| ID = 0 |
+	|toDestroy = {}|
+	|ID = 0|
 
-	| function destroyAsteroids() |
-		| for i = 1, #toDestroy do |
-			| for j = 1, #asteroids do |
-				| if toDestroy[i] == asteroids[j].id then |
-					| table.remove( asteroids, j ) |
-					| break |
-				| end |
-			| end |
-		| end |
-	| end |
+	|function destroyAsteroids()|
+		|for i = 1, #toDestroy do|
+			|for j = 1, #asteroids do|
+				|if toDestroy[i] == asteroids[j].id then|
+					|table.remove( asteroids, j )|
+					|break|
+				|end|
+			|end|
+		|end|
+	|end|
 
 	function createAsteroid( x, y, velocityX, velocityY, rotationSpeed, radius )
-		| ID = ID + 1 |
+		|ID = ID + 1|
 		local asteroid = {
 			x = x,
 			y = y,
-			| id = ID, |
+			|id = ID,|
 			rotation = 0,
 			rotationSpeed = rotationSpeed,
 			velocityX = velocityX,
@@ -1379,8 +1379,8 @@ function love.load()
 
 				if self.y - self.radius > screenHeight then
 					score = score + 50
-					| table.insert( toDestroy, self.id ) |
-					| table.insert( asteroids, randomAsteroid() ) |
+					|table.insert( toDestroy, self.id )|
+					|table.insert( asteroids, randomAsteroid() )|
 				end
 				-- etc.
 			end,
@@ -1392,7 +1392,7 @@ function love.load()
 
 
 	asteroids = {}
-	for i = 1, | 6 | do
+	for i = 1, |6| do
 		table.insert( asteroids, randomAsteroid() )
 	end
 
@@ -1414,7 +1414,7 @@ function love.load()
 		playing = {
 			update = function( dt )
 				updateAsteroids( dt )
-				| updateShip( dt ) |
+				|updateShip( dt )|
 				destroyAsteroids()
 			end,
 			-- etc.
@@ -1453,8 +1453,8 @@ function love.load()
 	-- etc.
 
 	score = 0
-	| difficulty = 1 |
-	| asteroidsPassed = 0 |
+	|difficulty = 1|
+	|asteroidsPassed = 0|
 	state = 'playing'
 
 	-- etc.
@@ -1480,10 +1480,10 @@ function love.load()
 					score = score + 50
 					table.insert( toDestroy, self.id )
 					table.insert( asteroids, randomAsteroid() )
-					| asteroidsPassed = asteroidsPassed + 1 |
-					| if asteroidsPassed % 5 == 0 then |
-						| difficulty = difficulty + .1 |
-					| end |
+					|asteroidsPassed = asteroidsPassed + 1|
+					|if asteroidsPassed % 5 == 0 then|
+						|difficulty = difficulty + .1|
+					|end|
 				end
 				-- etc.
 			end
@@ -1495,12 +1495,12 @@ function love.load()
 	-- etc.
 
 	function randomAsteroid()
-		local vectorMagnitude = love.math.random( 100, 200 ) * | difficulty |
+		local vectorMagnitude = love.math.random( 100, 200 ) * |difficulty|
 		local vectorAngle = ( 2 / 3 * math.pi - math.pi / 3 ) * love.math.random() + math.pi / 3
 		local vectorX = vectorMagnitude * math.cos( vectorAngle )
 		local vectorY = vectorMagnitude * math.sin( vectorAngle )
 
-		local radius = love.math.random( asteroidWidth / 3, 2 / 3 * asteroidWidth ) * | difficulty |
+		local radius = love.math.random( asteroidWidth / 3, 2 / 3 * asteroidWidth ) * |difficulty|
 
 		return createAsteroid( love.math.random( 0, screenWidth ), -asteroidHeight, vectorX, vectorY, love.math.random( -math.pi / 4, math.pi / 4 ), radius )
 	end
@@ -1511,7 +1511,7 @@ You should be able to notice how it slowly gets more and more difficult until yo
 
 ### Saving your high score
 
-Having a score is pointless if you don't have a verifiable way to show that you actually *are* better than your friends. So, you need to be able to save. This can be accomplished trivially with love.filesystem for our purposes. For more complicated games where you are serializing a table, you would need something called a **serialization library**. We can also go ahead and display the high score while we're at it.
+Having a score is pointless if you don't have a verifiable way to show that you actually *are* better than your friends. So, you need to be able to save. This can be accomplished trivially with love.filesystem for our purposes. For more complicated games where you are serializing a table, you would need something called a *serialization library*. We can also go ahead and display the high score while we're at it.
 
 `
 function love.load()
@@ -1519,10 +1519,10 @@ function love.load()
 	font = love.graphics.getFont()
 	screenWidth, screenHeight = love.graphics.getDimensions()
 
-	| highScore = 0 |
-	| if love.filesystem.exists( 'file.lua' ) then |
-		| highScore = love.filesystem.load( 'file.lua' )() |
-	| end |
+	|highScore = 0|
+	|if love.filesystem.exists( 'file.lua' ) then|
+		|highScore = love.filesystem.load( 'file.lua' )()|
+	|end|
 
 	states = {
 		-- etc.
@@ -1551,10 +1551,10 @@ function love.load()
 			update = function( self, dt )
 				if asteroidCollision( self ) then
 					state = 'lose'
-					| if score > highScore then |
-						| highScore = score |
-						| love.filesystem.write( 'file.lua', 'return ' .. score ) |
-					| end |
+					|if score > highScore then|
+						|highScore = score|
+						|love.filesystem.write( 'file.lua', 'return ' .. score )|
+					|end|
 				end
 			end,
 		}
