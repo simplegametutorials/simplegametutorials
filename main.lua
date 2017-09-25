@@ -1,6 +1,6 @@
 MAX_WIDTH = 600
 MAX_HEIGHT = 4000
-BACKGROUND = {255, 240, 240}
+BACKGROUND = {1, .9, .9}
 
 if arg[#arg] == '-debug' then require('mobdebug').start() end
 io.stdout:setvbuf('no')
@@ -141,10 +141,10 @@ elseif mode == 'images' then
                     encode(index)
                 end
             elseif key == 'b' then
-                if realBackground[1] == 255 then
+                if realBackground[1] == 1 then
                     realBackground = {0, 0, 0, 0}
                 else
-                    realBackground = {255, 255, 255, 0}
+                    realBackground = {1, 1, 1, 0}
                 end
             end
         end
@@ -184,7 +184,7 @@ elseif mode == 'images' then
         end
 
         local imagesPath = name..'/images.lua'
-        if not love.filesystem.isFile(imagesPath) then
+        if not love.filesystem.getInfo(imagesPath) then
             printError("Couldn't find images.lua at "..imagesPath)
             return 
         end
@@ -230,46 +230,76 @@ elseif mode == 'images' then
 elseif mode == 'html' then
     s = [[<html><head><title>]]
     ..(title or (name:gsub("^%l", string.upper)..' Tutorial'))..
-    [[</title>
-    <style>
-    body {
-        font-family: Calibri, sans-serif;
-        margin: 20px;
-    }
-    p {
-        max-width: 600px;
-        line-height: 1.4;
-    }
-    td {
-        padding-right:10px
-    }
-    .code {
-        font-family: Consolas, Monaco, Inconsolata, monospace;
-        border-left: solid 5px #e7e7e7;
-        color: #444;
-        padding-left: 12px;
-    }
-    .inlinecode {
-        font-family: Consolas, Monaco, Inconsolata, monospace;
-        color: #444;
-    }
-    .console {
-        font-family: Consolas, Monaco, Inconsolata, monospace;
-        padding: 16px;
-        background: #444;
-        color: #eee;
-        width: 700px;
-    }
-    .name {color:#d09}
-    .call {color:#d60}
-    .literal {color:#088}
-    .comment {color:#444; background:#eee}
-    .highlight {background:#ffc}
-    .highlight .comment, .comment .highlight {background:#f0edd3}
-    </style>
-    </head>
-    <body>
-    ]]
+[[</title>
+<link href="https://fonts.googleapis.com/css?family=Quicksand:500,700" rel="stylesheet">
+<style>
+body {
+    font-family: Calibri, sans-serif;
+    margin: 20px;
+    background: #efefef;
+}
+p, li, td, h1, h2, h3, h4 {
+    font-family: 'Quicksand';
+    color: #333;
+}
+p, li, td, pre {
+    font-weight: 500;
+    font-size: 11pt;
+}
+a {
+    color: #059dc5;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+p {
+    max-width: 600px;
+    line-height: 1.4;
+}
+td {
+    padding-right:10px
+}
+pre {
+    margin-top: 0;
+    min-width: 600px;
+}
+.pre {
+    display: table;
+    margin: 20px 0;
+}
+img {
+    display: block;
+    margin: 14px 0;
+}
+.code {
+    font-family: Consolas, Monaco, Inconsolata, monospace;
+    border-radius: 8px;
+    background: #fff;
+    color: #555;
+    padding: 12px;
+}
+.inlinecode {
+    font-family: Consolas, Monaco, Inconsolata, monospace;
+    color: #555;
+}
+.console {
+    font-family: Consolas, Monaco, Inconsolata, monospace;
+    padding: 16px;
+    background: #555;
+    border-radius: 8px;
+    color: #eee;
+}
+.name {color:#e824b7;}
+.call {color:#ab22d0;}
+.literal {color:#01afa5; color:#ea9b4c;}
+.comment {color:#555; background:#eee; border-radius: 4px;}
+.highlight {background:#fcffc4; border-radius: 4px;}
+.highlight .comment, .comment .highlight {background:#f0edd3;}
+</style>
+</head>
+<body>
+]]
 
     keywords = {}
     for keywordIndex, keyword in pairs{
@@ -386,20 +416,20 @@ elseif mode == 'html' then
                 inCode = false
                 a(highlight(codeString:sub(1, -2)))
                 codeString = ''
-                a('</pre>')
+                a('</pre></div>')
             else
                 inCode = true
-                s = s..'<pre class="code">'
+                s = s..'<div class="pre"><pre class="code">'
             end
         elseif console then
             if inConsole then
                 inConsole = false
                 a(consoleString:sub(1, -2))
                 consoleString = ''
-                a('</pre>')
+                a('</pre></div>')
             else
                 inConsole = true
-                a('<pre class="console">')
+                a('<div class="pre"><pre class="console">')
             end
         elseif inCode then
             codeString = codeString..line..'\n'
