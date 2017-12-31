@@ -67,16 +67,16 @@ Each level is stored as a grid of strings. For now, a single level is stored, an
 
 `
 function love.load()
-	level = {
-		{' ', ' ', '#', '#', '#'},
-		{' ', ' ', '#', '.', '#'},
-		{' ', ' ', '#', ' ', '#', '#', '#', '#'},
-		{'#', '#', '#', '$', ' ', '$', '.', '#'},
-		{'#', '.', ' ', '$', '@', '#', '#', '#'},
-		{'#', '#', '#', '#', '$', '#'},
-		{' ', ' ', ' ', '#', '.', '#'},
-		{' ', ' ', ' ', '#', '#', '#'},
-	}
+    level = {
+        {' ', ' ', '#', '#', '#'},
+        {' ', ' ', '#', '.', '#'},
+        {' ', ' ', '#', ' ', '#', '#', '#', '#'},
+        {'#', '#', '#', '$', ' ', '$', '.', '#'},
+        {'#', '.', ' ', '$', '@', '#', '#', '#'},
+        {'#', '#', '#', '#', '$', '#'},
+        {' ', ' ', ' ', '#', '.', '#'},
+        {' ', ' ', ' ', '#', '#', '#'},
+    }
 end
 
 function love.draw()
@@ -111,7 +111,7 @@ function love.draw()
             if cell ~= ' ' then
                 local cellSize = 23
 
-                |love.graphics.setColor(255, 255, 255)|
+                |love.graphics.setColor(1, 1, 1)|
                 love.graphics.rectangle(
                     'fill',
                     (x - 1) * cellSize,
@@ -141,7 +141,7 @@ The background color is set, and the color of each cell is set.
 function love.load()
     -- etc.
 
-    love.graphics.setBackgroundColor(255, 255, 190)
+    love.graphics.setBackgroundColor(1, 1, .75)
 end
 
 function love.draw()
@@ -151,12 +151,12 @@ function love.draw()
                 local cellSize = 23
 
                 |local colors = {|
-                |    ['@'] = {167, 135, 255},|
-                |    ['+'] = {158, 119, 255},|
-                |    ['$'] = {255, 201, 126},|
-                |    ['*'] = {150, 255, 127},|
-                |    ['.'] = {156, 229, 255},|
-                |    ['#'] = {255, 147, 209},|
+                |    ['@'] = {.64, .53, 1},|
+                |    ['+'] = {.62, .47, 1},|
+                |    ['$'] = {1, .79, .49},|
+                |    ['*'] = {.59, 1, .5},|
+                |    ['.'] = {.61, .9, 1},|
+                |    ['#'] = {1, .58, .82},|
                 |}|
 
                 |love.graphics.setColor(colors[cell])|
@@ -167,7 +167,7 @@ function love.draw()
                     cellSize,
                     cellSize
                 )
-                |love.graphics.setColor(255, 255, 255)|
+                |love.graphics.setColor(1, 1, 1)|
                 love.graphics.print(
                     level[y][x],
                     (x - 1) * cellSize,
@@ -205,12 +205,12 @@ function love.draw()
                 local cellSize = 23
 
                 local colors = {
-                    [|player|] = {167, 135, 255},
-                    [|playerOnStorage|] = {158, 119, 255},
-                    [|box|] = {255, 201, 126},
-                    [|boxOnStorage|] = {150, 255, 127},
-                    [|storage|] = {156, 229, 255},
-                    [|wall|] = {255, 147, 209},
+                    [|player|] = {.64, .53, 1},
+                    [|playerOnStorage|] = {.62, .47, 1},
+                    [|box|] = {1, .79, .49},
+                    [|boxOnStorage|] = {.59, 1, .5},
+                    [|storage|] = {.61, .9, 1},
+                    [|wall|] = {1, .58, .82},
                 }
                 
                 -- etc.
@@ -770,7 +770,7 @@ end
 
 `
 function love.load()
-    love.graphics.setBackgroundColor(255, 255, 190)
+    love.graphics.setBackgroundColor(1, 1, .75)
 
     player = '@'
     playerOnStorage = '+'
@@ -2184,12 +2184,12 @@ function love.draw()
                 local cellSize = 23
 
                 local colors = {
-                    [player] = {167, 135, 255},
-                    [playerOnStorage] = {158, 119, 255},
-                    [box] = {255, 201, 126},
-                    [boxOnStorage] = {150, 255, 127},
-                    [storage] = {156, 229, 255},
-                    [wall] = {255, 147, 209},
+                    [player] = {.64, .53, 1},
+                    [playerOnStorage] = {.62, .47, 1},
+                    [box] = {1, .79, .49},
+                    [boxOnStorage] = {.59, 1, .5},
+                    [storage] = {.61, .9, 1},
+                    [wall] = {1, .58, .82},
                 }
 
                 love.graphics.setColor(colors[cell])
@@ -2200,7 +2200,7 @@ function love.draw()
                     cellSize,
                     cellSize
                 )
-                love.graphics.setColor(255, 255, 255)
+                love.graphics.setColor(1, 1, 1)
                 love.graphics.print(
                     level[y][x],
                     (x - 1) * cellSize,

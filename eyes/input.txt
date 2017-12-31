@@ -12,10 +12,10 @@ The eye is drawn with a white circle and a smaller dark blue circle for the pupi
 
 `
 function love.draw()
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.circle('fill', 200, 200, 50)
 
-    love.graphics.setColor(0, 0, 100)
+    love.graphics.setColor(0, 0, .4)
     love.graphics.circle('fill', 200, 200, 15)
 end
 `
@@ -41,13 +41,13 @@ function love.draw()
     |table.insert(output, 'distance x: '..distanceX)|
     |table.insert(output, 'distance y: '..distanceY)|
 
-    |love.graphics.setColor(255, 255, 255)|
+    |love.graphics.setColor(1, 1, 1)|
     |love.graphics.print(table.concat(output, '\n'))|
 
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.circle('fill', |eyeX|, |eyeY|, 50)
 
-    love.graphics.setColor(0, 0, 100)
+    love.graphics.setColor(0, 0, .4)
     love.graphics.circle('fill', 200, 200, 15)
 end
 `
@@ -118,7 +118,7 @@ function love.draw()
 
     -- etc.
 
-    love.graphics.setColor(0, 0, 100)
+    love.graphics.setColor(0, 0, .4)
     love.graphics.circle('fill', |pupilX|, |pupilY|)
 end
 `
@@ -167,10 +167,10 @@ function love.draw()
         local pupilX = eyeX + (math.cos(angle) * distance)
         local pupilY = eyeY + (math.sin(angle) * distance)
 
-        love.graphics.setColor(255, 255, 255)
+        love.graphics.setColor(1, 1, 1)
         love.graphics.circle('fill', eyeX, eyeY, 50)
 
-        love.graphics.setColor(0, 0, 100)
+        love.graphics.setColor(0, 0, .4)
         love.graphics.circle('fill', pupilX, pupilY, 15)
     |end|
 

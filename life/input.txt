@@ -107,7 +107,7 @@ The background and dead cell colors are set.
 
 `
 function love.load()
-    love.graphics.setBackgroundColor(255, 255, 255)
+    love.graphics.setBackgroundColor(1, 1, 1)
 end
 
 function love.draw()
@@ -116,7 +116,7 @@ function love.draw()
             local cellSize = 5
             local cellDrawSize = cellSize - 1
 
-            |love.graphics.setColor(220, 220, 220)|
+            |love.graphics.setColor(.86, .86, .86)|
             love.graphics.rectangle(
                 'fill',
                 (x - 1) * cellSize,
@@ -180,9 +180,9 @@ function love.draw()
             local cellDrawSize = cellSize - 1
 
             |if x == selectedX and y == selectedY then|
-            |    love.graphics.setColor(0, 255, 255)|
+            |    love.graphics.setColor(0, 1, 1)|
             |else|
-                love.graphics.setColor(220, 220, 220)
+                love.graphics.setColor(.86, .86, .86)
             |end|
 
             love.graphics.rectangle(
@@ -237,11 +237,11 @@ function love.draw()
             local cellDrawSize = cellSize - 1
 
             if x == selectedX and y == selectedY then
-                love.graphics.setColor(0, 255, 255)
+                love.graphics.setColor(0, 1, 1)
             |elseif grid[y][x] then|
-            |    love.graphics.setColor(255, 0, 255)|
+            |    love.graphics.setColor(1, 0, 1)|
             else
-                love.graphics.setColor(220, 220, 220)
+                love.graphics.setColor(.86, .86, .86)
             end
 
             love.graphics.rectangle(
@@ -329,13 +329,13 @@ end
 
 ~
 Finding neighbors of grid[10][10]
-Checking grid[9][9]
-Checking grid[9][10]
-Checking grid[9][11]
+Checking grid.86].86]
+Checking grid.86][10]
+Checking grid.86][11]
 Neighbour found
-Checking grid[10][9]
+Checking grid[10].86]
 Checking grid[10][11]
-Checking grid[11][9]
+Checking grid[11].86]
 Checking grid[11][10]
 Neighbour found
 Checking grid[11][11]
@@ -430,7 +430,7 @@ end
 
 `
 function love.load()
-    love.graphics.setBackgroundColor(255, 255, 255)
+    love.graphics.setBackgroundColor(1, 1, 1)
 
     cellSize = 5
     
@@ -467,11 +467,11 @@ function love.draw()
             local cellDrawSize = cellSize - 1
 
             if x == selectedX and y == selectedY then
-                love.graphics.setColor(0, 255, 255)
+                love.graphics.setColor(0, 1, 1)
             elseif grid[y][x] then
-                love.graphics.setColor(255, 0, 255)
+                love.graphics.setColor(1, 0, 1)
             else
-                love.graphics.setColor(220, 220, 220)
+                love.graphics.setColor(.86, .86, .86)
             end
 
             love.graphics.rectangle(

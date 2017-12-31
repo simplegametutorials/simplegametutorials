@@ -313,7 +313,7 @@ Aces have a value of 11 instead of 1 if it would increase the value of the hand 
 
 First, the values of all of the cards in that hand are added together, counting aces as 1 instead of 11.
 
-Then, if the hand has an ace and the total value of the hand is 11 or less, 10 is added to the total (10 is added instead of 11 because the total has already had 1 added to it for that ace). If the total of the value hand was 12 (or more) then an ace counting as 11 would make the value of the hand 22 (or more).
+Then, if the hand has an ace and the total value of the hand is 11 or less, 10 is added to the total (10 is added instead of 11 because the total has already had 1 added to it for that ace). If the total of the value hand was 12 (or more) then an ace counting as 11 would make the value of the hand.2 (or more).
 
 `
 function love.draw()
@@ -601,16 +601,16 @@ All of the images used for drawing cards are loaded.
 function love.load()
     -- etc.
 
-	images = {}
-	for nameIndex, name in ipairs({
-		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-		'pip_heart', 'pip_diamond', 'pip_club', 'pip_spade',
-		'mini_heart', 'mini_diamond', 'mini_club', 'mini_spade',
-		'card', 'card_face_down',
-		'face_jack', 'face_queen', 'face_king',
-	}) do
-		images[name] = love.graphics.newImage('images/'..name..'.png')
-	end
+    images = {}
+    for nameIndex, name in ipairs({
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+        'pip_heart', 'pip_diamond', 'pip_club', 'pip_spade',
+        'mini_heart', 'mini_diamond', 'mini_club', 'mini_spade',
+        'card', 'card_face_down',
+        'face_jack', 'face_queen', 'face_king',
+    }) do
+        images[name] = love.graphics.newImage('images/'..name..'.png')
+    end
 end
 `
 
@@ -624,7 +624,7 @@ The cards in the player's hand are looped through and, for now, a blank card is 
 function love.load()
     -- etc.
 
-    love.graphics.setBackgroundColor(255, 255, 255)
+    love.graphics.setBackgroundColor(1, 1, 1)
 end
 
 function love.draw()
@@ -649,7 +649,7 @@ function love.draw()
     -- etc.
 
     for cardIndex, card in ipairs(playerHand) do
-        |love.graphics.setColor(255, 255, 255)|
+        |love.graphics.setColor(1, 1, 1)|
         love.graphics.draw(images.card, (cardIndex - 1) * 60, 0)
 
         |love.graphics.setColor(0, 0, 0)|
@@ -670,7 +670,7 @@ function love.draw()
     -- etc.
 
     |local function drawCard(card, x, y)|
-        love.graphics.setColor(255, 255, 255)
+        love.graphics.setColor(1, 1, 1)
         love.graphics.draw(images.card, |x|, |y|)
 
         love.graphics.setColor(0, 0, 0)
@@ -718,7 +718,7 @@ function love.draw()
     -- etc.
 
     local function drawCard(card, x, y)
-        love.graphics.setColor(255, 255, 255)
+        love.graphics.setColor(1, 1, 1)
         love.graphics.draw(images.card, x, y)
 
         love.graphics.setColor(0, 0, 0)
@@ -741,7 +741,7 @@ function love.draw()
     -- etc.
 
     local function drawCard(card, x, y)
-        love.graphics.setColor(255, 255, 255)
+        love.graphics.setColor(1, 1, 1)
         love.graphics.draw(images.card, x, y)
 
         love.graphics.setColor(0, 0, 0)
@@ -852,15 +852,15 @@ function love.draw()
     -- etc.
 
     local function drawCard(card, x, y)
-        love.graphics.setColor(255, 255, 255)
+        love.graphics.setColor(1, 1, 1)
         love.graphics.draw(images.card, x, y)
 
         -- Removed: love.graphics.setColor(0, 0, 0)
 
         |if card.suit == 'heart' or card.suit == 'diamond' then|
-        |    love.graphics.setColor(228, 15, 100)|
+        |    love.graphics.setColor(.89, .06, .39)|
         |else|
-        |    love.graphics.setColor(50, 50, 50)|
+        |    love.graphics.setColor(.2, .2, .2)|
         |end|
 
         -- etc.
@@ -890,7 +890,7 @@ function love.draw()
             elseif card.rank == 13 then
                 faceImage = images.face_king
             end
-            love.graphics.setColor(255, 255, 255)
+            love.graphics.setColor(1, 1, 1)
             love.graphics.draw(faceImage, x + 12, y + 11)
         end
     end
@@ -1490,14 +1490,14 @@ The hit and stand buttons are drawn as rectangles with text on top.
 function love.draw()
     -- etc.
 
-    love.graphics.setColor(255, 127, 57)
+    love.graphics.setColor(1, .5, .2)
     love.graphics.rectangle('fill', 10, 230, 53, 25)
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.print('Hit!', 16, 236)
 
-    love.graphics.setColor(255, 127, 57)
+    love.graphics.setColor(1, .5, .2)
     love.graphics.rectangle('fill', 70, 230, 53, 25)
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.print('Stand', 78, 236)
 end
 `
@@ -1513,20 +1513,20 @@ function love.draw()
     -- etc.
 
     --[[
-    love.graphics.setColor(255, 127, 57)
+    love.graphics.setColor(1, .5, .2)
     love.graphics.rectangle('fill', 10, 230, 53, 25)
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.print('Hit!', 16, 236)
 
-    love.graphics.setColor(255, 127, 57)
+    love.graphics.setColor(1, .5, .2)
     love.graphics.rectangle('fill', 70, 230, 53, 25)
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.print('Stand', 78, 236)
     --]]
 
-    love.graphics.setColor(255, 127, 57)
+    love.graphics.setColor(1, .5, .2)
     love.graphics.rectangle('fill', 10, 230, 113, 25)
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.print('Play again', 34, 236)
 end
 `
@@ -1548,22 +1548,22 @@ function love.draw()
     |local buttonY = 230|
 
     |local buttonHitX = 10|
-    love.graphics.setColor(255, 127, 57)
+    love.graphics.setColor(1, .5, .2)
     love.graphics.rectangle('fill', |buttonHitX|, |buttonY|, 53, 25)
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.print('Hit!', |buttonHitX + 6|, |buttonY + 6|)
 
     |local buttonStandX = 70|
-    love.graphics.setColor(255, 127, 57)
+    love.graphics.setColor(1, .5, .2)
     love.graphics.rectangle('fill', |buttonStandX|, |buttonY|, 53, 25)
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.print('Stand', |buttonStandX + 8|, |buttonY + 6|)
 
     --[[
     |local buttonPlayAgainX = 10|
-    love.graphics.setColor(255, 127, 57)
+    love.graphics.setColor(1, .5, .2)
     love.graphics.rectangle('fill', |buttonPlayAgainX|, |buttonY|, 113, 25)
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.print('Play again', |buttonPlayAgainX + 24|, |buttonY + 6|)
     --]]
 end
@@ -1579,9 +1579,9 @@ function love.draw()
 
     |local function drawButton(text, buttonX, buttonWidth, textOffsetX)|
         local buttonY = 230
-        love.graphics.setColor(255, 127, 57)
+        love.graphics.setColor(1, .5, .2)
         love.graphics.rectangle('fill', |buttonX|, buttonY, |buttonWidth|, 25)
-        love.graphics.setColor(255, 255, 255)
+        love.graphics.setColor(1, 1, 1)
         love.graphics.print(|text|, |buttonX + textOffsetX|, buttonY + 6)
     |end|
 
@@ -1615,12 +1615,12 @@ function love.draw()
         |and love.mouse.getX() < buttonX + buttonWidth|
         |and love.mouse.getY() >= buttonY|
         |and love.mouse.getY() < buttonY + buttonHeight then|
-        |    love.graphics.setColor(255, 202, 75)|
+        |    love.graphics.setColor(1, .8, .3)|
         |else|
-            love.graphics.setColor(255, 127, 57)
+            love.graphics.setColor(1, .5, .2)
         |end|
         love.graphics.rectangle('fill', buttonX, buttonY, buttonWidth, |buttonHeight|)
-        love.graphics.setColor(255, 255, 255)
+        love.graphics.setColor(1, 1, 1)
         love.graphics.print(text, buttonX + textOffsetX, buttonY + 6)
     end
 
@@ -1737,14 +1737,14 @@ Only some variables need to be reset when the play again button is clicked, so a
 
 `
 function love.load()
-    love.graphics.setBackgroundColor(255, 255, 255)
+    love.graphics.setBackgroundColor(1, 1, 1)
 
-	images = {}
-	for nameIndex, name in ipairs({
+    images = {}
+    for nameIndex, name in ipairs({
         -- etc.
-	}) do
+    }) do
         -- etc.
-	end
+    end
 
     function takeCard(hand)
         -- etc.
@@ -1805,7 +1805,7 @@ end
 
 `
 function love.load()
-    love.graphics.setBackgroundColor(255, 255, 255)
+    love.graphics.setBackgroundColor(1, 1, 1)
 
     images = {}
     for nameIndex, name in ipairs({
@@ -1917,13 +1917,13 @@ function love.draw()
     end
 
     local function drawCard(card, x, y)
-        love.graphics.setColor(255, 255, 255)
+        love.graphics.setColor(1, 1, 1)
         love.graphics.draw(images.card, x, y)
 
         if card.suit == 'heart' or card.suit == 'diamond' then
-            love.graphics.setColor(228, 15, 100)
+            love.graphics.setColor(.89, .06, .39)
         else
-            love.graphics.setColor(50, 50, 50)
+            love.graphics.setColor(.2, .2, .2)
         end
         
         local cardWidth = 53
@@ -1956,7 +1956,7 @@ function love.draw()
             elseif card.rank == 13 then
                 faceImage = images.face_king
             end
-            love.graphics.setColor(255, 255, 255)
+            love.graphics.setColor(1, 1, 1)
             love.graphics.draw(faceImage, x + 12, y + 11)
         else
             local function drawPip(offsetX, offsetY, mirrorX, mirrorY)
@@ -2092,12 +2092,12 @@ function love.draw()
         and love.mouse.getX() < buttonX + buttonWidth
         and love.mouse.getY() >= buttonY
         and love.mouse.getY() < buttonY + buttonHeight then
-            love.graphics.setColor(255, 202, 75)
+            love.graphics.setColor(1, .8, .3)
         else
-            love.graphics.setColor(255, 127, 57)
+            love.graphics.setColor(1, .5, .2)
         end
         love.graphics.rectangle('fill', buttonX, buttonY, buttonWidth, buttonHeight)
-        love.graphics.setColor(255, 255, 255)
+        love.graphics.setColor(1, 1, 1)
         love.graphics.print(text, buttonX + textOffsetX, buttonY + 6)
     end
 

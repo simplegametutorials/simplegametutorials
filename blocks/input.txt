@@ -98,7 +98,7 @@ end
 function love.draw()
     for y = 1, 18 do
         for x = 1, 10 do
-            |love.graphics.setColor(222, 222, 222)|
+            |love.graphics.setColor(.87, .87, .87)|
             local blockSize = 20
             local blockDrawSize = blockSize - 1
             love.graphics.rectangle(
@@ -170,14 +170,14 @@ function love.draw()
     for y = 1, gridYCount do
         for x = 1, gridXCount do
             |local colors = {|
-            |    [' '] = {222, 222, 222},|
-            |    i = {120, 195, 239},|
-            |    j = {236, 231, 108},|
-            |    l = {124, 218, 193},|
-            |    o = {234, 177, 121},|
-            |    s = {211, 136, 236},|
-            |    t = {248, 147, 196},|
-            |    z = {169, 221, 118},|
+            |    [' '] = {.87, .87, .87},|
+            |    i = {.47, .76, .94},|
+            |    j = {.93, .91, .42},|
+            |    l = {.49, .85, .76},|
+            |    o = {.92, .69, .47},|
+            |    s = {.83, .54, .93},|
+            |    t = {.97, .58, .77},|
+            |    z = {.66, .83, .46},|
             |}|
             |local block = inert[y][x]|
             |local color = colors[block]|
@@ -396,13 +396,13 @@ function love.draw()
             local block = pieceStructures[pieceType][pieceRotation][y][x]
             if block ~= ' ' then
                 local colors = {
-                    i = {120, 195, 239},
-                    j = {236, 231, 108},
-                    l = {124, 218, 193},
-                    o = {234, 177, 121},
-                    s = {211, 136, 236},
-                    t = {248, 147, 196},
-                    z = {169, 221, 118},
+                    i = {.47, .76, .94},
+                    j = {.93, .91, .42},
+                    l = {.49, .85, .76},
+                    o = {.92, .69, .47},
+                    s = {.83, .54, .93},
+                    t = {.97, .58, .77},
+                    z = {.66, .83, .46},
                 }
                 
                 local color = colors[block]
@@ -433,14 +433,14 @@ The code for drawing an inert block and drawing a falling piece's block is the s
 function love.draw()
     |local function drawBlock(block, x, y)|
         local colors = {
-            [' '] = {222, 222, 222},
-            i = {120, 195, 239},
-            j = {236, 231, 108},
-            l = {124, 218, 193},
-            o = {234, 177, 121},
-            s = {211, 136, 236},
-            t = {248, 147, 196},
-            z = {169, 221, 118},
+            [' '] = {.87, .87, .87},
+            i = {.47, .76, .94},
+            j = {.93, .91, .42},
+            l = {.49, .85, .76},
+            o = {.92, .69, .47},
+            s = {.83, .54, .93},
+            t = {.97, .58, .77},
+            z = {.66, .83, .46},
         }
         local color = colors[block]
         love.graphics.setColor(color)
@@ -1223,15 +1223,15 @@ function love.draw()
 
     local function drawBlock(block, x, y)
         local colors = {
-            [' '] = {222, 222, 222},
-            i = {120, 195, 239},
-            j = {236, 231, 108},
-            l = {124, 218, 193},
-            o = {234, 177, 121},
-            s = {211, 136, 236},
-            t = {248, 147, 196},
-            z = {169, 221, 118},
-            |preview = {190, 190, 190},|
+            [' '] = {.87, .87, .87},
+            i = {.47, .76, .94},
+            j = {.93, .91, .42},
+            l = {.49, .85, .76},
+            o = {.92, .69, .47},
+            s = {.83, .54, .93},
+            t = {.97, .58, .77},
+            z = {.66, .83, .46},
+            |preview = {.75, .75, .75},|
         }
 
         -- etc.
@@ -1573,15 +1573,15 @@ end
 function love.draw()
     local function drawBlock(block, x, y)
         local colors = {
-            [' '] = {222, 222, 222},
-            i = {120, 195, 239},
-            j = {236, 231, 108},
-            l = {124, 218, 193},
-            o = {234, 177, 121},
-            s = {211, 136, 236},
-            t = {248, 147, 196},
-            z = {169, 221, 118},
-            preview = {190, 190, 190},
+            [' '] = {.87, .87, .87},
+            i = {.47, .76, .94},
+            j = {.93, .91, .42},
+            l = {.49, .85, .76},
+            o = {.92, .69, .47},
+            s = {.83, .54, .93},
+            t = {.97, .58, .77},
+            z = {.66, .83, .46},
+            preview = {.75, .75, .75},
         }
         local color = colors[block]
         love.graphics.setColor(color)

@@ -66,8 +66,8 @@ A blue rectangle is drawn for the background.
 
 `
 function love.draw()
-	love.graphics.setColor(35, 92, 118)
-	love.graphics.rectangle('fill', 0, 0, 300, 388)
+    love.graphics.setColor(.14, .36, .46)
+    love.graphics.rectangle('fill', 0, 0, 300, 388)
 end
 `
 
@@ -81,8 +81,8 @@ A yellow rectangle is drawn for the bird.
 function love.draw()
     -- etc.
 
-	love.graphics.setColor(224, 214, 68)
-	love.graphics.rectangle('fill', 62, 200, 30, 25)
+    love.graphics.setColor(.87, .84, .27)
+    love.graphics.rectangle('fill', 62, 200, 30, 25)
 end
 `
 
@@ -94,18 +94,18 @@ The bird's Y position is made into a variable and every frame it increases by 30
 
 `
 function love.load()
-	birdY = 200
+    birdY = 200
 end
 
 function love.update(dt)
-	birdY = birdY + (30 * dt)
+    birdY = birdY + (30 * dt)
 end
 
 function love.draw()
-	-- etc.
+    -- etc.
 
-	love.graphics.setColor(224, 214, 68)
-	love.graphics.rectangle('fill', 62, |birdY|, 30, 25)
+    love.graphics.setColor(.87, .84, .27)
+    love.graphics.rectangle('fill', 62, |birdY|, 30, 25)
 end
 `
 
@@ -119,13 +119,13 @@ The bird's speed is made into a variable which starts at 0, and every frame it i
 
 `
 function love.load()
-	birdY = 200
-	|birdYSpeed = 0|
+    birdY = 200
+    |birdYSpeed = 0|
 end
 
 function love.update(dt)
-	|birdYSpeed = birdYSpeed + (516 * dt)|
-	birdY = birdY + |(birdYSpeed * dt)|
+    |birdYSpeed = birdYSpeed + (516 * dt)|
+    birdY = birdY + |(birdYSpeed * dt)|
 end
 `
 
@@ -135,7 +135,7 @@ Pressing any key sets the bird's speed so that it moves upwards.
 
 `
 function love.keypressed(key)
-	birdYSpeed = -165
+    birdYSpeed = -165
 end
 `
 
@@ -145,9 +145,9 @@ So that the bird can't fly completely above the playing area, flapping is only p
 
 `
 function love.keypressed(key)
-	|if birdY > 0 then|
-		birdYSpeed = -165
-	|end|
+    |if birdY > 0 then|
+        birdYSpeed = -165
+    |end|
 end
 `
 
@@ -159,20 +159,20 @@ The width and height of the playing area are reused from drawing the background,
 
 `
 function love.load()
-	-- etc.
+    -- etc.
 
-	|playingAreaWidth = 300|
-	|playingAreaHeight = 388|
+    |playingAreaWidth = 300|
+    |playingAreaHeight = 388|
 end
 
 function love.draw()
-	love.graphics.setColor(35, 92, 118)
-	love.graphics.rectangle('fill', 0, 0, |playingAreaWidth|, |playingAreaHeight|)
-	
-	-- etc.
+    love.graphics.setColor(.14, .36, .46)
+    love.graphics.rectangle('fill', 0, 0, |playingAreaWidth|, |playingAreaHeight|)
+    
+    -- etc.
 
-	|love.graphics.setColor(94, 201, 72)|
-	|love.graphics.rectangle('fill', playingAreaWidth, 0, 54, playingAreaHeight)|
+    |love.graphics.setColor(.37, .82, .28)|
+    |love.graphics.rectangle('fill', playingAreaWidth, 0, 54, playingAreaHeight)|
 end
 `
 
@@ -192,27 +192,27 @@ The pipe width is the same for both segments, so this is made into a variable.
 
 `
 function love.draw()
-	-- etc.
+    -- etc.
 
-	|local pipeWidth = 54|
-	|local pipeSpaceY = 150|
-	|local pipeSpaceHeight = 100|
+    |local pipeWidth = 54|
+    |local pipeSpaceY = 150|
+    |local pipeSpaceHeight = 100|
 
-	love.graphics.setColor(94, 201, 72)
-	love.graphics.rectangle(
-		'fill',
-		playingAreaWidth,
-		0,
-		|pipeWidth|,
-		|pipeSpaceY|
-	)
-	love.graphics.rectangle(
-		'fill',
-		playingAreaWidth,
-		|pipeSpaceY + pipeSpaceHeight|,
-		|pipeWidth|,
-		playingAreaHeight |- pipeSpaceY - pipeSpaceHeight|
-	)
+    love.graphics.setColor(.37, .82, .28)
+    love.graphics.rectangle(
+        'fill',
+        playingAreaWidth,
+        0,
+        |pipeWidth|,
+        |pipeSpaceY|
+    )
+    love.graphics.rectangle(
+        'fill',
+        playingAreaWidth,
+        |pipeSpaceY + pipeSpaceHeight|,
+        |pipeWidth|,
+        playingAreaHeight |- pipeSpaceY - pipeSpaceHeight|
+    )
 end
 `
 
@@ -228,10 +228,10 @@ To test this, pressing any key calls `love.load` to create a new random space po
 
 `
 function love.load()
-	-- etc.
+    -- etc.
 
-	pipeSpaceHeight = 100
-	pipeSpaceY = love.math.random(0, playingAreaHeight - pipeSpaceHeight)
+    pipeSpaceHeight = 100
+    pipeSpaceY = love.math.random(0, playingAreaHeight - pipeSpaceHeight)
 end
 
 function love.draw()
@@ -240,10 +240,10 @@ function love.draw()
 end
 
 function love.keypressed(key)
-	-- etc.
+    -- etc.
 
     -- Temporary
-	love.load()
+    love.load()
 end
 `
 
@@ -255,13 +255,13 @@ So that there is some distance between the top/bottom of the playing area and th
 
 `
 function love.load()
-	-- etc.
+    -- etc.
 
-	|local pipeSpaceYMin = 54|
-	pipeSpaceY = love.math.random(
-		|pipeSpaceYMin|,
-		playingAreaHeight - pipeSpaceHeight |- pipeSpaceYMin|
-	)
+    |local pipeSpaceYMin = 54|
+    pipeSpaceY = love.math.random(
+        |pipeSpaceYMin|,
+        playingAreaHeight - pipeSpaceHeight |- pipeSpaceYMin|
+    )
 end
 `
 
@@ -273,34 +273,34 @@ The pipe's X position is made into a variable, and is moved left 60 pixels per s
 
 `
 function love.load()
-	-- etc.
+    -- etc.
 
-	pipeX = playingAreaWidth
+    pipeX = playingAreaWidth
 end
 
 function love.update(dt)
-	-- etc.
+    -- etc.
 
-	pipeX = pipeX - (60 * dt)
+    pipeX = pipeX - (60 * dt)
 end
 
 function love.draw()
-	-- etc.
+    -- etc.
 
-	love.graphics.rectangle(
-		'fill',
-		|pipeX|,
-		0,
-		pipeWidth,
-		pipeSpaceY
-	)
-	love.graphics.rectangle(
-		'fill',
-		|pipeX|,
-		pipeSpaceY + pipeSpaceHeight,
-		pipeWidth,
-		playingAreaHeight - pipeSpaceY - pipeSpaceHeight
-	)
+    love.graphics.rectangle(
+        'fill',
+        |pipeX|,
+        0,
+        pipeWidth,
+        pipeSpaceY
+    )
+    love.graphics.rectangle(
+        'fill',
+        |pipeX|,
+        pipeSpaceY + pipeSpaceHeight,
+        pipeWidth,
+        playingAreaHeight - pipeSpaceY - pipeSpaceHeight
+    )
 end
 `
 
@@ -316,38 +316,38 @@ Setting the initial X position of the pipe and its random space position is reus
 
 `
 function love.load()
-	birdY = 200
-	birdYSpeed = 0
+    birdY = 200
+    birdYSpeed = 0
 
-	playingAreaWidth = 300
-	playingAreaHeight = 388
+    playingAreaWidth = 300
+    playingAreaHeight = 388
 
-	pipeSpaceHeight = 100
-	|pipeWidth = 54|
+    pipeSpaceHeight = 100
+    |pipeWidth = 54|
 
-	|function resetPipe()|
-		local pipeSpaceYMin = 54
-		pipeSpaceY = love.math.random(
-			pipeSpaceYMin,
-			playingAreaHeight - pipeSpaceHeight - pipeSpaceYMin
-		)
+    |function resetPipe()|
+        local pipeSpaceYMin = 54
+        pipeSpaceY = love.math.random(
+            pipeSpaceYMin,
+            playingAreaHeight - pipeSpaceHeight - pipeSpaceYMin
+        )
 
-		pipeX = playingAreaWidth
-	|end|
+        pipeX = playingAreaWidth
+    |end|
 
-	|resetPipe()|
+    |resetPipe()|
 end
 
 function love.update(dt)
-	-- etc.
+    -- etc.
 
-	if (pipeX + pipeWidth) < 0 then
-		resetPipe()
-	end
+    if (pipeX + pipeWidth) < 0 then
+        resetPipe()
+    end
 end
 
 function love.draw()
-	-- Removed: local pipeWidth = 54
+    -- Removed: local pipeWidth = 54
 end
 `
 
@@ -365,36 +365,36 @@ The bird's X position and width are reused from drawing the bird, so they are mo
 
 `
 function love.load()
-	-- etc.
+    -- etc.
 
-	birdX = 62
-	birdWidth = 30
+    birdX = 62
+    birdWidth = 30
 end
 
 function love.update(dt)
-	-- etc.
+    -- etc.
 
-	if
-	-- Left edge of bird is to the left of the right edge of pipe
-	birdX < (pipeX + pipeWidth)
-	and
-	 -- Right edge of bird is to the right of the left edge of pipe
-	(birdX + birdWidth) > pipeX
-	and 
-	-- Top edge of bird is above the bottom edge of first pipe segment
-	birdY < pipeSpaceY
-	then
-		love.load()
-	end
+    if
+    -- Left edge of bird is to the left of the right edge of pipe
+    birdX < (pipeX + pipeWidth)
+    and
+     -- Right edge of bird is to the right of the left edge of pipe
+    (birdX + birdWidth) > pipeX
+    and 
+    -- Top edge of bird is above the bottom edge of first pipe segment
+    birdY < pipeSpaceY
+    then
+        love.load()
+    end
 end
 
 function love.draw()
-	-- etc.
+    -- etc.
 
-	love.graphics.setColor(224, 214, 68)
-	love.graphics.rectangle('fill', |birdX|, birdY, |birdWidth|, 25)
+    love.graphics.setColor(.87, .84, .27)
+    love.graphics.rectangle('fill', |birdX|, birdY, |birdWidth|, 25)
 
-	-- etc.
+    -- etc.
 end
 `
 
@@ -408,38 +408,38 @@ The bird's X height is reused from drawing the bird, so it is moved into `love.l
 
 `
 function love.load()
-	-- etc.
+    -- etc.
 
-	birdHeight = 25
+    birdHeight = 25
 end
 
 function love.update(dt)
-	-- etc.
+    -- etc.
 
-	if
-	-- Left edge of bird is to the left of the right edge of pipe
-	birdX < (pipeX + pipeWidth)
-	and
-	 -- Right edge of bird is to the right of the left edge of pipe
-	(birdX + birdWidth) > pipeX
-	and |(|
-		-- Top edge of bird is above the bottom edge of first pipe segment
-		birdY < pipeSpaceY
-		|or|
-		|-- Bottom edge of bird is below the top edge of second pipe segment|
-		|(birdY + birdHeight) > (pipeSpaceY + pipeSpaceHeight)|
-	|)| then
-		love.load()
-	end
+    if
+    -- Left edge of bird is to the left of the right edge of pipe
+    birdX < (pipeX + pipeWidth)
+    and
+     -- Right edge of bird is to the right of the left edge of pipe
+    (birdX + birdWidth) > pipeX
+    and |(|
+        -- Top edge of bird is above the bottom edge of first pipe segment
+        birdY < pipeSpaceY
+        |or|
+        |-- Bottom edge of bird is below the top edge of second pipe segment|
+        |(birdY + birdHeight) > (pipeSpaceY + pipeSpaceHeight)|
+    |)| then
+        love.load()
+    end
 end
 
 function love.draw()
-	-- etc.
+    -- etc.
 
-	love.graphics.setColor(224, 214, 68)
-	love.graphics.rectangle('fill', birdX, birdY, birdWidth, |birdHeight|)
+    love.graphics.setColor(.87, .84, .27)
+    love.graphics.rectangle('fill', birdX, birdY, birdWidth, |birdHeight|)
 
-	-- etc.
+    -- etc.
 end
 `
 
@@ -466,7 +466,7 @@ function love.draw()
     -- etc.
 
     |local function drawPipe(pipeX, pipeSpaceY)|
-      love.graphics.setColor(94, 201, 72)
+      love.graphics.setColor(.37, .82, .28)
       love.graphics.rectangle(
           'fill',
           pipeX,
@@ -693,7 +693,7 @@ end
 function love.draw()
     -- etc.
 
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.print(score, 15, 15)
 end
 `
@@ -929,14 +929,14 @@ function love.update(dt)
 end
 
 function love.draw()
-    love.graphics.setColor(35, 92, 118)
+    love.graphics.setColor(.14, .36, .46)
     love.graphics.rectangle('fill', 0, 0, playingAreaWidth, playingAreaHeight)
 
-    love.graphics.setColor(224, 214, 68)
+    love.graphics.setColor(.87, .84, .27)
     love.graphics.rectangle('fill', birdX, birdY, birdWidth, birdHeight)
     
     local function drawPipe(pipeX, pipeSpaceY)
-        love.graphics.setColor(94, 201, 72)
+        love.graphics.setColor(.37, .82, .28)
         love.graphics.rectangle(
             'fill',
             pipeX,
@@ -956,7 +956,7 @@ function love.draw()
     drawPipe(pipe1X, pipe1SpaceY)
     drawPipe(pipe2X, pipe2SpaceY)
     
-    love.graphics.setColor(255, 255, 255)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.print(score, 15, 15)
 end
 
