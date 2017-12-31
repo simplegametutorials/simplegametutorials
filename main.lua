@@ -299,6 +299,7 @@ img {
 </style>
 </head>
 <body>
+<h3><a href="../">Introduction and other tutorials</a></h3>
 ]]
 
     keywords = {}
