@@ -313,7 +313,7 @@ Aces have a value of 11 instead of 1 if it would increase the value of the hand 
 
 First, the values of all of the cards in that hand are added together, counting aces as 1 instead of 11.
 
-Then, if the hand has an ace and the total value of the hand is 11 or less, 10 is added to the total (10 is added instead of 11 because the total has already had 1 added to it for that ace). If the total of the value hand was 12 (or more) then an ace counting as 11 would make the value of the hand.2 (or more).
+Then, if the hand has an ace and the total value of the hand is 11 or less, 10 is added to the total (10 is added instead of 11 because the total has already had 1 added to it for that ace). If the total of the value hand was 12 (or more) then an ace counting as 11 would make the value of the hand 22 (or more).
 
 `
 function love.draw()
