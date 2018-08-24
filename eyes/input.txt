@@ -36,19 +36,18 @@ function love.draw()
     |local distanceX = love.mouse.getX() - eyeX|
     |local distanceY = love.mouse.getY() - eyeY|
 
-    |local output = {}|
-
-    |table.insert(output, 'distance x: '..distanceX)|
-    |table.insert(output, 'distance y: '..distanceY)|
-
-    |love.graphics.setColor(1, 1, 1)|
-    |love.graphics.print(table.concat(output, '\n'))|
-
     love.graphics.setColor(1, 1, 1)
     love.graphics.circle('fill', |eyeX|, |eyeY|, 50)
 
     love.graphics.setColor(0, 0, .4)
     love.graphics.circle('fill', 200, 200, 15)
+
+    |love.graphics.setColor(1, 1, 1)|
+    |love.graphics.print(table.concat({|
+    |    'distance x: '..distanceX,|
+    |    'distance y: '..distanceY,|
+    |}, '\n'))|
+
 end
 `
 
@@ -62,13 +61,17 @@ The square root of the distance on the X axis squared plus the distance on the Y
 
 `
 function love.draw()
+    -- etc.
+
     local distance = math.sqrt(distanceX^2 + distanceY^2)
     
     -- etc.
 
-    table.insert(output, 'distance: '..distance)
-
-    -- etc.
+    love.graphics.print(table.concat({
+        'distance x: '..distanceX,
+        'distance y: '..distanceY,
+    |    'distance: '..distance,|
+    }, '\n'))
 end
 `
 
@@ -86,9 +89,12 @@ function love.draw()
 
     -- etc.
 
-    table.insert(output, 'angle: '..angle)
-
-    -- etc.
+    love.graphics.print(table.concat({
+        'distance x: '..distanceX,
+        'distance y: '..distanceY,
+        'distance: '..distance,
+    |    'angle: '..angle,|
+    }, '\n'))
 end
 `
 
@@ -113,13 +119,19 @@ function love.draw()
 
     -- etc.
 
-    |table.insert(output, 'cos(angle): '..math.cos(angle))|
-    |table.insert(output, 'sin(angle): '..math.sin(angle))|
+    love.graphics.setColor(0, 0, .4)
+    love.graphics.circle('fill', |pupilX|, |pupilY|, 15)
 
     -- etc.
 
-    love.graphics.setColor(0, 0, .4)
-    love.graphics.circle('fill', |pupilX|, |pupilY|)
+    love.graphics.print(table.concat({
+        'distance x: '..distanceX,
+        'distance y: '..distanceY,
+        'distance: '..distance,
+        'angle: '..angle,
+    |    'cos(angle): '..math.cos(angle),|
+    |    'sin(angle): '..math.sin(angle),|
+    }, '\n'))
 end
 `
 
@@ -133,13 +145,7 @@ The straight-line distance is limited to a certain number so that it can't move 
 function love.draw()
     -- etc.
 
-    |local eyeMaxPupilDistance = 30|
-    |if distance > eyeMaxPupilDistance then|
-    |    distance = eyeMaxPupilDistance|
-    |end|
-
-    local pupilX = eyeX + (math.cos(angle) * distance)
-    local pupilY = eyeY + (math.sin(angle) * distance)
+    local distance = |math.min(|math.sqrt(distanceX^2 + distanceY^2)|, 30)|
 
     -- etc.
 end
@@ -156,13 +162,8 @@ function love.draw()
     |function drawEye(eyeX, eyeY)|
         local distanceX = love.mouse.getX() - eyeX
         local distanceY = love.mouse.getY() - eyeY
-        local distance = math.sqrt(distanceX^2 + distanceY^2)
+        local distance = math.min(math.sqrt(distanceX^2 + distanceY^2), 30)
         local angle = math.atan2(distanceY, distanceX)
-
-        local eyeMaxPupilDistance = 30
-        if distance > eyeMaxPupilDistance then
-            distance = eyeMaxPupilDistance
-        end
 
         local pupilX = eyeX + (math.cos(angle) * distance)
         local pupilY = eyeY + (math.sin(angle) * distance)
