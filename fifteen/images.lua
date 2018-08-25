@@ -1,3 +1,22 @@
+if ONCE.start then
+    ONCE.start = false
+    local setColor = love.graphics.setColor
+    love.graphics.setColor = function(r, g, b, a)
+        local function c(a)
+            if type(a) == 'number' then
+                return a / 255
+            elseif type(a) == 'table' then
+                local t = {}
+                for i, v in ipairs(a) do
+                    table.insert(t, v / 255)
+                end
+                return t
+            end
+        end
+        setColor(c(r), c(g), c(b), c(a))
+    end
+end
+
 local pieceSize = 100
 local pieceDrawSize = pieceSize - 1
 local pieceColor = {100, 20, 150}
