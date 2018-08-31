@@ -387,6 +387,7 @@ img {
             :gsub([[%b||]], function(s) return '<span class="highlight">'..s..'</span>' end):gsub('|', '')
         end
         output = output:gsub([[%b||]], function(s) return '<span class="highlight">'..s..'</span>' end):gsub('|', '')
+        output = output:gsub('^\n', '')
 
         return output
     end
@@ -496,7 +497,7 @@ img {
 
     function love.run()
         love.filesystem.createDirectory(name)
-        s = s:gsub('LOVE', 'L&Ouml;VE'):gsub('²', '&sup2;')
+        s = s:gsub('LOVE', 'L&Ouml;VE'):gsub('Â²', '&sup2;')
         love.filesystem.write(name..'/index.html', s)
     end
 end
