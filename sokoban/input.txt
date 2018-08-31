@@ -8,9 +8,9 @@
 
 ## Rules
 
-Push all the boxes to storage locations.
+Push all the boxes on to the storage locations.
 
-Boxes can only be moved if there is a free space beyond it, not a wall or another box.
+Boxes can only be moved if there is a free space beyond it (not a wall or another box).
 
 ### Legend
 
@@ -30,8 +30,6 @@ Boxes can only be moved if there is a free space beyond it, not a wall or anothe
 
 ## Overview
 
-### Representing data
-
 The different states a cell can be in are represented by the following strings:
 
 & `'@'` & Player
@@ -45,19 +43,17 @@ The level is stored as a grid of these strings.
 
 !
 
-### Basic logic
-
 When an arrow key is pressed, the grid is looped through to find where the player is.
 
 If the position on the grid adjacent to the player in the direction of the arrow pressed is movable (i.e. empty or a storage location), the values of the grid are changed to reflect the new player position.
 
 !
 
-If position adjacent to the player is a box and the position beyond the box is movable, the grid is changed to reflect the new player and new box positions.
+If the position adjacent to the player is a box and the position beyond the box is movable, the grid is changed to reflect the new player and new box positions.
 
 !
 
-The grid is looped through and if there are no boxes left which aren't on storage locations then the level is complete.
+If there are no boxes left which aren't on storage locations then the level is complete.
 
 ## Coding
 
@@ -135,7 +131,7 @@ end
 
 ### Settings colors
 
-The background color is set, and the color of each cell is set.
+The background color is set, and the color of each cell is set based on its type.
 
 `
 function love.load()
@@ -249,9 +245,9 @@ end
 5       5
 ~
 
-### Finding cell in direction of key pressed
+### Finding cell type in direction of key pressed
 
-For now, the cell adjacent to the player in the direction of the key pressed is printed out.
+For now, the cell adjacent to the player in the direction of the key pressed has its type printed out.
 
 `
 function love.keypressed(key)
@@ -305,7 +301,7 @@ adjacent = level[5][4] ($)
 
 ### Creating test level
 
-For testing player movement, a test level is made.
+A test level is made for testing player movement.
 
 `
 function love.load()
@@ -331,7 +327,7 @@ end
 
 ### Moving player to empty location
 
-If the player's current position is the cell type `player` (i.e. not `playerOnStorage`) and the adjacent cell type is `empty`, then the player's position becomes `empty` and the adjacent position becomes `player`.
+If the value at the player's current position is `player` (i.e. not `playerOnStorage`) and the adjacent cell is `empty`, then the player's position becomes `empty` and the adjacent position becomes `player`.
 
 `
 function love.keypressed(key)
@@ -349,7 +345,7 @@ end
 
 ### Moving player to storage
 
-If the adjacent position is `storage` then the new adjacent position becomes `playerOnStorage`.
+If the adjacent position is `storage`, then the new adjacent position becomes `playerOnStorage`.
 
 Currently the player can move on to storage, but not off storage.
 
@@ -375,7 +371,7 @@ end
 
 ### Simplifying code
 
-The new adjacent position is changed based on what `adjacent` is, so a table is made which returns the next adjacent cell type when indexed by the current adjacent cell type.
+The new adjacent position is set based on the type of `adjacent`, so a table is made which returns the next adjacent cell type when indexed by the current adjacent cell type.
 
 Indexing by anything other than the values `empty` or `storage` will be result in `nil`, so it can also be used to check if the player can move to the adjacent position.
 
@@ -447,9 +443,9 @@ end
 
 The cell beyond the adjacent cell is stored in a variable.
 
-`level[playerY + dy + dy]` is checked to see if it is not `nil` before it is indexed by `[playerX + dx + dx]`. The adjacent position isn't checked in the same way because there is always a border of walls around each level, so `level[playerY + dy]` can never be `nil`.
+`level[playerY + dy + dy]` is checked to see if it is not `nil` before it is indexed by `[playerX + dx + dx]`. The adjacent position isn't checked in the same way because there is always a border of walls around each level, so `level[playerY + dy]` won't ever be `nil`.
 
-If the adjacent cell is a box and the beyond cell is empty, the adjacent position is set to `player` and the beyond position is set to `box`.
+If the adjacent cell is a box and the beyond cell is empty, then the adjacent position is set to `player` and the beyond position is set to `box`.
 
 `
 function love.keypressed(key)
@@ -483,7 +479,7 @@ end
 
 ### Pushing box on to storage
 
-If the beyond position is `storage` then the new beyond position becomes `boxOnStorage`.
+If the beyond position is `storage`, then beyond position is set to `boxOnStorage`.
 
 `
 function love.keypressed(key)
@@ -599,9 +595,9 @@ end
 
 The levels are stored in a table.
 
-The current level is stored as a number.
+The number of the current level is also stored.
 
-The cells of the current level are copied into the level table.
+The cells of the current level are copied into the levels table.
 
 `
 function love.load()
@@ -658,7 +654,7 @@ end
 
 When the *r* key is pressed the level is reset.
 
-The code for copying the current level to the level table is reused from `love.load`, so a function is made.
+The code for copying the current level to the levels table is reused, so a function is made.
 
 `
 function love.load()
@@ -688,7 +684,7 @@ end
 
 ### Next and previous level
 
-When the *n* key is pressed the next level is loaded, and when the *p* key is pressed the previous level is loaded.
+When the *n* key is pressed, the next level is loaded, and when the *p* key is pressed, the previous level is loaded.
 
 `
 function love.keypressed(key)
@@ -709,9 +705,9 @@ end
 
 ### Wrapping next and previous
 
-If the previous level is before the first level, the last level is loaded.
+If the previous level is before the first level, then the last level is loaded.
 
-If the next level is after the last level, the first level is loaded.
+If the next level is after the last level, then the first level is loaded.
 
 `
 function love.keypressed(key)
@@ -736,7 +732,7 @@ end
 
 ### Go to next level when complete
 
-After the player has moved, all of the cells in the level are looped through. If none of the cells are boxes (i.e. they are all boxes on storage) then the level is complete and the next level is loaded.
+After the player has moved, all of the cells in the level are looped through. If none of the cells are boxes (i.e. all the boxes are on storage), then the level is complete and the next level is loaded.
 
 `
 function love.keypressed(key)

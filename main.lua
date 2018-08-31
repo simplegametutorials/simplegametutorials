@@ -496,7 +496,7 @@ img {
 
     function love.run()
         love.filesystem.createDirectory(name)
-        s = s:gsub('LOVE', 'L&Ouml;VE')
+        s = s:gsub('LOVE', 'L&Ouml;VE'):gsub('²', '&sup2;')
         love.filesystem.write(name..'/index.html', s)
     end
 end

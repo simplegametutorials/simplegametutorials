@@ -25,13 +25,13 @@ Create an initial configuration of cells, hold a key to step forward in time, an
 
 ## Overview
 
-The cells are stored as a grid of boolean values, `true` for alive and `false` for dead.
+The cells in the grid are stored as boolean values: `true` for alive, `false` for dead.
 
 !
 
 When time steps forward, a new grid is created, and whether the cells of this new grid are alive or dead is based on the current grid.
 
-After the new grid is complete, the current grid is replaced with the new grid.
+After the new grid is complete, the current grid is replaced by the new grid.
 
 ## Coding
 
@@ -55,7 +55,7 @@ end
 
 ### Drawing a row of cells
 
-A row of cells are drawn, with 1 pixel between each cell.
+A row of cells is drawn, with 1 pixel between each cell.
 
 `
 function love.draw()
@@ -170,7 +170,7 @@ end
 
 ### Highlighting cells
 
-The square under the mouse cursor is set to the highlighted color.
+The square under the mouse cursor is set to the highlight color.
 
 `
 function love.draw()
@@ -205,7 +205,7 @@ A grid is created to store the cells.
 
 Each cell is represented by a boolean value: `true` for alive, `false` for dead.
 
-If the cell is alive, the alive color is used to draw the cell.
+If the cell is alive, then the alive color is used to draw the cell.
 
 To test this, some cells are manually set to alive.
 
@@ -260,7 +260,7 @@ end
 
 ### Set cells to alive with left mouse button
 
-If the left mouse button is down, the selected cell is set to alive.
+If the left mouse button is down, then the selected cell is set to alive.
 
 `
 function love.update()
@@ -297,11 +297,11 @@ Updating the grid after a step of time requires knowing how many alive neighbors
 
 For now, right clicking a cell will print out how many alive neighbors it has.
 
-`grid[selectedY + dy]` is checked to see if it exists before `grid[selectedY + dy][selectedX + dx]`, because if `selectedY + dy` is not on the grid, then `grid[selectedY + dy]` will return `nil`, and `grid[selectedY + dy][selectedX + dx]` will error because the `[selectedX + dx]` part is trying to index `nil`.
+`grid[selectedY + dy]` is checked to see if it exists before `grid[selectedY + dy][selectedX + dx]` is, because if `selectedY + dy` is not inside the grid, then `grid[selectedY + dy]` will return `nil`, and `grid[selectedY + dy][selectedX + dx]` will error because the `[selectedX + dx]` part is trying to index `nil`.
 
 `
 function love.mousepressed(mouseX, mouseY, button)
-    -- Temporary.
+    -- Temporary
     if button == 2 then
         local neighbourCount = 0
 
@@ -329,13 +329,13 @@ end
 
 ~
 Finding neighbors of grid[10][10]
-Checking grid.86].86]
-Checking grid.86][10]
-Checking grid.86][11]
+Checking grid[9][9]
+Checking grid[9][10]
+Checking grid[9][11]
 Neighbour found
-Checking grid[10].86]
+Checking grid[10][9]
 Checking grid[10][11]
-Checking grid[11].86]
+Checking grid[11][9]
 Checking grid[11][10]
 Neighbour found
 Checking grid[11][11]
@@ -416,7 +416,7 @@ end
 
 ### Turning key repeat on
 
-Key repeat is turned on so holding a key down will call `love.keypressed` repeatedly.
+Key repeat is turned on, so that holding a key down will call `love.keypressed` repeatedly.
 
 `
 function love.load()

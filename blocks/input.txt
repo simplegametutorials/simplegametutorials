@@ -16,25 +16,23 @@ The type of the next piece that will fall is shown above the playing area.
 
 !
 
-When an unbroken row of blocks is formed the row disappears and all the blocks above it move down one row.
+When an unbroken row of blocks is formed, the row disappears and all the blocks above it move down one row.
 
-The game ends when a piece has fallen and the next piece would immediately overlap a previously fallen block.
+The game ends when a piece has come to rest and the next piece would immediately overlap a previously fallen block.
 
 ## Controls
 
 & *Left arrow* & Move left
 & *Right arrow* & Move right
-& *z* & Rotate counter-clockwise
+& *z* & Rotate counterclockwise
 & *x* & Rotate clockwise
 & *c* & Drop
 
 ## Overview
 
-### Representing data
-
 A grid stores the inert blocks which have already fallen.
 
-The state of a cell can be empty or filled with a block of a certain color. The string `' '` (a space) represents an empty cell, and the strings `'i'`, `'j'`, `'l'`, `'o'`, `'s'`, `'t'` and `'z'` represent blocks of different colors.
+The state of a block can either be empty or filled with a block of a certain color. The string `' '` (a space) represents an empty block, and the strings `'i'`, `'j'`, `'l'`, `'o'`, `'s'`, `'t'` and `'z'` represent blocks of different colors.
 
 !
 
@@ -42,9 +40,7 @@ All the different types of pieces are stored with their rotated variations.
 
 !
 
-The currently falling piece is stored as a number representing which type of piece it is, a number representing which rotation variation it is at, and a number representing its X and Y position on the playing area.
-
-### Basic logic
+The currently falling piece is stored as a number representing which type of piece it is, a number representing which rotation variation it is at, and numbers representing its X and Y position in the playing area.
 
 A new piece is created at the top of the screen, unless it would overlap an inert block, in which case the game is over.
 
@@ -52,17 +48,17 @@ The player can move the piece left and right, unless this new position would ove
 
 After an amount of time has passed, the piece moves down, unless this new position would overlap an inert block or be outside the playing area, in which case it has come to rest.
 
-When a rotate button is pressed, the piece changes to its next rotation variation, unless this variation would overlap an inert block or be outside the playing area.
+When one of the rotate buttons is pressed, the piece changes its rotation variation, unless this variation would overlap an inert block or be outside the playing area.
 
 When the drop button is pressed, the piece moves down until the next position would overlap an inert block or be outside the playing area, at which point it has come to rest.
 
-When the piece comes to rest, the blocks of the piece are added to the inert blocks, and the next piece is created.
+When a piece comes to rest, the blocks of the piece are added to the inert blocks, and the next piece is created.
 
 A sequence of one of each of the seven pieces in a random order is created, and the next piece is taken from this sequence. Once all of the pieces have been taken, a new random sequence is created.
 
 ## Coding
 
-### Drawing the grid of blocks
+### Drawing grid of blocks
 
 A square is drawn for each block in the playing area.
 
@@ -88,7 +84,7 @@ end
 
 ### Setting colors
 
-The background color and block color are set.
+The background color and empty block color are set.
 
 `
 function love.load()
@@ -117,7 +113,7 @@ end
 
 ### Storing inert blocks
 
-The grid for the inert blocks is created and every cell is set to `' '` (a string containing the space character), representing an empty cell.
+The grid for the inert blocks is created and every block is set to `' '` (a string containing the space character), representing an empty block.
 
 The width and height of the grid in blocks is reused from drawing the blocks, so they are made into variables.
 
@@ -150,7 +146,7 @@ end
 
 When the blocks of the grid are drawn, the color is set based on what is stored in the inert grid.
 
-To test, some cells are set to values representing blocks of different colors.
+To test this, some block are set to values representing different colors.
 
 `
 function love.load()
@@ -385,7 +381,7 @@ end
 
 ### Drawing the piece
 
-The piece is drawn by looping through the grid and, unless the block is empty, drawing a square with a color determined by the block type.
+The piece is drawn by looping through its structure, and, unless the block is empty, drawing a square with a color determined by the block type.
 
 `
 function love.draw()
@@ -427,7 +423,7 @@ end
 
 ### Simplifying code
 
-The code for drawing an inert block and drawing a falling piece's block is the same, so a function is made.
+The code for drawing an inert block and drawing a block of the falling piece is the same, so a function is made.
 
 `
 function love.draw()
@@ -479,7 +475,7 @@ When the *x* key is pressed, the piece's rotation number is increased by 1, rota
 
 If the rotation number is greater than the number of rotation positions (i.e. greater than the last rotation position), the rotation number is set to 1 (i.e. the first rotation position).
 
-Likewise, when the *z* key is pressed, the piece rotation number is decreased by 1, rotating the piece counter-clockwise.
+Likewise, when the *z* key is pressed, the piece rotation number is decreased by 1, rotating the piece counterclockwise.
 
 If the rotation number is less than 1 (i.e. less than the first rotation position), the rotation number is set to the number of rotation positions (i.e. the last rotation position).
 
@@ -504,7 +500,7 @@ end
 
 ### Testing pieces
 
-For testing, the up and down arrows cycle through the piece types.
+For testing purposes, the up and down arrows cycle through the piece types.
 
 `
 function love.keypressed(key)
@@ -674,7 +670,7 @@ end
 
 ### Checking left of playing area
 
-If any block is not empty and its X position is less than 1 (i.e. off the left of the playing area) the function returns false.
+If any block is not empty and its X position is less than 1 (i.e. off the left of the playing area), then the function returns false.
 
 Otherwise the function returns true.
 
@@ -737,7 +733,7 @@ end
 `
 ### Checking right of playing area
 
-If any block's X position is greater than the width of the playing area (i.e. off the right of the playing area) the function also returns false.
+If any block's X position is greater than the width of the playing area (i.e. off the right of the playing area), then the function also returns false.
 
 `
 function love.load()
@@ -762,7 +758,7 @@ end
 
 ### Checking bottom
 
-If any block's Y position is greater than the height of the playing area (i.e off the bottom of the playing area) the function also returns false.
+If any block's Y position is greater than the height of the playing area (i.e off the bottom of the playing area), then the function also returns false.
 
 `
 function love.load()
@@ -788,7 +784,7 @@ end
 
 ### Checking inert
 
-If there is an inert block at any block's position, the function also returns false.
+If there is an inert block at any block's position, then the function also returns false.
 
 To test this, an inert block is manually set.
 
@@ -931,7 +927,7 @@ The sequence for the next pieces is stored as a table containing the numbers rep
 
 Each number representing a piece type is looped through and inserted into the sequence at a random position from 1 (the first position) to 1 more than the number of piece types already in the sequence table (the last position).
 
-To test this, a new sequence is created when the *s* key is pressed and is printed.
+To test this, a new sequence is created when the *s* key is pressed, and the sequence is printed.
 
 `
 function love.load()
@@ -1011,9 +1007,9 @@ end
 
 ### Add to inert
 
-When the piece has come to rest, the blocks in the piece are added to the inert blocks.
+When a piece has come to rest, the blocks in the piece are added to the inert blocks.
 
-The piece's blocks are looped through, and if the block isn't empty then the inert block at this position is set to the piece's block.
+The piece's blocks are looped through, and if a block isn't empty, then the inert block at this position is set to the type of the piece's block.
 
 `
 function love.update(dt)
@@ -1044,7 +1040,7 @@ end
 
 ### New piece immediately after drop
 
-When the piece is dropped the timer is set immediately to the limit so that adding the piece to the inert pieces and creating the new piece happen immediately.
+When a piece is dropped, the timer is set immediately to the limit so that adding the piece to the inert pieces and creating the new piece happen immediately instead of waiting for the timer.
 
 The timer limit is reused from `love.update`, so it is moved into `love.load`.
 
@@ -1073,7 +1069,7 @@ end
 
 ### Finding complete rows
 
-Each row of the inert blocks is looped through, and if none of the columns of the row contain an empty block the row is complete.
+Each row of the inert blocks is looped through, and if none of the columns of the row contain an empty block, then the row is complete.
 
 For now, the complete row numbers are printed out.
 
@@ -1156,7 +1152,7 @@ end
 
 ### Game over
 
-If a newly created piece is in an unmovable position the game is over.
+If a newly created piece is in an unmovable position, then the game is over.
 
 For now, `love.load` is called to reset the game to its initial state.
 
@@ -1215,7 +1211,7 @@ end
 
 ### Drawing next piece
 
-The last piece of the sequence (the next piece to fall) is drawn at its first rotation position. It is offset 5 blocks from the left and 1 block from the top.
+The last piece of the sequence (i.e. the next piece to fall) is drawn at its first rotation position. It is offset 5 blocks from the left and 1 block from the top.
 
 `
 function love.draw()
@@ -1254,7 +1250,7 @@ end
 
 ### Resetting
 
-When the game is over only some of the variables need to be reset, so a function is made.
+When the game is over, only some of the variables need to be reset, so a function is made.
 
 `
 function love.load()

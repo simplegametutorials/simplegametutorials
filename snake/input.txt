@@ -8,7 +8,7 @@
 
 Eating food makes the snake grow. When the food is eaten it moves to another random position.
 
-Going off an edge of the screen will wrap the snake around to the other edge.
+The snake will wrap around to the other side of the screen when it goes off the edge.
 
 The game is over when the snake crashes into itself.
 
@@ -22,7 +22,7 @@ The snake is represented by a sequence of X and Y positions.
 
 The food is represented by a single X and Y position.
 
-When the snake moves, the last item in the sequence (i.e. its tail) is removed, and an item is added to the front (i.e. for its head) in the direction that the snake is going.
+When the snake moves, then the last item in the sequence (i.e. its old tail position) is removed, and an item is added to the front (i.e. its new head position) in the direction that the snake is going.
 
 !
 
@@ -30,11 +30,11 @@ When the snake moves, the last item in the sequence (i.e. its tail) is removed, 
 
 !
 
-If the new head is at the same position as the food's position, the snake's tail isn't removed, and the food is moved to a random position not occupied by the snake.
+If the new head position is the same as the food's position, then the snake's tail is not removed, and the food is moved to a random position not occupied by the snake.
 
 !
 
-If the new head is at the same position as any of the snake's other segments, the game is over.
+If the new head position is the same as any of the snake's other segments, then the game is over.
 
 ## Coding
 
@@ -98,7 +98,7 @@ The snake moves once every 0.15 seconds.
 
 A timer variable starts at 0 and increases by `dt` each frame.
 
-When it is at or above 0.15, it is reset by taking 0.15 from it (leaving any residual time in the timer variable if the timer has gone slightly above 0.15, so the timing is more accurate than setting the timer to 0), and this is when the snake will move.
+When the timer is at or above 0.15, it is reset by taking 0.15 from it (leaving any residual time in the timer variable if the timer has gone slightly above 0.15, so the timing is more accurate than setting the timer to 0), and this is when the snake will move.
 
 `
 function love.load()
@@ -150,21 +150,17 @@ function love.update(dt)
 end
 
 function love.draw()
-    -- etc.
-
     -- Removed: local snakeSegments
-
-    -- etc.
 end
 `
 
 !
 
-### Moving the snake in different directions
+### Moving the snake in all four directions
 
 The snake's current direction is stored in a variable, and is changed using the arrow keys.
 
-The snake's next head position is based on this direction.
+The snake's next head position is set based on this direction.
 
 `
 function love.load()
@@ -212,9 +208,9 @@ end
 
 !
 
-### Preventing going backwards
+### Preventing moving straight backwards
 
-The snake shouldn't be able to move in the opposite direction it's currently going in (e.g. when it is going right, it shouldn't immediately go left), so this is checked before setting the direction.
+The snake shouldn't be able to move in the opposite direction it's currently going in (e.g. when it's going right, it shouldn't immediately go left), so this is checked before setting the direction.
 
 `
 function love.keypressed(key)
@@ -239,17 +235,17 @@ end
 
 ### Using direction queue
 
-Currently, the snake can still go backwards if another direction and then the opposite direction is pressed within a single tick. For example, if the snake moved right on the last tick, and then the player presses down then left before the next tick, the snake will move left on the next tick.
+Currently, the snake can still go backwards if another direction and then the opposite direction is pressed within a single tick of the timer. For example, if the snake moved right on the last tick, and then the player presses down then left before the next tick, then the snake will move left on the next tick.
 
 Also, the player may want to give multiple directions within a single tick. In the above example, the player may have wanted the snake to move down for the next tick, and then left on the tick after.
 
 A direction queue is created. The first item in the queue is the direction the snake will move on the next tick.
 
-If the direction queue has more than one item, the first item is removed from it on every tick.
+If the direction queue has more than one item, then the first item is removed from it on every tick.
 
 When a key is pressed, the direction is added to the end of the direction queue.
 
-The last item of the direction queue (i.e. the last direction pressed) is checked to see if it's not in the opposite direction of the new direction before adding the new direction to the direction queue.
+The last item in the direction queue (i.e. the last direction pressed) is checked to see if it's not in the opposite direction of the new direction before adding the new direction to the direction queue.
 
 `
 function love.load()
@@ -308,7 +304,7 @@ end
 function love.draw()
     -- etc.
 
-    -- Temporary.
+    -- Temporary
     for directionIndex, direction in ipairs(directionQueue) do
         love.graphics.setColor(1, 1, 1)
         love.graphics.print('directionQueue['..directionIndex..']: '..direction, 15, 15 * directionIndex)
@@ -320,7 +316,7 @@ end
 
 ### Preventing adding direction to the direction queue twice
 
-If the last direction is the same direction as the new direction, the new direction is not added to the direction queue.
+If the last direction is the same direction as the new direction, then the new direction is not added to the direction queue.
 
 `
 function love.keypressed(key)
@@ -347,11 +343,11 @@ function love.keypressed(key)
 end
 `
 
-### Wrapping around
+### Wrapping around screen
 
 If the next position would be off the grid, it is wrapped around to the position on the other side.
 
-The grid X/Y count is reused from drawing the background, so they are moved to `love.load`.
+The grid X/Y counts are reused from drawing the background, so they are moved to `love.load`.
 
 `
 function love.load()
@@ -457,7 +453,7 @@ end
 
 ### Eating food
 
-If the snake's new head position is the same as the food's position, the snake's tail isn't removed, and the food gets a new random position.
+If the snake's new head position is the same as the food's position, then the snake's tail is not removed, and the food gets a new random position.
 
 `
 function love.update(dt)
@@ -510,9 +506,9 @@ end
 
 ### Moving food to free positions
 
-Instead of being set to any random position, the food is set to be in a position not occupied by the snake.
+Instead of moving the food to any random position, it is moved to a position not occupied by the snake.
 
-All of the positions of the grid are looped through, and for each position all of the segments of the snake are looped through, and if no segments of the snake are at the same position as the grid position, the grid position is added to a table of possible food positions. The next food position is selected randomly from this table.
+All of the positions of the grid are looped through, and for each grid position all of the segments of the snake are looped through, and if no segments of the snake are at the same position as the grid position, then the grid position is added to a table of possible food positions. The next food position is selected randomly from this table.
 
 `
 function love.load()
@@ -546,9 +542,9 @@ end
 
 ### Game over
 
-The snake is looped through, and if any of its segments except for the last one is at the same position as the snake's new head position then the snake has crashed into itself.
+The snake's segments are looped through, and if any of them except for the last one is at the same position as the snake's new head position, then the snake has crashed into itself.
 
-The last segment isn't checked because it will be removed within the same tick.
+The last segment is not checked because it will be removed within the same tick.
 
 For now, `love.load` is called to reset the game when the snake crashes into itself.
 
@@ -586,7 +582,7 @@ end
 
 A variable is used to store whether or not the snake is alive, and is set to `false` when the snake has crashed.
 
-If the snake is dead, the timer waits for 2 seconds before calling `love.load`.
+If the snake is dead, then the timer waits for 2 seconds before calling `love.load`.
 
 `
 function love.load()
@@ -617,7 +613,7 @@ end
 
 ### Changing color when snake is dead
 
-The snake's color is changed based on if it's alive or not.
+The snake's color is changed based on whether it is alive or not.
 
 `
 function love.draw()
@@ -640,12 +636,16 @@ end
 
 ### Resetting
 
-When the game is over only some variables need to be reset, so a function is made.
+When the game is over, only some variables need to be reset, so a function is made.
 
 `
 function love.load()
     gridXCount = 20
     gridYCount = 15
+
+    function moveFood()
+        -- etc.
+    end
 
     |function reset()|
         snakeSegments = {
@@ -656,33 +656,10 @@ function love.load()
         directionQueue = {'right'}
         snakeAlive = true
         timer = 0
+        moveFood()
     |end|
 
     |reset()|
-
-    function moveFood()
-        local possibleFoodPositions = {}
-
-        for foodX = 1, gridXCount do
-            for foodY = 1, gridYCount do
-                local possible = true
-
-                for segmentIndex, segment in ipairs(snakeSegments) do
-                    if foodX == segment.x and foodY == segment.y then
-                        possible = false
-                    end
-                end
-
-                if possible then
-                    table.insert(possibleFoodPositions, {x = foodX, y = foodY})
-                end
-            end
-        end
-
-        foodPosition = possibleFoodPositions[love.math.random(1, #possibleFoodPositions)]
-    end
-
-    moveFood()
 end
 
 function love.update(dt)
@@ -701,19 +678,6 @@ function love.load()
     gridXCount = 20
     gridYCount = 15
 
-    function reset()
-        snakeSegments = {
-            {x = 3, y = 1},
-            {x = 2, y = 1},
-            {x = 1, y = 1},
-        }
-        directionQueue = {'right'}
-        snakeAlive = true
-        timer = 0
-    end
-
-    reset()
-
     function moveFood()
         local possibleFoodPositions = {}
 
@@ -736,7 +700,19 @@ function love.load()
         foodPosition = possibleFoodPositions[love.math.random(1, #possibleFoodPositions)]
     end
 
-    moveFood()
+    function reset()
+        snakeSegments = {
+            {x = 3, y = 1},
+            {x = 2, y = 1},
+            {x = 1, y = 1},
+        }
+        directionQueue = {'right'}
+        snakeAlive = true
+        timer = 0
+        moveFood()
+    end
+
+    reset()
 end
 
 function love.update(dt)

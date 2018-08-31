@@ -16,19 +16,19 @@ A point is scored for every pipe passed.
 
 ## Overview
 
-The bird doesn't actually move forward, it stays still on the X axis while the pipes move to the left.
+The bird doesn't actually move forward; it stays still on the X axis while the pipes move to the left.
 
-The bird is drawn by a yellow rectangle, and each pipe is drawn by two green rectangles.
+The bird is drawn as a yellow rectangle, and each pipe is drawn as two green rectangles.
 
 The bird's Y position moves down by a certain speed each frame. Each frame this speed is increased to simulate gravity.
 
-When a key is pressed the bird's speed is set to a high number in the up direction.
+When a key is pressed, the bird's speed is set to a high number in the upward direction.
 
-The pipes share the same width and the same height of the space between the segments.
+The pipes share the same width, and the same space height between the segments.
 
 !
 
-Each pipe has its own X position within the playing area and Y position of where the space starts.
+Each pipe has its own X position, and Y position the space.
 
 !
 
@@ -90,7 +90,7 @@ end
 
 ### Moving the bird
 
-The bird's Y position is made into a variable and every frame it increases by 30 multiplied by `dt`, making the bird move down 30 pixels per second.
+The bird's Y position is made into a variable, and every frame it increases by 30 multiplied by `dt`, making the bird move down 30 pixels per second.
 
 `
 function love.load()
@@ -131,7 +131,7 @@ end
 
 ### Flapping
 
-Pressing any key sets the bird's speed so that it moves upwards.
+Pressing any key sets the bird's speed to a negative number so that it moves upwards.
 
 `
 function love.keypressed(key)
@@ -182,11 +182,11 @@ end
 
 Instead of drawing one rectangle, two rectangles are drawn for the upper and lower segments.
 
-The top rectangle's height is set to where the "space" between the two segments starts. For now, this is 150.
+The top rectangle's height is set to where the space between the two segments starts. For now, this is 150.
 
 The bottom rectangle starts at the Y position of the top rectangle's height plus the amount of space between them (which is 100).
 
-The bottom rectangle's height is the playing area's height, minus the height of what is "already there" (the top rectangle and the space).
+The bottom rectangle's height is the playing area's height, minus the height of the top rectangle and the space.
 
 The pipe width is the same for both segments, so this is made into a variable.
 
@@ -222,7 +222,7 @@ end
 
 The pipe's space position is set to a random number between 0 (the top of the playing area) and the playing area height minus the space height (so that the bottom of the space would be touching the bottom of the playing area).
 
-The pipe's space position should be set only once, not every frame, so it is moved into `love.load`. Setting the pipe's space position requires the space's height, so this is also moved into `love.load`.
+The pipe's space position should be set only once, so it is moved into `love.load`. Setting the pipe's space position requires the space's height, so this is also moved into `love.load`.
 
 To test this, pressing any key calls `love.load` to create a new random space position.
 
@@ -566,7 +566,7 @@ end
 
 The code which moves the pipe is uncommented and turned into a function which takes a pipe's X position and space position, and returns the updated positions.
 
-When a pipe goes off the playing area it is set to the right of the playing area.
+When a pipe goes off the playing area, it is set to be at the right of the playing area.
 
 `
 function love.update(dt)
@@ -610,9 +610,9 @@ end
 
 ### Initial X position for pipes
 
-The first pipe's initial X position is the width of the playing area (i.e. the pipe's left edge is touching the right edge of the playing area).
+The first pipe's initial X position is set to the width of the playing area (i.e. the pipe's left edge is touching the right edge of the playing area).
 
-The second pipe's initial X position is set so that there is an even space between it and the first pipe on either side.
+The second pipe's initial X position is set so that there is an even space between it and the other pipe on either side.
 
 The distance the first pipe travels before it wraps around the playing area is the width of the playing area plus the width of the pipe, because it starts when its left edge is on the right edge of the playing area and ends when its right edge if on the left edge of the playing area. The second pipe's initial X position is set to half this distance.
 

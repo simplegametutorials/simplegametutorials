@@ -414,7 +414,11 @@ function collide(birdY, pipeX, pipeSpaceY, A, B, C, bottom, D)
     else
         f('bird top', '^', 'pipe bottom', 3, C)
     end
-    drawArrow3('up', x - 4, 4 + y + 15 * 2)
+    if bottom then
+        drawArrow3('down', x - 4, y - 4 + 15 * 2)
+    else
+        drawArrow3('up', x - 4, 4 + y + 15 * 2)
+    end
     if not A and not B and not C and not D then
         love.graphics.setColor(255, 255, 0, 150)
         if not bottom then
@@ -550,8 +554,8 @@ t = {
         love.graphics.pop()
 
         love.graphics.setColor(0, 0, 0)
-        drawXSpan(pipe1X, -10, pipeWidth, 'pipe\nspace\nwidth')
-        drawXSpan(pipe2X, -10, pipeWidth, 'pipe\nspace\nwidth')
+        drawXSpan(pipe1X, -10, pipeWidth, 'pipe\nwidth')
+        drawXSpan(pipe2X, -10, pipeWidth, 'pipe\nwidth')
     end,
     function ()
         love.graphics.translate(100, 100)
