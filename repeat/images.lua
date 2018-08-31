@@ -55,7 +55,7 @@ t = {
         love.graphics.setNewFont(20)
         drawBackground(300, 182)
         local sequence = testSequence
-        local current = 2
+        local current = 1
         
         local squareSize = 50
 
@@ -71,7 +71,7 @@ t = {
         love.graphics.setNewFont(20)
         drawBackground(300, 182)
         local sequence = testSequence
-        local current = 2
+        local current = 1
 
         local function drawSquare(number, color)
             local squareSize = 50
