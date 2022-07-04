@@ -35,6 +35,8 @@ The cells are drawn by assembling the following images:
 
 !
 
+To obtain these images, <a href="flowers.love">download flowers.love</a>, rename the extension from .love to .zip and then unzip the file. Inside the directory there will be the directory of images that you can use in your project. 
+
 ## Coding
 
 ### Loading images
