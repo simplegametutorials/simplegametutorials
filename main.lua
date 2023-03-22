@@ -394,7 +394,6 @@ h2 + h3 {
     s = s..'<p><a href="../../">Home page</a> > <a href="../">'..linkName..'</a></p>'
     ..'<h1>'..title..'</h1>'
     ..'<p class="subheading">A tutorial for '..frameworkName..'</p>'
-    ..'<p>Please send any feedback to <a href="mailto:simple.game.tutorials@gmail.com">simple.game.tutorials@gmail.com</a></p>'
 
     if framework == 'love' then
         s = s..'<p><a href="'..name..'.love" class="download">Download '..name..'.love'..'</a></p>'
