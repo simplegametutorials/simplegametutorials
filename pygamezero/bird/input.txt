@@ -1,0 +1,3067 @@
+<a href="bird.py" class="download">Download bird.py</a>
+
+!
+
+## Rules
+
+Fly through the spaces between the pipes by flapping.
+
+A point is scored for every pipe passed.
+
+### Controls
+
+& *Any key* & Flap
+
+## Overview
+
+The bird doesn't actually move forward; it stays still on the X axis while the pipes move to the left.
+
+The bird is drawn as a yellow rectangle, and each pipe is drawn as two green rectangles.
+
+The bird's Y position moves down by a certain speed each frame. Each frame this speed is increased to simulate gravity.
+
+When a key is pressed, the bird's speed is set to a high number in the upward direction.
+
+The pipes share the same width, and the same space height between the segments.
+
+!
+
+Each pipe has its own X position, and Y position the space starts at.
+
+!
+
+Since there are only two pipes in the playing area at one time, the information for only two pipes needs to stored. Once a pipe goes out of the playing area, it gets a new space position and its X position is reset to the right edge of the playing area.
+
+To see if the bird has collided with a pipe's two segments, three things need to be checked for each segment.
+
+The bird has collided with the top segment if...
+- The left edge of the bird is to the left of the right edge of the pipe, and...
+- The right edge of the bird is to the right of the left edge of the pipe, and...
+- The top edge of the bird is above the bottom edge of the pipe segment
+
+!
+
+!
+
+!
+
+!
+
+The bird has collided with the bottom segment if...
+- The left edge of the bird is to the left of the right edge of the pipe, and...
+- The right edge of the bird is to the right of the left edge of the pipe, and...
+- The bottom edge of the bird is below the top edge of the pipe segment
+
+!
+
+!
+
+## Coding
+
+### Drawing the background
+
+A blue rectangle is drawn for the background.
+
+``
+|def draw():|
+|    screen.fill((0, 0, 0))|
+|    |
+|    screen.draw.filled_rect(|
+|        Rect(|
+|            (0, 0),|
+|            (300, 388)|
+|        ),|
+|        color=(35, 92, 118)|
+|    )|
+``
+`
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (300, 388)
+        ),
+        color=(35, 92, 118)
+    )
+`
+
+!
+
+### Drawing the bird
+
+A yellow rectangle is drawn for the bird.
+
+``
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (300, 388)
+        ),
+        color=(35, 92, 118)
+    )
+
+    |screen.draw.filled_rect(|
+    |    Rect(|
+    |        (62, 200),|
+    |        (30, 25)|
+    |    ),|
+    |    color=(224, 214, 68)|
+    |)|
+``
+`
+def draw():
+    # etc.
+
+    screen.draw.filled_rect(
+        Rect(
+            (62, 200),
+            (30, 25)
+        ),
+        color=(224, 214, 68)
+    )
+`
+
+!
+
+### Moving the bird
+
+The bird's Y position is made into a variable, and every frame it increases by 30 multiplied by `dt`, making the bird move down 30 pixels per second.
+
+``
+|bird_y = 200|
+
+|def update(dt):|
+|    global bird_y|
+|    |
+|    bird_y += 30 * dt|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (300, 388)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (62, |bird_y|),
+            (30, 25)
+        ),
+        color=(224, 214, 68)
+    )
+``
+`
+bird_y = 200
+
+def update(dt):
+    global bird_y
+
+    bird_y += 30 * dt
+
+def draw():
+    # etc.
+
+    screen.draw.filled_rect(
+        Rect(
+            (62, |bird_y|),
+            (30, 25)
+        ),
+        color=(224, 214, 68)
+    )
+`
+
+!
+
+### Gravity
+
+Instead of moving at a constant speed, the number added to the bird's Y position also increases over time.
+
+The bird's speed is made into a variable which starts at 0, and every frame it increases by 516 multiplied by `dt`.
+
+``
+bird_y = 200
+|bird_y_speed = 0|
+
+def update(dt):
+    global bird_y
+    |global bird_y_speed|
+
+    |bird_y_speed += 516 * dt|
+    bird_y += |bird_y_speed| * dt
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (300, 388)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (62, bird_y),
+            (30, 25)
+        ),
+        color=(224, 214, 68)
+    )
+``
+`
+bird_y = 200
+|bird_y_speed = 0|
+
+def update(dt):
+    global bird_y
+    |global bird_y_speed|
+
+    |bird_y_speed += 516 * dt|
+    bird_y += |bird_y_speed| * dt
+`
+
+### Flapping
+
+Pressing any key sets the bird's speed to a negative number so that it moves upwards.
+
+``
+bird_y = 200
+bird_y_speed = 0
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+|def on_key_down():|
+|    global bird_y_speed|
+|    |
+|    bird_y_speed = -165|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (300, 388)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (62, bird_y),
+            (30, 25)
+        ),
+        color=(224, 214, 68)
+    )
+``
+`
+def on_key_down():
+    global bird_y_speed
+
+    bird_y_speed = -165
+`
+
+### Preventing flapping when above the playing area
+
+So that the bird can't fly completely above the playing area, flapping is only possible if the top edge of the bird is not above the playing area.
+
+``
+bird_y = 200
+bird_y_speed = 0
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+def on_key_down():
+    global bird_y_speed
+
+    |if bird_y > 0:|
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (300, 388)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (62, bird_y),
+            (30, 25)
+        ),
+        color=(224, 214, 68)
+    )
+``
+`
+def on_key_down():
+    global bird_y_speed
+
+    |if bird_y > 0:|
+        bird_y_speed = -165
+`
+
+### Drawing a pipe
+
+For now, a solid rectangle is drawn for the pipe, with its left edge touching the playing area's right edge.
+
+The width and height of the playing area are reused from drawing the background, so they are made into variables.
+
+``
+bird_y = 200
+bird_y_speed = 0
+
+|playing_area_width = 300|
+|playing_area_height = 388|
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (|playing_area_width|, |playing_area_height|)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (62, bird_y),
+            (30, 25)
+        ),
+        color=(224, 214, 68)
+    )
+
+    |screen.draw.filled_rect(|
+    |    Rect(|
+    |        (playing_area_width, 0),|
+    |        (54, playing_area_height)|
+    |    ),|
+    |    color=(94, 201, 72)|
+    |)|
+``
+`
+# etc.
+
+playing_area_width = 300
+playing_area_height = 388
+
+def draw():
+    # etc.
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (|playing_area_width|, |playing_area_height|)
+        ),
+        color=(35, 92, 118)
+    )
+
+    # etc.
+
+    screen.draw.filled_rect(
+        Rect(
+            (playing_area_width, 0),
+            (54, playing_area_height)
+        ),
+        color=(94, 201, 72)
+    )
+`
+
+!
+
+### Drawing two pipe segments
+
+Instead of drawing one rectangle, two rectangles are drawn for the upper and lower segments.
+
+The top rectangle's height is set to where the space between the two segments starts. For now, this is 150.
+
+The bottom rectangle starts at the Y position of the top rectangle's height plus the amount of space between them (which is 100).
+
+The bottom rectangle's height is the playing area's height, minus the height of the top rectangle and the space.
+
+The pipe width is the same for both segments, so it is made into a variable.
+
+``
+bird_y = 200
+bird_y_speed = 0
+
+playing_area_width = 300
+playing_area_height = 388
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (62, bird_y),
+            (30, 25)
+        ),
+        color=(224, 214, 68)
+    )
+
+    |pipe_width = 54|
+    |pipe_space_height = 100|
+    |pipe_space_y = 150|
+
+    screen.draw.filled_rect(
+        Rect(
+            (playing_area_width, 0),
+            (|pipe_width|, |pipe_space_y|)
+        ),
+        color=(94, 201, 72)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (playing_area_width, |pipe_space_y + pipe_space_height|),
+            (|pipe_width|, |playing_area_height - pipe_space_y - pipe_space_height|)
+        ),
+        color=(94, 201, 72)
+    )
+``
+`
+def draw():
+    # etc.
+
+    pipe_width = 54
+    pipe_space_height = 100
+    pipe_space_y = 150
+
+    screen.draw.filled_rect(
+        Rect(
+            (playing_area_width, 0),
+            (|pipe_width|, |pipe_space_y|)
+        ),
+        color=(94, 201, 72)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (playing_area_width, pipe_space_y + pipe_space_height),
+            (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+        ),
+        color=(94, 201, 72)
+    )
+`
+
+!
+
+### Randomizing the space position
+
+The pipe's space position is set to a random number between 0 (the top of the playing area) and the playing area height minus the space height (so that the bottom of the space would be touching the bottom of the playing area).
+
+The *random* module is imported so that `random.randint` can be used.
+
+The pipe's space position should be set only once, so it is moved to be global. Setting the pipe's space position requires the space's height, so it is also moved to be global.
+
+To test this, the code for setting the pipe's space position is copied into `on_key_down`.
+
+``
+|import random|
+
+bird_y = 200
+bird_y_speed = 0
+
+playing_area_width = 300
+playing_area_height = 388
+
+|pipe_space_height = 100|
+|pipe_space_y = random.randint(0, playing_area_height - pipe_space_height)|
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+    |# Temporary|
+    |global pipe_space_y|
+    |pipe_space_y = random.randint(0, playing_area_height - pipe_space_height)|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (62, bird_y),
+            (30, 25)
+        ),
+        color=(224, 214, 68)
+    )
+
+    pipe_width = 54
+    |# Moved: pipe_space_y = 150|
+    |# Moved: pipe_space_height = 100|
+
+    screen.draw.filled_rect(
+        Rect(
+            (playing_area_width, 0),
+            (pipe_width, pipe_space_y)
+        ),
+        color=(94, 201, 72)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (playing_area_width, pipe_space_y + pipe_space_height),
+            (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+        ),
+        color=(94, 201, 72)
+    )
+``
+`
+import random
+
+# etc.
+
+pipe_space_height = 100
+pipe_space_y = random.randint(0, playing_area_height - pipe_space_height)
+
+def on_key_down():
+    # etc.
+
+    # Temporary
+    global pipe_space_y
+    pipe_space_y = random.randint(0, playing_area_height - pipe_space_height)
+
+def draw():
+    # Moved: pipe_space_y = 150
+    # Moved: pipe_space_height = 100
+`
+
+!
+
+### The space's minimum distance from top/bottom
+
+So that there is some distance between the top/bottom of the playing area and the space, a minimum number is added/subtracted from the random minimum/maximum values.
+
+``
+import random
+
+bird_y = 200
+bird_y_speed = 0
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+
+|pipe_space_y_min = 54|
+pipe_space_y = random.randint(
+    |pipe_space_y_min|,
+    playing_area_height - pipe_space_height |- pipe_space_y_min|
+)
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+    # Temporary
+    global pipe_space_y
+    pipe_space_y = random.randint(
+        |pipe_space_y_min|,
+        playing_area_height - pipe_space_height |- pipe_space_y_min|
+    )
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (62, bird_y),
+            (30, 25)
+        ),
+        color=(224, 214, 68)
+    )
+
+    pipe_width = 54
+
+    screen.draw.filled_rect(
+        Rect(
+            (playing_area_width, 0),
+            (pipe_width, pipe_space_y)
+        ),
+        color=(94, 201, 72)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (playing_area_width, pipe_space_y + pipe_space_height),
+            (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+        ),
+        color=(94, 201, 72)
+    )
+``
+`
+# etc.
+
+pipe_space_y_min = 54
+pipe_space_y = random.randint(
+    |pipe_space_y_min|,
+    playing_area_height - pipe_space_height |- pipe_space_y_min|
+)
+
+def on_key_down():
+    # etc.
+
+    # Temporary
+    global pipe_space_y
+    pipe_space_y = random.randint(
+        |pipe_space_y_min|,
+        playing_area_height - pipe_space_height |- pipe_space_y_min|
+    )
+`
+
+!
+
+### Moving the pipe
+
+The pipe's X position is made into a variable, and is moved left 60 pixels per second.
+
+``
+import random
+
+bird_y = 200
+bird_y_speed = 0
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+
+pipe_space_y_min = 54
+pipe_space_y = random.randint(
+    pipe_space_y_min,
+    playing_area_height - pipe_space_height - pipe_space_y_min
+)
+
+|pipe_x = playing_area_width|
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    |global pipe_x|
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    |pipe_x -= 60 * dt|
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (62, bird_y),
+            (30, 25)
+        ),
+        color=(224, 214, 68)
+    )
+
+    pipe_width = 54
+
+    screen.draw.filled_rect(
+        Rect(
+            (|pipe_x|, 0),
+            (pipe_width, pipe_space_y)
+        ),
+        color=(94, 201, 72)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (|pipe_x|, pipe_space_y + pipe_space_height),
+            (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+        ),
+        color=(94, 201, 72)
+    )
+``
+`
+# etc.
+
+pipe_x = playing_area_width
+
+def update(dt):
+    # etc.
+    global pipe_x
+
+    # etc.
+
+    pipe_x -= 60 * dt
+
+def draw():
+    # etc.
+
+    screen.draw.filled_rect(
+        Rect(
+            (|pipe_x|, 0),
+            (pipe_width, pipe_space_y)
+        ),
+        color=(94, 201, 72)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (|pipe_x|, pipe_space_y + pipe_space_height),
+            (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+        ),
+        color=(94, 201, 72)
+    )
+`
+
+!
+
+### Resetting the pipe
+
+When the pipe goes out of the playing area, its X position is reset and it gets a new random space position.
+
+Determining if the pipe has gone out of the playing area requires knowing the pipe's width, which is reused from drawing the pipe, so the pipe's width is moved to be global.
+
+Setting the initial X position of the pipe and its random space position is reused, so a function is made.
+
+``
+import random
+
+bird_y = 200
+bird_y_speed = 0
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+|pipe_width = 54|
+
+|def reset_pipe():|
+    |global pipe_space_y|
+    |global pipe_x|
+
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    pipe_x = playing_area_width
+
+|reset_pipe()|
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    global pipe_x
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    pipe_x -= 60 * dt
+
+    |if (pipe_x + pipe_width) < 0:|
+    |    reset_pipe()|
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (62, bird_y),
+            (30, 25)
+        ),
+        color=(224, 214, 68)
+    )
+
+    |# Moved: pipe_width = 54|
+
+    screen.draw.filled_rect(
+        Rect(
+            (pipe_x, 0),
+            (pipe_width, pipe_space_y)
+        ),
+        color=(94, 201, 72)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (pipe_x, pipe_space_y + pipe_space_height),
+            (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+        ),
+        color=(94, 201, 72)
+    )
+``
+`
+# etc.
+
+bird_y = 200
+bird_y_speed = 0
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+|pipe_width = 54|
+
+|def reset_pipe():|
+    |global pipe_space_y|
+    |global pipe_x|
+
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    pipe_x = playing_area_width
+
+|reset_pipe()|
+
+def update(dt):
+    # etc.
+
+    if (pipe_x + pipe_width) < 0:
+        reset_pipe()
+
+def draw():
+    # Moved: pipe_width = 54
+`
+
+### Colliding with the top pipe segment
+
+The bird is colliding with the top pipe segment if...
+- the left edge of the bird is to the left of the right edge of the pipe (i.e. the bird is not completely past the pipe on the right side), and...
+- the right edge of the bird is to the left of the pipe (i.e. the bird is not completely to the left of the pipe), and...
+- the top edge of the bird is above the bottom edge of the pipe segment (i.e. the bird is not completely below the pipe segment)
+... then the bird is colliding with the top pipe segment.
+
+For now, `reset_pipe` is called when the bird and pipe collide.
+
+The bird's X position and width are reused from drawing the bird, so they are made into variables.
+
+``
+import random
+
+bird_y = 200
+bird_y_speed = 0
+
+|bird_x = 62|
+|bird_width = 30|
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def reset_pipe():
+    global pipe_space_y
+    global pipe_x
+
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    pipe_x = playing_area_width
+
+reset_pipe()
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    global pipe_x
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    pipe_x -= 60 * dt
+
+    if (pipe_x + pipe_width) < 0:
+        reset_pipe()
+
+    |if (|
+    |    # Left edge of bird is to the left of the right edge of pipe|
+    |    bird_x < (pipe_x + pipe_width)|
+    |    and|
+    |    # Right edge of bird is to the right of the left edge of pipe|
+    |    (bird_x + bird_width) > pipe_x|
+    |    and|
+    |    # Top edge of bird is above the bottom edge of first pipe segment|
+    |    bird_y < pipe_space_y|
+    |):|
+    |    # Temporary|
+    |    reset_pipe()|
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (|bird_x|, bird_y),
+            (|bird_width|, 25)
+        ),
+        color=(224, 214, 68)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (pipe_x, 0),
+            (pipe_width, pipe_space_y)
+        ),
+        color=(94, 201, 72)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (pipe_x, pipe_space_y + pipe_space_height),
+            (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+        ),
+        color=(94, 201, 72)
+    )
+``
+`
+# etc.
+
+bird_x = 62
+bird_width = 30
+
+# etc.
+
+def update(dt):
+    # etc.
+
+    if (
+        # Left edge of bird is to the left of the right edge of pipe
+        bird_x < (pipe_x + pipe_width)
+        and
+        # Right edge of bird is to the right of the left edge of pipe
+        (bird_x + bird_width) > pipe_x
+        and
+        # Top edge of bird is above the bottom edge of first pipe segment
+        bird_y < pipe_space_y
+    ):
+        # Temporary
+        reset_pipe()
+
+def draw():
+    # etc.
+
+    screen.draw.filled_rect(
+        Rect(
+            (|bird_x|, bird_y),
+            (|bird_width|, 25)
+        ),
+        color=(224, 214, 68)
+    )
+
+    # etc.
+`
+
+### Colliding with the bottom pipe segment
+
+The bird is colliding with the bottom pipe segment if...
+- the bird is overlapping the pipe on the X axis (as checked for with the top pipe segment), and...
+- the bottom edge of the bird is above the top edge of the pipe segment (i.e. the bird is not completely above the pipe segment)
+... then the bird is colliding with the bottom pipe segment.
+The bird's height is reused from drawing the bird, so it is made into a variable.
+
+``
+import random
+
+bird_y = 200
+bird_y_speed = 0
+
+bird_x = 62
+bird_width = 30
+|bird_height = 25|
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def reset_pipe():
+    global pipe_space_y
+    global pipe_x
+
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    pipe_x = playing_area_width
+
+reset_pipe()
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    global pipe_x
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    pipe_x -= 60 * dt
+
+    if (pipe_x + pipe_width) < 0:
+        reset_pipe()
+
+    if (
+        # Left edge of bird is to the left of the right edge of pipe
+        bird_x < (pipe_x + pipe_width)
+        and
+        # Right edge of bird is to the right of the left edge of pipe
+        (bird_x + bird_width) > pipe_x
+        and |(|
+            # Top edge of bird is above the bottom edge of first pipe segment
+            bird_y < pipe_space_y
+            |or|
+            |# Bottom edge of bird is below the top edge of second pipe segment|
+            |(bird_y + bird_height) > (pipe_space_y + pipe_space_height)|
+        |)|
+    ):
+        # Temporary
+        reset_pipe()
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, |bird_height|)
+        ),
+        color=(224, 214, 68)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (pipe_x, 0),
+            (pipe_width, pipe_space_y)
+        ),
+        color=(94, 201, 72)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (pipe_x, pipe_space_y + pipe_space_height),
+            (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+        ),
+        color=(94, 201, 72)
+    )
+``
+`
+# etc.
+
+bird_height = 25
+
+def update(dt):
+    # etc.
+
+    if (
+        # Left edge of bird is to the left of the right edge of pipe
+        bird_x < (pipe_x + pipe_width)
+        and
+        # Right edge of bird is to the right of the left edge of pipe
+        (bird_x + bird_width) > pipe_x
+        and |(|
+            # Top edge of bird is above the bottom edge of first pipe segment
+            bird_y < pipe_space_y
+            |or|
+            |# Bottom edge of bird is below the top edge of second pipe segment|
+            |(bird_y + bird_height) > (pipe_space_y + pipe_space_height)|
+        |)|
+    ):
+        # Temporary
+        reset_pipe()
+
+def draw():
+    # etc.
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, |bird_height|)
+        ),
+        color=(224, 214, 68)
+    )
+`
+
+### Drawing two pipes
+
+Each pipe has its own X position and space position.
+
+For now, these are manually set for each pipe.
+
+The pipe drawing code is turned into a function which takes a pipe's X position and space position.
+
+``
+import random
+
+bird_y = 200
+bird_y_speed = 0
+
+bird_x = 62
+bird_width = 30
+bird_height = 25
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def reset_pipe():
+    global pipe_space_y
+    global pipe_x
+
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    pipe_x = playing_area_width
+
+reset_pipe()
+
+|pipe_1_x = 100|
+|pipe_1_space_y = 100|
+
+|pipe_2_x = 200|
+|pipe_2_space_y = 200|
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    global pipe_x
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    pipe_x -= 60 * dt
+
+    if (pipe_x + pipe_width) < 0:
+        reset_pipe()
+
+    if (
+        # Left edge of bird is to the left of the right edge of pipe
+        bird_x < (pipe_x + pipe_width)
+        and
+        # Right edge of bird is to the right of the left edge of pipe
+        (bird_x + bird_width) > pipe_x
+        and (
+            # Top edge of bird is above the bottom edge of first pipe segment
+            bird_y < pipe_space_y
+            or
+            # Bottom edge of bird is below the top edge of second pipe segment
+            (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+        )
+    ):
+        # Temporary
+        pipe_x = playing_area_width
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, bird_height)
+        ),
+        color=(224, 214, 68)
+    )
+
+    |def draw_pipe(pipe_x, pipe_space_y):|
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, 0),
+                (pipe_width, pipe_space_y)
+            ),
+            color=(94, 201, 72)
+        )
+
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, pipe_space_y + pipe_space_height),
+                (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+            ),
+            color=(94, 201, 72)
+        )
+
+    |draw_pipe(pipe_1_x, pipe_1_space_y)|
+    |draw_pipe(pipe_2_x, pipe_2_space_y)|
+``
+`
+# etc.
+
+pipe_1_x = 100
+pipe_1_space_y = 100
+
+pipe_2_x = 200
+pipe_2_space_y = 200
+
+def draw():
+    # etc.
+
+    |def draw_pipe(pipe_x, pipe_space_y):|
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, 0),
+                (pipe_width, pipe_space_y)
+            ),
+            color=(94, 201, 72)
+        )
+
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, pipe_space_y + pipe_space_height),
+                (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+            ),
+            color=(94, 201, 72)
+        )
+
+    |draw_pipe(pipe_1_x, pipe_1_space_y)|
+    |draw_pipe(pipe_2_x, pipe_2_space_y)|
+`
+
+!
+
+### Randomizing space position for two pipes
+
+Because each pipe has an individual X position, setting the X position is removed from the `reset_pipe` function, leaving only the random space position. The function is renamed to `new_pipe_space_y` to reflect this.
+
+Instead of creating a global `pipe_space_y` variable, the function returns a new space position.
+
+Because the variables `pipe_x`, `pipe_space_y` and `reset_pipe` no longer exist, the parts of the `update` function which use them are commented out.
+
+To test the random space positions, the pipes get new space positions when a key is pressed.
+
+``
+import random
+
+bird_y = 200
+bird_y_speed = 0
+
+bird_x = 62
+bird_width = 30
+bird_height = 25
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def |new_pipe_space_y|():
+    |# Removed: global pipe_space_y|
+    |# Removed: global pipe_x|
+
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    |# Removed: pipe_x = playing_area_width|
+
+    |return pipe_space_y|
+
+|# Removed: reset_pipe()|
+
+pipe_1_x = 100
+pipe_1_space_y = |new_pipe_space_y()|
+
+pipe_2_x = 200
+pipe_2_space_y = |new_pipe_space_y()|
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    |# Removed: global pipe_x|
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+|##    pipe_x -= 60 * dt|
+|##|
+|##    if (pipe_x + pipe_width) < 0:|
+|##        reset_pipe()|
+|##|
+|##    if (|
+|##        # Left edge of bird is to the left of the right edge of pipe|
+|##        bird_x < (pipe_x + pipe_width)|
+|##        and|
+|##        # Right edge of bird is to the right of the left edge of pipe|
+|##        (bird_x + bird_width) > pipe_x|
+|##        and (|
+|##            # Top edge of bird is above the bottom edge of first pipe segment|
+|##            bird_y < pipe_space_y|
+|##            or|
+|##            # Bottom edge of bird is below the top edge of second pipe segment|
+|##            (bird_y + bird_height) > (pipe_space_y + pipe_space_height)|
+|##        )|
+|##    ):|
+|##        # Temporary|
+|##        reset_pipe()|
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+    |# Temporary|
+    |global pipe_1_space_y|
+    |global pipe_2_space_y|
+    |pipe_1_space_y = new_pipe_space_y()|
+    |pipe_2_space_y = new_pipe_space_y()|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, bird_height)
+        ),
+        color=(224, 214, 68)
+    )
+
+    def draw_pipe(pipe_x, pipe_space_y):
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, 0),
+                (pipe_width, pipe_space_y)
+            ),
+            color=(94, 201, 72)
+        )
+
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, pipe_space_y + pipe_space_height),
+                (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+            ),
+            color=(94, 201, 72)
+        )
+
+    draw_pipe(pipe_1_x, pipe_1_space_y)
+    draw_pipe(pipe_2_x, pipe_2_space_y)
+``
+`
+def |new_pipe_space_y|():
+    # Removed: global pipe_space_y
+    # Removed: global pipe_x
+
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    # Removed: pipe_x = playing_area_width
+
+    |return pipe_space_y|
+
+# Removed: reset_pipe()
+
+pipe_1_x = 100
+pipe_1_space_y = |new_pipe_space_y()|
+
+pipe_2_x = 200
+pipe_2_space_y = |new_pipe_space_y()|
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    # Removed: global pipe_x
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+##    pipe_x -= 60 * dt
+##
+##    if (pipe_x + pipe_width) < 0:
+##        reset_pipe()
+##
+##    if (
+##        # Left edge of bird is to the left of the right edge of pipe
+##        bird_x < (pipe_x + pipe_width)
+##        and
+##        # Right edge of bird is to the right of the left edge of pipe
+##        (bird_x + bird_width) > pipe_x
+##        and (
+##            # Top edge of bird is above the bottom edge of first pipe segment
+##            bird_y < pipe_space_y
+##            or
+##            # Bottom edge of bird is below the top edge of second pipe segment
+##            (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+##        )
+##    ):
+##        # Temporary
+##        reset_pipe()
+
+def on_key_down():
+    # etc.
+
+    # Temporary
+    global pipe_1_space_y
+    global pipe_2_space_y
+    pipe_1_space_y = new_pipe_space_y()
+    pipe_2_space_y = new_pipe_space_y()
+`
+
+!
+
+### Moving two pipes
+
+The code which moves the pipe is uncommented and turned into a function which takes a pipe's X position and space position, and returns the updated positions.
+
+When a pipe moves out of the playing area, its position is set to be at the right of the playing area.
+
+``
+import random
+
+bird_y = 200
+bird_y_speed = 0
+
+bird_x = 62
+bird_width = 30
+bird_height = 25
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def new_pipe_space_y():
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    return pipe_space_y
+
+pipe_1_x = 100
+pipe_1_space_y = new_pipe_space_y()
+
+pipe_2_x = 200
+pipe_2_space_y = new_pipe_space_y()
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    |global pipe_1_x|
+    |global pipe_2_x|
+    |global pipe_1_space_y|
+    |global pipe_2_space_y|
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    |def move_pipe(pipe_x, pipe_space_y):|
+        pipe_x -= 60 * dt
+
+        if (pipe_x + pipe_width) < 0:
+            |pipe_x = playing_area_width|
+            |pipe_space_y = new_pipe_space_y()|
+
+        |return pipe_x, pipe_space_y|
+
+    |pipe_1_x, pipe_1_space_y = move_pipe(pipe_1_x, pipe_1_space_y)|
+    |pipe_2_x, pipe_2_space_y = move_pipe(pipe_2_x, pipe_2_space_y)|
+
+##    if (
+##        # Left edge of bird is to the left of the right edge of pipe
+##        bird_x < (pipe_x + pipe_width)
+##        and
+##        # Right edge of bird is to the right of the left edge of pipe
+##        (bird_x + bird_width) > pipe_x
+##        and (
+##            # Top edge of bird is above the bottom edge of first pipe segment
+##            bird_y < pipe_space_y
+##            or
+##            # Bottom edge of bird is below the top edge of second pipe segment
+##            (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+##        )
+##    ):
+##        # Temporary
+##        reset_pipe()
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, bird_height)
+        ),
+        color=(224, 214, 68)
+    )
+
+    def draw_pipe(pipe_x, pipe_space_y):
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, 0),
+                (pipe_width, pipe_space_y)
+            ),
+            color=(94, 201, 72)
+        )
+
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, pipe_space_y + pipe_space_height),
+                (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+            ),
+            color=(94, 201, 72)
+        )
+
+    draw_pipe(pipe_1_x, pipe_1_space_y)
+    draw_pipe(pipe_2_x, pipe_2_space_y)
+``
+`
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    |global pipe_1_x|
+    |global pipe_2_x|
+    |global pipe_1_space_y|
+    |global pipe_2_space_y|
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    |def move_pipe(pipe_x, pipe_space_y):|
+        pipe_x -= 60 * dt
+
+        if (pipe_x + pipe_width) < 0:
+            |pipe_x = playing_area_width|
+            |pipe_space_y = new_pipe_space_y()|
+
+        |return pipe_x, pipe_space_y|
+
+    |pipe_1_x, pipe_1_space_y = move_pipe(pipe_1_x, pipe_1_space_y)|
+    |pipe_2_x, pipe_2_space_y = move_pipe(pipe_2_x, pipe_2_space_y)|
+
+##    if (
+##        # Left edge of bird is to the left of the right edge of pipe
+##        bird_x < (pipe_x + pipe_width)
+##        and
+##        # Right edge of bird is to the right of the left edge of pipe
+##        (bird_x + bird_width) > pipe_x
+##        and (
+##            # Top edge of bird is above the bottom edge of first pipe segment
+##            bird_y < pipe_space_y
+##            or
+##            # Bottom edge of bird is below the top edge of second pipe segment
+##            (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+##        )
+##    ):
+##        # Temporary
+##        reset_pipe()
+`
+
+!
+
+### Initial X position for pipes
+
+The first pipe's initial X position is set to the width of the playing area (i.e. the pipe's left edge is touching the right edge of the playing area).
+
+The second pipe's initial X position is set so that there is an even space between it and the other pipe on either side.
+
+The total distance that a pipe travels from the of the right of the playing area to left is the width of the playing area plus the width of the pipe.
+
+The second pipe's initial X position is set to the playing area width plus half the total distance, so that the two pipes are spaced evenly apart.
+
+``
+import random
+
+bird_y = 200
+bird_y_speed = 0
+
+bird_x = 62
+bird_width = 30
+bird_height = 25
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def new_pipe_space_y():
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    return pipe_space_y
+
+pipe_1_x = |playing_area_width|
+pipe_1_space_y = new_pipe_space_y()
+
+pipe_2_x = |playing_area_width + ((playing_area_width + pipe_width) / 2)|
+pipe_2_space_y = new_pipe_space_y()
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_2_x
+    global pipe_1_space_y
+    global pipe_2_space_y
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    def move_pipe(pipe_x, pipe_space_y):
+        pipe_x -= 60 * dt
+
+        if (pipe_x + pipe_width) < 0:
+            pipe_x = playing_area_width
+            pipe_space_y = new_pipe_space_y()
+
+        return pipe_x, pipe_space_y
+
+    pipe_1_x, pipe_1_space_y = move_pipe(pipe_1_x, pipe_1_space_y)
+    pipe_2_x, pipe_2_space_y = move_pipe(pipe_2_x, pipe_2_space_y)
+
+##    if (
+##        # Left edge of bird is to the left of the right edge of pipe
+##        bird_x < (pipe_x + pipe_width)
+##        and
+##        # Right edge of bird is to the right of the left edge of pipe
+##        (bird_x + bird_width) > pipe_x
+##        and (
+##            # Top edge of bird is above the bottom edge of first pipe segment
+##            bird_y < pipe_space_y
+##            or
+##            # Bottom edge of bird is below the top edge of second pipe segment
+##            (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+##        )
+##    ):
+##        # Temporary
+##        reset_pipe()
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, bird_height)
+        ),
+        color=(224, 214, 68)
+    )
+
+    def draw_pipe(pipe_x, pipe_space_y):
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, 0),
+                (pipe_width, pipe_space_y)
+            ),
+            color=(94, 201, 72)
+        )
+
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, pipe_space_y + pipe_space_height),
+                (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+            ),
+            color=(94, 201, 72)
+        )
+
+    draw_pipe(pipe_1_x, pipe_1_space_y)
+    draw_pipe(pipe_2_x, pipe_2_space_y)
+``
+`
+# etc.
+
+pipe_1_x = |playing_area_width|
+pipe_1_space_y = new_pipe_space_y()
+
+pipe_2_x = |playing_area_width + ((playing_area_width + pipe_width) / 2)|
+pipe_2_space_y = new_pipe_space_y()
+`
+
+!
+
+### Bird colliding with pipe
+
+The code for the checking if the bird and pipe have collided is uncommented and turned into a function which takes a pipe's X position and space position and returns a boolean value.
+
+The function is called for both pipes.
+
+For now, when the bird collides with a pipe, the position of both pipes are reset.
+
+``
+import random
+
+bird_y = 200
+bird_y_speed = 0
+
+bird_x = 62
+bird_width = 30
+bird_height = 25
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def new_pipe_space_y():
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    return pipe_space_y
+
+pipe_1_x = playing_area_width
+pipe_1_space_y = new_pipe_space_y()
+
+pipe_2_x = playing_area_width + ((playing_area_width + pipe_width) / 2)
+pipe_2_space_y = new_pipe_space_y()
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_2_x
+    global pipe_1_space_y
+    global pipe_2_space_y
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    def move_pipe(pipe_x, pipe_space_y):
+        pipe_x -= 60 * dt
+
+        if (pipe_x + pipe_width) < 0:
+            pipe_x = playing_area_width
+            pipe_space_y = new_pipe_space_y()
+
+        return pipe_x, pipe_space_y
+
+    pipe_1_x, pipe_1_space_y = move_pipe(pipe_1_x, pipe_1_space_y)
+    pipe_2_x, pipe_2_space_y = move_pipe(pipe_2_x, pipe_2_space_y)
+
+    |def is_bird_colliding_with_pipe(pipe_x, pipe_space_y):|
+        |return| (
+            # Left edge of bird is to the left of the right edge of pipe
+            bird_x < (pipe_x + pipe_width)
+            and
+            # Right edge of bird is to the right of the left edge of pipe
+            (bird_x + bird_width) > pipe_x
+            and (
+                # Top edge of bird is above the bottom edge of first pipe segment
+                bird_y < pipe_space_y
+                or
+                # Bottom edge of bird is below the top edge of second pipe segment
+                (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+            )
+        )
+
+    |if (|
+    |    is_bird_colliding_with_pipe(pipe_1_x, pipe_1_space_y)|
+    |    or is_bird_colliding_with_pipe(pipe_2_x, pipe_2_space_y)|
+    |):|
+        |pipe_1_x = playing_area_width|
+        |pipe_2_x = playing_area_width + ((playing_area_width + pipe_width) / 2)|
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, bird_height)
+        ),
+        color=(224, 214, 68)
+    )
+
+    def draw_pipe(pipe_x, pipe_space_y):
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, 0),
+                (pipe_width, pipe_space_y)
+            ),
+            color=(94, 201, 72)
+        )
+
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, pipe_space_y + pipe_space_height),
+                (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+            ),
+            color=(94, 201, 72)
+        )
+
+    draw_pipe(pipe_1_x, pipe_1_space_y)
+    draw_pipe(pipe_2_x, pipe_2_space_y)
+``
+`
+def update(dt):
+    # etc.
+
+    |def is_bird_colliding_with_pipe(pipe_x, pipe_space_y):|
+        |return| (
+            # Left edge of bird is to the left of the right edge of pipe
+            bird_x < (pipe_x + pipe_width)
+            and
+            # Right edge of bird is to the right of the left edge of pipe
+            (bird_x + bird_width) > pipe_x
+            and (
+                # Top edge of bird is above the bottom edge of first pipe segment
+                bird_y < pipe_space_y
+                or
+                # Bottom edge of bird is below the top edge of second pipe segment
+                (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+            )
+        )
+
+    |if (|
+    |    is_bird_colliding_with_pipe(pipe_1_x, pipe_1_space_y)|
+    |    or is_bird_colliding_with_pipe(pipe_2_x, pipe_2_space_y)|
+    |):|
+        |pipe_1_x = playing_area_width|
+        |pipe_2_x = playing_area_width + ((playing_area_width + pipe_width) / 2)|
+`
+
+### Resetting the game
+
+A function is made which sets the initial state of the game.
+
+This function is called before the game begins and when the bird collides with a pipe.
+
+``
+import random
+
+bird_x = 62
+bird_width = 30
+bird_height = 25
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def new_pipe_space_y():
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    return pipe_space_y
+
+|def reset():|
+    |global bird_y|
+    |global bird_y_speed|
+    |global pipe_1_x|
+    |global pipe_1_space_y|
+    |global pipe_2_x|
+    |global pipe_2_space_y|
+
+    bird_y = 200
+    bird_y_speed = 0
+
+    pipe_1_x = playing_area_width
+    pipe_1_space_y = new_pipe_space_y()
+
+    pipe_2_x = playing_area_width + ((playing_area_width + pipe_width) / 2)
+    pipe_2_space_y = new_pipe_space_y()
+
+|reset()|
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_2_x
+    global pipe_1_space_y
+    global pipe_2_space_y
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    def move_pipe(pipe_x, pipe_space_y):
+        pipe_x -= 60 * dt
+
+        if (pipe_x + pipe_width) < 0:
+            pipe_x = playing_area_width
+            pipe_space_y = new_pipe_space_y()
+
+        return pipe_x, pipe_space_y
+
+    pipe_1_x, pipe_1_space_y = move_pipe(pipe_1_x, pipe_1_space_y)
+    pipe_2_x, pipe_2_space_y = move_pipe(pipe_2_x, pipe_2_space_y)
+
+    def is_bird_colliding_with_pipe(pipe_x, pipe_space_y):
+        return (
+            # Left edge of bird is to the left of the right edge of pipe
+            bird_x < (pipe_x + pipe_width)
+            and
+            # Right edge of bird is to the right of the left edge of pipe
+            (bird_x + bird_width) > pipe_x
+            and (
+                # Top edge of bird is above the bottom edge of first pipe segment
+                bird_y < pipe_space_y
+                or
+                # Bottom edge of bird is below the top edge of second pipe segment
+                (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+            )
+        )
+
+    if (
+        is_bird_colliding_with_pipe(pipe_1_x, pipe_1_space_y)
+        or is_bird_colliding_with_pipe(pipe_2_x, pipe_2_space_y)
+    ):
+        |reset()|
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, bird_height)
+        ),
+        color=(224, 214, 68)
+    )
+
+    def draw_pipe(pipe_x, pipe_space_y):
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, 0),
+                (pipe_width, pipe_space_y)
+            ),
+            color=(94, 201, 72)
+        )
+
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, pipe_space_y + pipe_space_height),
+                (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+            ),
+            color=(94, 201, 72)
+        )
+
+    draw_pipe(pipe_1_x, pipe_1_space_y)
+    draw_pipe(pipe_2_x, pipe_2_space_y)
+``
+`
+bird_x = 62
+bird_width = 30
+bird_height = 25
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def new_pipe_space_y():
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    return pipe_space_y
+
+|def reset():|
+    |global bird_y|
+    |global bird_y_speed|
+    |global pipe_1_x|
+    |global pipe_1_space_y|
+    |global pipe_2_x|
+    |global pipe_2_space_y|
+
+    bird_y = 200
+    bird_y_speed = 0
+
+    pipe_1_x = playing_area_width
+    pipe_1_space_y = new_pipe_space_y()
+
+    pipe_2_x = playing_area_width + ((playing_area_width + pipe_width) / 2)
+    pipe_2_space_y = new_pipe_space_y()
+
+|reset()|
+
+def update(dt):
+    # etc.
+
+    if (
+        is_bird_colliding_with_pipe(pipe_1_x, pipe_1_space_y)
+        or is_bird_colliding_with_pipe(pipe_2_x, pipe_2_space_y)
+    ):
+        |reset()|
+`
+
+### Bird falling out of the playing area
+
+The game is also reset if the bird has fallen out of the playing area (i.e. the bird's top edge is below the bottom edge of the playing area).
+
+``
+import random
+
+bird_x = 62
+bird_width = 30
+bird_height = 25
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def new_pipe_space_y():
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    return pipe_space_y
+
+def reset():
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_1_space_y
+    global pipe_2_x
+    global pipe_2_space_y
+
+    bird_y = 200
+    bird_y_speed = 0
+
+    pipe_1_x = playing_area_width
+    pipe_1_space_y = new_pipe_space_y()
+
+    pipe_2_x = playing_area_width + ((playing_area_width + pipe_width) / 2)
+    pipe_2_space_y = new_pipe_space_y()
+
+reset()
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_2_x
+    global pipe_1_space_y
+    global pipe_2_space_y
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    def move_pipe(pipe_x, pipe_space_y):
+        pipe_x -= 60 * dt
+
+        if (pipe_x + pipe_width) < 0:
+            pipe_x = playing_area_width
+            pipe_space_y = new_pipe_space_y()
+
+        return pipe_x, pipe_space_y
+
+    pipe_1_x, pipe_1_space_y = move_pipe(pipe_1_x, pipe_1_space_y)
+    pipe_2_x, pipe_2_space_y = move_pipe(pipe_2_x, pipe_2_space_y)
+
+    def is_bird_colliding_with_pipe(pipe_x, pipe_space_y):
+        return (
+            # Left edge of bird is to the left of the right edge of pipe
+            bird_x < (pipe_x + pipe_width)
+            and
+            # Right edge of bird is to the right of the left edge of pipe
+            (bird_x + bird_width) > pipe_x
+            and (
+                # Top edge of bird is above the bottom edge of first pipe segment
+                bird_y < pipe_space_y
+                or
+                # Bottom edge of bird is below the top edge of second pipe segment
+                (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+            )
+        )
+
+    if (
+        is_bird_colliding_with_pipe(pipe_1_x, pipe_1_space_y)
+        or is_bird_colliding_with_pipe(pipe_2_x, pipe_2_space_y)
+        |or bird_y > playing_area_height|
+    ):
+        reset()
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, bird_height)
+        ),
+        color=(224, 214, 68)
+    )
+
+    def draw_pipe(pipe_x, pipe_space_y):
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, 0),
+                (pipe_width, pipe_space_y)
+            ),
+            color=(94, 201, 72)
+        )
+
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, pipe_space_y + pipe_space_height),
+                (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+            ),
+            color=(94, 201, 72)
+        )
+
+    draw_pipe(pipe_1_x, pipe_1_space_y)
+    draw_pipe(pipe_2_x, pipe_2_space_y)
+``
+`
+def update(dt):
+    # etc.
+
+    if (
+        is_bird_colliding_with_pipe(pipe_1_x, pipe_1_space_y)
+        or is_bird_colliding_with_pipe(pipe_2_x, pipe_2_space_y)
+        |or bird_y > playing_area_height|
+    ):
+        reset()
+`
+
+### Drawing the score
+
+The score is initially set to 0 and is drawn.
+
+``
+import random
+
+bird_x = 62
+bird_width = 30
+bird_height = 25
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def new_pipe_space_y():
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    return pipe_space_y
+
+def reset():
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_1_space_y
+    global pipe_2_x
+    global pipe_2_space_y
+    |global score|
+
+    bird_y = 200
+    bird_y_speed = 0
+
+    pipe_1_x = playing_area_width
+    pipe_1_space_y = new_pipe_space_y()
+
+    pipe_2_x = playing_area_width + ((playing_area_width + pipe_width) / 2)
+    pipe_2_space_y = new_pipe_space_y()
+
+    |score = 0|
+
+reset()
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_2_x
+    global pipe_1_space_y
+    global pipe_2_space_y
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    def move_pipe(pipe_x, pipe_space_y):
+        pipe_x -= 60 * dt
+
+        if (pipe_x + pipe_width) < 0:
+            pipe_x = playing_area_width
+            pipe_space_y = new_pipe_space_y()
+
+        return pipe_x, pipe_space_y
+
+    pipe_1_x, pipe_1_space_y = move_pipe(pipe_1_x, pipe_1_space_y)
+    pipe_2_x, pipe_2_space_y = move_pipe(pipe_2_x, pipe_2_space_y)
+
+    def is_bird_colliding_with_pipe(pipe_x, pipe_space_y):
+        return (
+            # Left edge of bird is to the left of the right edge of pipe
+            bird_x < (pipe_x + pipe_width)
+            and
+            # Right edge of bird is to the right of the left edge of pipe
+            (bird_x + bird_width) > pipe_x
+            and (
+                # Top edge of bird is above the bottom edge of first pipe segment
+                bird_y < pipe_space_y
+                or
+                # Bottom edge of bird is below the top edge of second pipe segment
+                (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+            )
+        )
+
+    if (
+        is_bird_colliding_with_pipe(pipe_1_x, pipe_1_space_y)
+        or is_bird_colliding_with_pipe(pipe_2_x, pipe_2_space_y)
+        or bird_y > playing_area_height
+    ):
+        reset()
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, bird_height)
+        ),
+        color=(224, 214, 68)
+    )
+
+    def draw_pipe(pipe_x, pipe_space_y):
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, 0),
+                (pipe_width, pipe_space_y)
+            ),
+            color=(94, 201, 72)
+        )
+
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, pipe_space_y + pipe_space_height),
+                (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+            ),
+            color=(94, 201, 72)
+        )
+
+    draw_pipe(pipe_1_x, pipe_1_space_y)
+    draw_pipe(pipe_2_x, pipe_2_space_y)
+
+    |screen.draw.text(str(score), (15, 15))|
+``
+`
+def reset():
+    # etc.
+    global score
+
+    # etc.
+
+    score = 0
+
+def draw():
+    # etc.
+
+    screen.draw.text(str(score), (15, 15))
+`
+
+!
+
+### Updating the score after passing the first pipe
+
+If the bird's left edge is to the right of the pipe's right edge, then 1 is added to the score.
+
+Currently, this happens every frame instead of just once, so the score will increase too much, and only the first pipe is checked.
+
+``
+import random
+
+bird_x = 62
+bird_width = 30
+bird_height = 25
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def new_pipe_space_y():
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    return pipe_space_y
+
+def reset():
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_1_space_y
+    global pipe_2_x
+    global pipe_2_space_y
+    global score
+
+    bird_y = 200
+    bird_y_speed = 0
+
+    pipe_1_x = playing_area_width
+    pipe_1_space_y = new_pipe_space_y()
+
+    pipe_2_x = playing_area_width + ((playing_area_width + pipe_width) / 2)
+    pipe_2_space_y = new_pipe_space_y()
+
+    score = 0
+
+reset()
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_2_x
+    global pipe_1_space_y
+    global pipe_2_space_y
+    |global score|
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    def move_pipe(pipe_x, pipe_space_y):
+        pipe_x -= 60 * dt
+
+        if (pipe_x + pipe_width) < 0:
+            pipe_x = playing_area_width
+            pipe_space_y = new_pipe_space_y()
+
+        return pipe_x, pipe_space_y
+
+    pipe_1_x, pipe_1_space_y = move_pipe(pipe_1_x, pipe_1_space_y)
+    pipe_2_x, pipe_2_space_y = move_pipe(pipe_2_x, pipe_2_space_y)
+
+    def is_bird_colliding_with_pipe(pipe_x, pipe_space_y):
+        return (
+            # Left edge of bird is to the left of the right edge of pipe
+            bird_x < (pipe_x + pipe_width)
+            and
+            # Right edge of bird is to the right of the left edge of pipe
+            (bird_x + bird_width) > pipe_x
+            and (
+                # Top edge of bird is above the bottom edge of first pipe segment
+                bird_y < pipe_space_y
+                or
+                # Bottom edge of bird is below the top edge of second pipe segment
+                (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+            )
+        )
+
+    if (
+        is_bird_colliding_with_pipe(pipe_1_x, pipe_1_space_y)
+        or is_bird_colliding_with_pipe(pipe_2_x, pipe_2_space_y)
+        or bird_y > playing_area_height
+    ):
+        reset()
+
+    |if bird_x > (pipe_1_x + pipe_width):|
+    |    score += 1|
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, bird_height)
+        ),
+        color=(224, 214, 68)
+    )
+
+    def draw_pipe(pipe_x, pipe_space_y):
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, 0),
+                (pipe_width, pipe_space_y)
+            ),
+            color=(94, 201, 72)
+        )
+
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, pipe_space_y + pipe_space_height),
+                (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+            ),
+            color=(94, 201, 72)
+        )
+
+    draw_pipe(pipe_1_x, pipe_1_space_y)
+    draw_pipe(pipe_2_x, pipe_2_space_y)
+
+    screen.draw.text(str(score), (15, 15))
+``
+`
+def update(dt):
+    # etc.
+    global score
+
+    # etc.
+
+    if bird_x > (pipe_1_x + pipe_width):
+        score += 1
+`
+
+!
+
+### Updating the score once for both pipes
+
+A number representing which pipe is upcoming is stored in a variable and the bird is checked to see if it has passed a pipe only when that particular pipe is the upcoming pipe.
+
+When it has passed it, the upcoming pipe is set to the other pipe.
+
+``
+import random
+
+bird_x = 62
+bird_width = 30
+bird_height = 25
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def new_pipe_space_y():
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    return pipe_space_y
+
+def reset():
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_1_space_y
+    global pipe_2_x
+    global pipe_2_space_y
+    global score
+    global upcoming_pipe
+
+    bird_y = 200
+    bird_y_speed = 0
+
+    pipe_1_x = playing_area_width
+    pipe_1_space_y = new_pipe_space_y()
+
+    pipe_2_x = playing_area_width + ((playing_area_width + pipe_width) / 2)
+    pipe_2_space_y = new_pipe_space_y()
+
+    score = 0
+
+    |upcoming_pipe = 1|
+
+reset()
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_2_x
+    global pipe_1_space_y
+    global pipe_2_space_y
+    global score
+    |global upcoming_pipe|
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    def move_pipe(pipe_x, pipe_space_y):
+        pipe_x -= 60 * dt
+
+        if (pipe_x + pipe_width) < 0:
+            pipe_x = playing_area_width
+            pipe_space_y = new_pipe_space_y()
+
+        return pipe_x, pipe_space_y
+
+    pipe_1_x, pipe_1_space_y = move_pipe(pipe_1_x, pipe_1_space_y)
+    pipe_2_x, pipe_2_space_y = move_pipe(pipe_2_x, pipe_2_space_y)
+
+    def is_bird_colliding_with_pipe(pipe_x, pipe_space_y):
+        return (
+            # Left edge of bird is to the left of the right edge of pipe
+            bird_x < (pipe_x + pipe_width)
+            and
+            # Right edge of bird is to the right of the left edge of pipe
+            (bird_x + bird_width) > pipe_x
+            and (
+                # Top edge of bird is above the bottom edge of first pipe segment
+                bird_y < pipe_space_y
+                or
+                # Bottom edge of bird is below the top edge of second pipe segment
+                (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+            )
+        )
+
+    if (
+        is_bird_colliding_with_pipe(pipe_1_x, pipe_1_space_y)
+        or is_bird_colliding_with_pipe(pipe_2_x, pipe_2_space_y)
+        or bird_y > playing_area_height
+    ):
+        reset()
+
+    if |(|
+        |upcoming_pipe == 1|
+        |and| bird_x > (pipe_1_x + pipe_width)
+    |)|:
+        score += 1
+        |upcoming_pipe = 2|
+
+    if |(|
+        |upcoming_pipe == 2|
+        |and| bird_x > (|pipe_2_x| + pipe_width)
+    |)|:
+        score += 1
+        |upcoming_pipe = 1|
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, bird_height)
+        ),
+        color=(224, 214, 68)
+    )
+
+    def draw_pipe(pipe_x, pipe_space_y):
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, 0),
+                (pipe_width, pipe_space_y)
+            ),
+            color=(94, 201, 72)
+        )
+
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, pipe_space_y + pipe_space_height),
+                (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+            ),
+            color=(94, 201, 72)
+        )
+
+    draw_pipe(pipe_1_x, pipe_1_space_y)
+    draw_pipe(pipe_2_x, pipe_2_space_y)
+
+    screen.draw.text(str(score), (15, 15))
+``
+`
+def reset():
+    global upcoming_pipe
+    # etc.
+
+    upcoming_pipe = 1
+
+def update(dt):
+    global upcoming_pipe
+    # etc.
+
+    if |(|
+        |upcoming_pipe == 1|
+        |and| bird_x > (pipe_1_x + pipe_width)
+    |)|:
+        score += 1
+        |upcoming_pipe = 2|
+
+    if |(|
+        |upcoming_pipe == 2|
+        |and| bird_x > (|pipe_2_x| + pipe_width)
+    |)|:
+        score += 1
+        |upcoming_pipe = 1|
+`
+
+!
+
+### Simplifying code
+
+The only differences between updating the score for the first and second pipes are the currently upcoming pipe, the pipe's X position, and the next upcoming pipe.
+
+A function is made with these values as parameters.
+
+``
+import random
+
+bird_x = 62
+bird_width = 30
+bird_height = 25
+
+playing_area_width = 300
+playing_area_height = 388
+
+pipe_space_height = 100
+pipe_width = 54
+
+def new_pipe_space_y():
+    pipe_space_y_min = 54
+    pipe_space_y = random.randint(
+        pipe_space_y_min,
+        playing_area_height - pipe_space_height - pipe_space_y_min
+    )
+
+    return pipe_space_y
+
+def reset():
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_1_space_y
+    global pipe_2_x
+    global pipe_2_space_y
+    global score
+    global upcoming_pipe
+
+    bird_y = 200
+    bird_y_speed = 0
+
+    pipe_1_x = playing_area_width
+    pipe_1_space_y = new_pipe_space_y()
+
+    pipe_2_x = playing_area_width + ((playing_area_width + pipe_width) / 2)
+    pipe_2_space_y = new_pipe_space_y()
+
+    score = 0
+
+    upcoming_pipe = 1
+
+reset()
+
+def update(dt):
+    global bird_y
+    global bird_y_speed
+    global pipe_1_x
+    global pipe_2_x
+    global pipe_1_space_y
+    global pipe_2_space_y
+    |# Moved: global score|
+    |# Moved: global upcoming_pipe|
+
+    bird_y_speed += 516 * dt
+    bird_y += bird_y_speed * dt
+
+    def move_pipe(pipe_x, pipe_space_y):
+        pipe_x -= 60 * dt
+
+        if (pipe_x + pipe_width) < 0:
+            pipe_x = playing_area_width
+            pipe_space_y = new_pipe_space_y()
+
+        return pipe_x, pipe_space_y
+
+    pipe_1_x, pipe_1_space_y = move_pipe(pipe_1_x, pipe_1_space_y)
+    pipe_2_x, pipe_2_space_y = move_pipe(pipe_2_x, pipe_2_space_y)
+
+    def is_bird_colliding_with_pipe(pipe_x, pipe_space_y):
+        return (
+            # Left edge of bird is to the left of the right edge of pipe
+            bird_x < (pipe_x + pipe_width)
+            and
+            # Right edge of bird is to the right of the left edge of pipe
+            (bird_x + bird_width) > pipe_x
+            and (
+                # Top edge of bird is above the bottom edge of first pipe segment
+                bird_y < pipe_space_y
+                or
+                # Bottom edge of bird is below the top edge of second pipe segment
+                (bird_y + bird_height) > (pipe_space_y + pipe_space_height)
+            )
+        )
+
+    if (
+        is_bird_colliding_with_pipe(pipe_1_x, pipe_1_space_y)
+        or is_bird_colliding_with_pipe(pipe_2_x, pipe_2_space_y)
+        or bird_y > playing_area_height
+    ):
+        reset()
+
+    |def update_score_and_closest_pipe(this_pipe, pipe_x, other_pipe):|
+        |global score|
+        |global upcoming_pipe|
+
+        if (
+            upcoming_pipe == |this_pipe|
+            and bird_x > (|pipe_x| + pipe_width)
+        ):
+            score += 1
+            upcoming_pipe = |other_pipe|
+
+    |update_score_and_closest_pipe(1, pipe_1_x, 2)|
+    |update_score_and_closest_pipe(2, pipe_2_x, 1)|
+
+def on_key_down():
+    global bird_y_speed
+
+    if bird_y > 0:
+        bird_y_speed = -165
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (playing_area_width, playing_area_height)
+        ),
+        color=(35, 92, 118)
+    )
+
+    screen.draw.filled_rect(
+        Rect(
+            (bird_x, bird_y),
+            (bird_width, bird_height)
+        ),
+        color=(224, 214, 68)
+    )
+
+    def draw_pipe(pipe_x, pipe_space_y):
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, 0),
+                (pipe_width, pipe_space_y)
+            ),
+            color=(94, 201, 72)
+        )
+
+        screen.draw.filled_rect(
+            Rect(
+                (pipe_x, pipe_space_y + pipe_space_height),
+                (pipe_width, playing_area_height - pipe_space_y - pipe_space_height)
+            ),
+            color=(94, 201, 72)
+        )
+
+    draw_pipe(pipe_1_x, pipe_1_space_y)
+    draw_pipe(pipe_2_x, pipe_2_space_y)
+
+    screen.draw.text(str(score), (15, 15))
+``
+`
+def update(dt):
+    # etc.
+
+    |def update_score_and_closest_pipe(this_pipe, pipe_x, other_pipe):|
+        |global upcoming_pipe|
+        |global score|
+
+        if (
+            upcoming_pipe == |this_pipe|
+            and bird_x > (|pipe_x| + pipe_width)
+        ):
+            score += 1
+            upcoming_pipe = |other_pipe|
+
+    |update_score_and_closest_pipe(1, pipe_1_x, 2)|
+    |update_score_and_closest_pipe(2, pipe_2_x, 1)|
+`

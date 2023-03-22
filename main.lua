@@ -8,7 +8,14 @@ io.stdout:setvbuf('no')
 love.filesystem.setIdentity('tutorials')
 mode = arg[2]
 name = arg[3]
-title = arg[4]
+framework = arg[4]
+
+title = name:gsub("^%l", string.upper)
+
+frameworkName = 'Lua and L&OumlVE 11'
+if framework == 'pygamezero' then
+    frameworkName = 'Python and Pygame Zero 1.2'
+end
 
 realBackground = {0, 0, 0, 0}
 
@@ -16,7 +23,23 @@ ONCE = {}
 ONCE.start = true
 
 if mode == 'open' then
-    love.system.openURL(love.filesystem.getSaveDirectory()..'/'..name..'/index.html')
+    love.system.openURL(love.filesystem.getSaveDirectory()..'/'..framework..'/'..name..'/index.html')
+    love.event.quit()
+elseif mode == 'openall' then
+    --love.system.openURL(love.filesystem.getSaveDirectory()..'/'..framework..'/'..name..'/index.html')
+    local i = 1
+    local notFound = 0
+    repeat
+        local html = framework..'/'..name..'/'..i..'.html'
+        if love.filesystem.getInfo(html) then
+            love.system.openURL(love.filesystem.getSaveDirectory()..'/'..html)
+            love.timer.sleep(.2)
+            notFound = 0
+        else
+            notFound = notFound + 1
+        end
+        i = i + 1
+    until notFound > 10
     love.event.quit()
 elseif mode == 'images' then
     function cropImageData(screenshot, background)
@@ -116,9 +139,9 @@ elseif mode == 'images' then
         ONCE[key] = true
         local function encode(i)
             love.window.setTitle('Saving image '..i)
-            love.filesystem.createDirectory(name)
+            love.filesystem.createDirectory(framework..'/'..name)
             local imagedata = cropImageData(canvas:newImageData(), realBackground)
-            imagedata:encode('png', name..'/'..i..'.png')
+            imagedata:encode('png', framework..'/'..name..'/'..i..'.png')
         end
         if imageCount > 0 then
             if key == 'down' then
@@ -156,7 +179,7 @@ elseif mode == 'images' then
         love.graphics.setBackgroundColor(0, 0, 0, 0)
 
         love.graphics.clear(BACKGROUND)
-        local function printError(s)    
+        local function printError(s)
             local err = {}
 
             table.insert(err, "Error\n")
@@ -183,10 +206,10 @@ elseif mode == 'images' then
             love.graphics.pop()
         end
 
-        local imagesPath = name..'/images.lua'
+        local imagesPath = framework..'/'..name..'/images.lua'
         if not love.filesystem.getInfo(imagesPath) then
             printError("Couldn't find images.lua at "..imagesPath)
-            return 
+            return
         end
         success, chunk = pcall(love.filesystem.load, imagesPath)
         if not success then
@@ -228,15 +251,10 @@ elseif mode == 'images' then
         end
     end
 elseif mode == 'html' then
-    s = [[<html><head><title>]]
-    ..(title or (name:gsub("^%l", string.upper)..' Tutorial'))..
-[[</title>
-<link href="https://fonts.googleapis.com/css?family=Quicksand:500,700" rel="stylesheet">
-<style>
+    syntaxcss = [[
 body {
     font-family: Calibri, sans-serif;
     margin: 20px;
-    background: #efefef;
 }
 p, li, td, h1, h2, h3, h4 {
     font-family: 'Quicksand';
@@ -244,68 +262,151 @@ p, li, td, h1, h2, h3, h4 {
 }
 p, li, td, pre {
     font-weight: 500;
-    font-size: 11pt;
+    font-size: 16px;
+}
+p {
+    max-width: 695px;
+    line-height: 1.4;
+}
+.fullcode {
+    font-family: Consolas, Monaco, Inconsolata, monospace;
+    padding: 12px;
+    color: #555;
+}
+.name {color:#e824b7;}
+.call {color:#ab22d0;}
+.literal {color:#01afa5;}
+.comment {color:#555; background:#eee;}
+.highlight {background:#fffcad;}
+.highlight .comment, .comment .highlight {background:#f0edd3;}
+    ]]
+    s = [[<html><head><title>]]
+    ..title..' Tutorial for '..frameworkName..
+[[</title>
+<link href="https://fonts.googleapis.com/css?family=Quicksand:500,700" rel="stylesheet">
+<style>
+]]
+..syntaxcss..
+[[
+body {
+    background: #fff;
+}
+.container {
+    max-width: 800px;
+    margin: 0 auto;
 }
 a {
     color: #059dc5;
     text-decoration: none;
+    font-weight: 700;
 }
 a:hover {
     text-decoration: underline;
 }
-p {
-    max-width: 600px;
-    line-height: 1.4;
+h1 {
+    font-size: 60px;
+    margin: 0;
+}
+h2 {
+    font-size: 30px;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 45px;
+    color: #fff;
+    background: #de53b3;
+    margin-bottom: 0;
+    display: inline-block;
+}
+h3 {
+    font-size: 20px;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 45px;
+    color: #fff;
+    background: #734590;
+    max-width: 695px;
 }
 td {
-    padding-right:10px
+    padding-right: 10px
 }
 pre {
     margin-top: 0;
-    min-width: 600px;
+    min-width: 695px;
+    margin-bottom: 10px;
 }
 .pre {
     display: table;
-    margin: 20px 0;
+    margin-top: 16px;
+}
+table {
+    margin-top: 16px;
 }
 img {
     display: block;
     margin: 14px 0;
 }
-.code {
-    font-family: Consolas, Monaco, Inconsolata, monospace;
-    border-radius: 8px;
-    background: #fff;
-    color: #555;
-    padding: 12px;
+td img {
+    margin: 0;
 }
 .inlinecode {
     font-family: Consolas, Monaco, Inconsolata, monospace;
     color: #555;
 }
+.code {
+    font-family: Consolas, Monaco, Inconsolata, monospace;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+    background: #fff;
+    color: #555;
+    padding: 12px;
+}
 .console {
     font-family: Consolas, Monaco, Inconsolata, monospace;
     padding: 16px;
-    background: #555;
+    background: #333;
     border-radius: 8px;
+    border: 1px solid #777;
     color: #eee;
 }
-.name {color:#e824b7;}
-.call {color:#ab22d0;}
-.literal {color:#01afa5; color:#ea9b4c;}
-.comment {color:#555; background:#eee; border-radius: 4px;}
-.highlight {background:#fcffc4; border-radius: 4px;}
-.highlight .comment, .comment .highlight {background:#f0edd3;}
+h2 + h3 {
+    margin-top: 20px;
+}
+.download {
+    font-size: 24px;
+    font-weight: 700;
+}
+.subheading {
+    font-size: 24px;
+    margin-top: 0;
+}
 </style>
 </head>
 <body>
-<h3><a href="../">Introduction and other tutorials</a></h3>
+<div class="container">
 ]]
 
+    linkName = 'L&OumlVE tutorials'
+
+    if framework == 'pygamezero' then
+        linkName = 'Pygame Zero tutorials'
+    end
+
+    s = s..'<p><a href="../../">Home page</a> > <a href="../">'..linkName..'</a></p>'
+    ..'<h1>'..title..'</h1>'
+    ..'<p class="subheading">A tutorial for '..frameworkName..'</p>'
+    ..'<p>Please send any feedback to <a href="mailto:simple.game.tutorials@gmail.com">simple.game.tutorials@gmail.com</a></p>'
+
+    if framework == 'love' then
+        s = s..'<p><a href="'..name..'.love" class="download">Download '..name..'.love'..'</a></p>'
+    end
+
     keywords = {}
-    for keywordIndex, keyword in pairs{
-        "and", "break", "do", "else", "elseif", "end", "for", "function", "if", "local", "nil", "not", "or", "repeat", "return", "then", "until", "while", "true", "false", "in"
-    } do
+    local kw = {"and", "break", "do", "else", "elseif", "end", "for", "function", "if", "local", "nil", "not", "or", "repeat", "return", "then", "until", "while", "true", "false", "in"}
+    if framework == "pygamezero" then
+        kw = {"and", "break", "else", "elif", "for", "def", "if", "import", "not", "or", "repeat", "return", "until", "while", "True", "False", "in", "global", "continue"}
+    end
+
+    for keywordIndex, keyword in pairs(kw) do
         keywords[keyword] = true
     end
 
@@ -318,6 +419,9 @@ img {
     end
 
     function highlight(s)
+        if #s > 10000 then
+            --return s
+        end
         local function noSpans(s, a)
             return s
             :gsub('<span class=@name@>', '')
@@ -326,29 +430,51 @@ img {
             :gsub('<span class=@comment@>', '')
             :gsub('</span>', '')
         end
-        local name = '[%a_][%a%d_%.%:]*'
+        local name = '[%a_][%a%d_%.]*'
         local function f(s)
-            return s
-            :gsub(name, function(s) if not keywords[s:match('%a+')] then return '<span class=@name@>'..s..'</span>' end end)
-            :gsub('<span class=@name@>('..name..')%.%.</span>', function(s) return '<span class=@name@>'..s..'</span>..' end)
-            :gsub('('..name..')%(', function(s) if not keywords[s:match('%a+')] then return '<span class=@call@>'..s..'</span>(' end end)
-            :gsub('function <span class=@name@>', 'function <span class=@literal@>')
-            :gsub('<span class=@name@>'..name..'</span>%(', function(s) return '<span class=@call@>'..s:gsub('<span class=@name@>', '') end)
+            if framework == 'pygamezero' then
+                return s
+                :gsub(name, function(s) if not keywords[s:match('%a+')] then return '<span class=@name@>'..s..'</span>' end end)
+                :gsub('<span class=@name@>('..name..')%.%.</span>', function(s) return '<span class=@name@>'..s..'</span>..' end)
 
-            :gsub([[%'<span class=@name@>]]..name..[[*</span>%']], function(s) return '\''..s:gsub('\' <span class=@name@>', ' '):gsub('\'<span class=@name@>', ''):gsub('</span> \'', ' '):gsub('</span>\'', '')..'\'' end)
-            :gsub([[%'[ ]?<span class=@name@>]]..name..[[+</span>[ ]?%']], function(s) return '\''..s:gsub('\' <span class=@name@>', ' '):gsub('\'<span class=@name@>', ''):gsub('</span> \'', ' '):gsub('</span>\'', '')..'\'' end)
+                :gsub('('..name..')%(', function(s) if not keywords[s:match('%a+')] then return '<span class=@call@>'..s..'</span>(' end end)
+                :gsub('def <span class=@name@>', 'def <span class=@FUNCTION@>')
+                :gsub('<span class=@name@>'..name..'</span>%(', function(s) return '<span class=@call@>'..s:gsub('<span class=@name@>', '') end)
+                :gsub([[%'<span class=@name@>]]..name..[[*</span>%']], function(s) return '\''..s:gsub('\' <span class=@name@>', ' '):gsub('\'<span class=@name@>', ''):gsub('</span> \'', ' '):gsub('</span>\'', '')..'\'' end)
+                :gsub([[%'[ ]?<span class=@name@>]]..name..[[+</span>[ ]?%']], function(s) return '\''..s:gsub('\' <span class=@name@>', ' '):gsub('\'<span class=@name@>', ''):gsub('</span> \'', ' '):gsub('</span>\'', '')..'\'' end)
 
-            :gsub([[%"<span class=@name@>]]..name..[[*</span>%"]], function(s) return "\""..s:gsub("\" <span class=@name@>", " "):gsub("\"<span class=@name@>", ""):gsub("</span> \"", " "):gsub("</span>\"", "").."\"" end)
-            :gsub([[%"[ ]?<span class=@name@>]]..name..[[+</span>[ ]?%"]], function(s) return "\""..s:gsub("\" <span class=@name@>", " "):gsub("\"<span class=@name@>", ""):gsub("</span> \"", " "):gsub("</span>\"", "").."\"" end)
+                :gsub([[%"<span class=@name@>]]..name..[[*</span>%"]], function(s) return "\""..s:gsub("\" <span class=@name@>", " "):gsub("\"<span class=@name@>", ""):gsub("</span> \"", " "):gsub("</span>\"", "").."\"" end)
+                :gsub([[%"[ ]?<span class=@name@>]]..name..[[+</span>[ ]?%"]], function(s) return "\""..s:gsub("\" <span class=@name@>", " "):gsub("\"<span class=@name@>", ""):gsub("</span> \"", " "):gsub("</span>\"", "").."\"" end)
 
-            :gsub('([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%] ])([%d%.]+)([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%] \n])', function(a, b, c) return a..'<span class=@literal@>'..b..'</span>'..c end)
-            :gsub('true', function(s) return '<span class=@literal@>'..s..'</span>' end)
-            :gsub('false', function(s) return '<span class=@literal@>'..s..'</span>' end)
-            :gsub('nil', function(s) return '<span class=@literal@>'..s..'</span>' end)
+                :gsub('([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%] ])([%d%.]+)([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%]%: \n])', function(a, b, c) return a..'<span class=@literal@>'..b..'</span>'..c end)
+                :gsub('([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%] ])([%d%.]+)$', function(a, b) return a..'<span class=@literal@>'..b..'</span>' end)
+                :gsub('True', function(s) return '<span class=@literal@>'..s..'</span>' end)
+                :gsub('False', function(s) return '<span class=@literal@>'..s..'</span>' end)
+                :gsub('null', function(s) return '<span class=@literal@>'..s..'</span>' end)
 
-            :gsub('function <span class=@literal@>', 'function <span class=@name@>')
-            :gsub('(<span class=@comment@>)(%s*)', function(a, b) return b..a end)
+                :gsub('def <span class=@FUNCTION@>', 'def <span class=@name@>')
+                :gsub('(<span class=@comment@>)(%s*)', function(a, b) return b..a end)
+            else
+                return s
+                :gsub(name, function(s) if not keywords[s:match('%a+')] then return '<span class=@name@>'..s..'</span>' end end)
+                :gsub('<span class=@name@>('..name..')%.%.</span>', function(s) return '<span class=@name@>'..s..'</span>..' end)
+                :gsub('('..name..')%(', function(s) if not keywords[s:match('%a+')] then return '<span class=@call@>'..s..'</span>(' end end)
+                :gsub('function <span class=@name@>', 'function <span class=@literal@>')
+                :gsub('<span class=@name@>'..name..'</span>%(', function(s) return '<span class=@call@>'..s:gsub('<span class=@name@>', '') end)
 
+                :gsub([[%'<span class=@name@>]]..name..[[*</span>%']], function(s) return '\''..s:gsub('\' <span class=@name@>', ' '):gsub('\'<span class=@name@>', ''):gsub('</span> \'', ' '):gsub('</span>\'', '')..'\'' end)
+                :gsub([[%'[ ]?<span class=@name@>]]..name..[[+</span>[ ]?%']], function(s) return '\''..s:gsub('\' <span class=@name@>', ' '):gsub('\'<span class=@name@>', ''):gsub('</span> \'', ' '):gsub('</span>\'', '')..'\'' end)
+
+                :gsub([[%"<span class=@name@>]]..name..[[*</span>%"]], function(s) return "\""..s:gsub("\" <span class=@name@>", " "):gsub("\"<span class=@name@>", ""):gsub("</span> \"", " "):gsub("</span>\"", "").."\"" end)
+                :gsub([[%"[ ]?<span class=@name@>]]..name..[[+</span>[ ]?%"]], function(s) return "\""..s:gsub("\" <span class=@name@>", " "):gsub("\"<span class=@name@>", ""):gsub("</span> \"", " "):gsub("</span>\"", "").."\"" end)
+                :gsub('([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%]%` ])([%d%.]+)([%)%(%-%+%=%*%/%%%^%,%|%{%}%[%]%` \n])', function(a, b, c) return a..'<span class=@literal@>'..b..'</span>'..c end)
+                :gsub('true', function(s) return '<span class=@literal@>'..s..'</span>' end)
+                :gsub('false', function(s) return '<span class=@literal@>'..s..'</span>' end)
+                :gsub('nil', function(s) return '<span class=@literal@>'..s..'</span>' end)
+
+                :gsub('function <span class=@literal@>', 'function <span class=@name@>')
+                :gsub('(<span class=@comment@>)(%s*)', function(a, b) return b..a end)
+            end
         end
         s = f(s)
 
@@ -362,14 +488,29 @@ img {
             line = line:gsub([[%b'']], function(s) return '<span class=@literal@>'..noSpans(s)..'</span>' end)
                        :gsub([[%b""]], function(s) return '<span class=@literal@>'..noSpans(s)..'</span>' end)
             if not inComment then
-                local a, z = line:match('(.*)(%-%-%[%[.*)')
-                if z then
-                    line = a .. '<span class="comment">'..noSpans(z)
-                    inComment = true
-                else
-                    local a, z = line:match('(.*)(%-%-.*)')
+                if framework == 'pygamezero' then
+                    local commentMatch = '^(%#.*)'
+                    local z = line:match(commentMatch)
                     if z then
-                        line = a..'<span class=@comment@>'..noSpans(z)..'</span>'
+                        line = '<span class=@comment@>'..noSpans(z)..'</span>'
+                    else
+                        local commentMatch = '(.-[^\'\"\\])(%#.*)'
+                        local a, z = line:match(commentMatch)
+                        if z then
+                            line = a..'<span class=@comment@>'..noSpans(z)..'</span>'
+                        end
+                    end
+                else
+                    local a, z = line:match('(.*)(%-%-%[%[.*)')
+                    if z then
+                        line = a .. '<span class="comment">'..noSpans(z)
+                        inComment = true
+                    else
+                        local commentMatch = '(.*)(%-%-.*)'
+                        local a, z = line:match(commentMatch)
+                        if z then
+                            line = a..'<span class=@comment@>'..noSpans(z)..'</span>'
+                        end
                     end
                 end
             else
@@ -393,14 +534,18 @@ img {
     end
 
     codeString = ''
+    fullCodeString = ''
     consoleString = ''
     list = false
     inCode = false
+    inFullCode = false
     inConsole = false
     inTable = false
     imageNumber = 1
+    fullCodeNumber = 1
+    codeNumber = 1
 
-    for line in love.filesystem.lines(name..'/input.txt') do
+    for line in love.filesystem.lines(framework..'/'..name..'/input.txt') do
         line = line:gsub('\t', '    ')
         h1 = line:match('^#%s(.+)')
         h2 = line:match('^##%s(.+)')
@@ -409,6 +554,7 @@ img {
         li = line:match('^- (.+)')
         link = line:match('^%%(.+)')
         code = line:match('^%`$')
+        fullcode = line:match('^%``$')
         console = line:match('^%~$')
         image = line:match('^%!$')
         td1, td2 = line:match('^%&%s+(.-)%s+%&%s+(.+)')
@@ -422,6 +568,53 @@ img {
             else
                 inCode = true
                 s = s..'<div class="pre"><pre class="code">'
+                codeNumber = codeNumber + 1
+                if codeNumber ~= fullCodeNumber then
+                    print('Missing full code? '..codeNumber - 1)
+                    fullCodeNumber = codeNumber
+                end
+            end
+        elseif fullcode then
+            if inFullCode then
+                inFullCode = false
+                love.filesystem.createDirectory(framework..'/'..name)
+                love.filesystem.write(framework..'/'..name..'/'..fullCodeNumber..'.html',
+                '<html><head><link href="https://fonts.googleapis.com/css?family=Quicksand:500,700" rel="stylesheet"><style>'
+                ..syntaxcss..'</style></head><body style="margin: 0"><div class="pre"><pre class="fullcode">'..highlight(fullCodeString)..'</pre></div></body></html>')
+
+                --[[
+                if framework == 'pygamezero' then
+                    --love.filesystem.write(framework..'/'..name..'/'..fullCodeNumber..'.py',
+                    --love.filesystem.write(name..'-'..fullCodeNumber..'.py',
+                    love.filesystem.write(name..'.py',
+                    --love.filesystem.write(framework..'/'..name..'.py',
+                    --'import pgzrun\n\n'..fullCodeString:gsub('%|', '')..'\n\npgzrun.go()')
+                    (fullCodeString:gsub('%|', '')))
+                end
+                --]]
+                --[[
+                if framework == 'love' then
+                    local n = framework..'/'..name..'/'..fullCodeNumber
+                    love.filesystem.createDirectory(n)
+                    love.filesystem.write(n..'/main.lua', (fullCodeString:gsub('%|', '')))
+                    --love.filesystem.write(n..'/test.bat', 'lovec .')
+                    local outdir = love.filesystem.getSaveDirectory()..'/'..framework..'/'..name
+                    local outname = outdir..'/'..name..'-'..fullCodeNumber..'.love'
+                    local outname = love.filesystem.getSaveDirectory()..'/'..name..'.love'
+                    local imagedir = love.filesystem.getWorkingDirectory()..'/images'
+                    local cmd = '7z -tzip a "'..outname..'" "'..outdir..'/'..fullCodeNumber..'/*" "'..imagedir..'"'
+                    print(cmd)
+                    os.execute(cmd)
+                    --love.filesystem.remove(n..'/main.lua')
+                    --love.filesystem.remove(n)
+                end
+                --]]
+
+                fullCodeString = ''
+                fullCodeNumber = fullCodeNumber + 1
+            else
+                inFullCode = true
+                s = s..'<p><a class="fullcodelink" target="_blank" href="'..fullCodeNumber..'.html">Full code at this point</a></p>'
             end
         elseif console then
             if inConsole then
@@ -433,6 +626,8 @@ img {
                 inConsole = true
                 a('<div class="pre"><pre class="console">')
             end
+        elseif inFullCode then
+            fullCodeString = fullCodeString..line..'\n'
         elseif inCode then
             codeString = codeString..line..'\n'
         elseif inConsole then
@@ -487,17 +682,18 @@ img {
             a('</table>')
             inTable = false
         elseif line ~= '' then
-            line = line:gsub('%b``', function(s) return '<span class="inlinecode">'..highlight(s)..'</span>' end):gsub('`', '')
+            line = line:gsub('%b``', function(s) return '<span class="inlinecode">'..highlight(s):gsub('*', 'ASTERISK')..'</span>' end):gsub('`', '')
             line = line:gsub('%*[^%*]+%*', function(s) return '<b>'..s:sub(2, -2)..'</b>' end)
+            line = line:gsub('ASTERISK', '*')
             a('p', line)
         end
     end
 
-    a('</body></html>')
+    a('</div></body></html>')
 
     function love.run()
-        love.filesystem.createDirectory(name)
+        love.filesystem.createDirectory(framework..'/'..name)
         s = s:gsub('LOVE', 'L&Ouml;VE'):gsub('²', '&sup2;')
-        love.filesystem.write(name..'/index.html', s)
+        love.filesystem.write(framework..'/'..name..'/index.html', s)
     end
 end

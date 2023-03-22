@@ -1,0 +1,1 @@
+lovec ../../ openall snake pygamezero

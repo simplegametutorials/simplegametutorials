@@ -1,0 +1,1 @@
+lovec ../../ open blackjack pygamezero

@@ -1,0 +1,956 @@
+<a href="life.py" class="download">Download life.py</a>
+
+!
+
+## Rules
+
+There is a grid of cells, which are either alive or dead.
+
+After a step of time:
+
+- Alive cells with exactly two or three alive neighbors live on.
+- Dead cells with exactly three alive neighbors become alive.
+
+All other cells die or remain dead.
+
+Create an initial configuration of cells, press any key to step forward in time, and observe.
+
+### Controls
+
+& *Left click* & Make cell alive
+& *Right click* & Make cell dead
+& *Any key* & Step forward in time
+
+## Overview
+
+The cells in the grid are stored as boolean values: `True` for alive, `False` for dead.
+
+!
+
+When time steps forward, a new grid is created, and whether the cells of this new grid are alive or dead is based on the current grid.
+
+After the new grid is complete, the current grid is replaced by the new grid.
+
+## Coding
+
+### Drawing a cell
+
+A cell is drawn as a square.
+
+``
+|def draw():|
+|    screen.fill((255, 255, 255))|
+|    |
+|    screen.draw.filled_rect(|
+|        Rect(|
+|            (0, 0),|
+|            (4, 4)|
+|        ),|
+|        color=(220, 220, 220)|
+|    )|
+``
+`
+def draw():
+    screen.fill((255, 255, 255))
+
+    screen.draw.filled_rect(
+        Rect(
+            (0, 0),
+            (4, 4)
+        ),
+        color=(220, 220, 220)
+    )
+`
+
+!
+
+### Drawing a row of cells
+
+A row of cells is drawn, with 1 pixel between each cell.
+
+``
+def draw():
+    screen.fill((255, 255, 255))
+
+    |for x in range(70):|
+        |cell_size = 5|
+        |cell_draw_size = cell_size - 1|
+
+        screen.draw.filled_rect(
+            Rect(
+                (|x * cell_size|, 0),
+                (|cell_draw_size|, |cell_draw_size|)
+            ),
+            color=(220, 220, 220)
+        )
+``
+`
+def draw():
+    screen.fill((255, 255, 255))
+
+    |for x in range(70):|
+        |cell_size = 5|
+        |cell_draw_size = cell_size - 1|
+
+        screen.draw.filled_rect(
+            Rect(
+                (|x * cell_size|, 0),
+                (|cell_draw_size|, |cell_draw_size|)
+            ),
+            color=(220, 220, 220)
+        )
+`
+
+!
+
+### Drawing all the cells
+
+All of the rows are drawn.
+
+``
+def draw():
+    screen.fill((255, 255, 255))
+
+    |for y in range(50):|
+        for x in range(70):
+            cell_size = 5
+            cell_draw_size = cell_size - 1
+
+            screen.draw.filled_rect(
+                Rect(
+                    (x * cell_size, |y * cell_size|),
+                    (cell_draw_size, cell_draw_size)
+                ),
+                color=(220, 220, 220)
+            )
+``
+`
+def draw():
+    screen.fill((255, 255, 255))
+
+    |for y in range(50):|
+        for x in range(70):
+            cell_size = 5
+            cell_draw_size = cell_size - 1
+
+            screen.draw.filled_rect(
+                Rect(
+                    (x * cell_size, |y * cell_size|),
+                    (cell_draw_size, cell_draw_size)
+                ),
+                color=(220, 220, 220)
+            )
+`
+
+!
+
+### Selecting cells
+
+The cell position that the mouse cursor is over is stored.
+
+This is calculated by taking the mouse position and dividing it by the cell size, and flooring this number.
+
+For example, if the mouse is at position 17 on the X axis and the cell size is 5, dividing 17 by 5 gives 3.4, flooring 3.4 gives 3, meaning that the mouse is over the cell with an index of 3 on the X axis.
+
+The cell size is needed to calculate this, so it is moved to be global.
+
+For now, this position is drawn to the screen as text.
+
+The *pygame* module is imported so that `pygame.mouse.get_pos` can be used.
+
+The *math* module is imported so that `math.floor` can be used.
+
+``
+|import pygame|
+|import math|
+
+|cell_size = 5|
+
+|def update():|
+|    global selected_x|
+|    global selected_y|
+|    |
+|    mouse_x, mouse_y = pygame.mouse.get_pos()|
+|    selected_x = math.floor(mouse_x / cell_size)|
+|    selected_y = math.floor(mouse_y / cell_size)|
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(50):
+        for x in range(70):
+            |# Removed: cell_size = 5|
+            cell_draw_size = cell_size - 1
+
+            screen.draw.filled_rect(
+                Rect(
+                    (x * cell_size, y * cell_size),
+                    (cell_draw_size, cell_draw_size)
+                ),
+                color=(220, 220, 220)
+            )
+
+    |# Temporary|
+    |screen.draw.text(|
+    |    'selected x: ' + str(selected_x) +|
+    |    ', selected y: ' + str(selected_y),|
+    |    (0, 0),|
+    |    color=(0, 0, 0)|
+    |)|
+``
+`
+import pygame
+import math
+
+cell_size = 5
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(50):
+        for x in range(70):
+            # Removed: cell_size = 5
+
+            # etc.
+
+    # Temporary
+    screen.draw.text(
+        'selected x: ' + str(selected_x) +
+        ', selected y: ' + str(selected_y),
+        (0, 0),
+        color=(0, 0, 0)
+    )
+`
+
+!
+
+### Confining selected cell to grid
+
+`min` is used to give the selected position a maximum value, so that it won't be outside the grid even if the mouse is outside the grid.
+
+The grid's width/height in cells is reused from drawing the cells, so variables are made for them.
+
+``
+import pygame
+import math
+
+cell_size = 5
+
+|grid_x_count = 70|
+|grid_y_count = 50|
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = |min(|math.floor(mouse_x / cell_size)|, grid_x_count - 1)|
+    selected_y = |min(|math.floor(mouse_y / cell_size)|, grid_y_count - 1)|
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(|grid_y_count|):
+        for x in range(|grid_x_count|):
+            cell_draw_size = cell_size - 1
+
+            screen.draw.filled_rect(
+                Rect(
+                    (x * cell_size, y * cell_size),
+                    (cell_draw_size, cell_draw_size)
+                ),
+                color=(220, 220, 220)
+            )
+
+    # Temporary
+    screen.draw.text(
+        'selected x: ' + str(selected_x) +
+        ', selected y: ' + str(selected_y),
+        (0, 0),
+        color=(0, 0, 0)
+    )
+``
+`
+grid_x_count = 70
+grid_y_count = 50
+
+def update():
+    # etc.
+
+    selected_x = |min(|math.floor(mouse_x / cell_size)|, grid_x_count - 1)|
+    selected_y = |min(|math.floor(mouse_y / cell_size)|, grid_y_count - 1)|
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(|grid_y_count|):
+        for x in range(|grid_x_count|):
+            # etc.
+`
+
+### Highlighting cells
+
+The square under the mouse cursor is set to the highlight color.
+
+``
+import pygame
+import math
+
+cell_size = 5
+
+grid_x_count = 70
+grid_y_count = 50
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = min(math.floor(mouse_x / cell_size), grid_x_count - 1)
+    selected_y = min(math.floor(mouse_y / cell_size), grid_y_count - 1)
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            cell_draw_size = cell_size - 1
+
+            |if x == selected_x and y == selected_y:|
+            |    color = (0, 255, 255)|
+            |else:|
+            |    color = (220, 220, 220)|
+
+            screen.draw.filled_rect(
+                Rect(
+                    (x * cell_size, y * cell_size),
+                    (cell_draw_size, cell_draw_size)
+                ),
+                |color=color|
+            )
+``
+`
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            cell_draw_size = cell_size - 1
+
+            |if x == selected_x and y == selected_y:|
+            |    color = (0, 255, 255)|
+            |else:|
+            |    color = (220, 220, 220)|
+
+            screen.draw.filled_rect(
+                Rect(
+                    (x * cell_size, y * cell_size),
+                    (cell_draw_size, cell_draw_size)
+                ),
+                |color=color|
+            )
+`
+
+!
+
+### Creating the grid
+
+A grid is created to store the cells.
+
+Each cell is represented by a boolean value: `True` for alive, `False` for dead.
+
+If the cell is alive, then the alive color is used to draw the cell.
+
+To test this, some cells are manually set to alive.
+
+``
+import pygame
+import math
+
+cell_size = 5
+
+grid_x_count = 70
+grid_y_count = 50
+
+|grid = []|
+
+|for y in range(grid_y_count):|
+|    grid.append([])|
+|    for x in range(grid_x_count):|
+|        grid[y].append(False)|
+
+|# Temporary|
+|grid[0][0] = True|
+|grid[0][1] = True|
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = min(math.floor(mouse_x / cell_size), grid_x_count - 1)
+    selected_y = min(math.floor(mouse_y / cell_size), grid_y_count - 1)
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            cell_draw_size = cell_size - 1
+
+            if x == selected_x and y == selected_y:
+                color = (0, 255, 255)
+            |elif grid[y][x]:|
+            |    color = (255, 0, 255)|
+            else:
+                color = (220, 220, 220)
+
+            screen.draw.filled_rect(
+                Rect(
+                    (x * cell_size, y * cell_size),
+                    (cell_draw_size, cell_draw_size)
+                ),
+                color=color
+            )
+``
+`
+# etc.
+
+grid = []
+
+for y in range(grid_y_count):
+    grid.append([])
+    for x in range(grid_x_count):
+        grid[y].append(False)
+
+# Temporary
+grid[0][0] = True
+grid[0][1] = True
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            cell_draw_size = cell_size - 1
+
+            if x == selected_x and y == selected_y:
+                color = (0, 255, 255)
+            |elif grid[y][x]:|
+            |    color = (255, 0, 255)|
+            else:
+                color = (220, 220, 220)
+
+            # etc.
+`
+
+!
+
+### Set cells to alive with the left mouse button
+
+If the left mouse button is down, then the selected cell is set to alive.
+
+``
+import pygame
+import math
+
+cell_size = 5
+
+grid_x_count = 70
+grid_y_count = 50
+
+grid = []
+
+for y in range(grid_y_count):
+    grid.append([])
+    for x in range(grid_x_count):
+        grid[y].append(False)
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = min(math.floor(mouse_x / cell_size), grid_x_count - 1)
+    selected_y = min(math.floor(mouse_y / cell_size), grid_y_count - 1)
+
+    |if pygame.mouse.get_pressed()[0]:|
+    |    grid[selected_y][selected_x] = True|
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            cell_draw_size = cell_size - 1
+
+            if x == selected_x and y == selected_y:
+                color = (0, 255, 255)
+            elif grid[y][x]:
+                color = (255, 0, 255)
+            else:
+                color = (220, 220, 220)
+
+            screen.draw.filled_rect(
+                Rect(
+                    (x * cell_size, y * cell_size),
+                    (cell_draw_size, cell_draw_size)
+                ),
+                color=color
+            )
+``
+`
+def update():
+    # etc.
+
+    if pygame.mouse.get_pressed()[0]:
+        grid[selected_y][selected_x] = True
+`
+
+!
+
+### Getting number of neighbors
+
+Updating the grid after a step of time requires knowing how many alive neighbors each cell has.
+
+For now, right clicking a cell will print out how many alive neighbors it has.
+
+``
+import pygame
+import math
+
+cell_size = 5
+
+grid_x_count = 70
+grid_y_count = 50
+
+grid = []
+
+for y in range(grid_y_count):
+    grid.append([])
+    for x in range(grid_x_count):
+        grid[y].append(False)
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = min(math.floor(mouse_x / cell_size), grid_x_count - 1)
+    selected_y = min(math.floor(mouse_y / cell_size), grid_y_count - 1)
+
+    if pygame.mouse.get_pressed()[0]:
+        grid[selected_y][selected_x] = True
+
+|# Temporary|
+|def on_mouse_down(pos, button):|
+|    if button == mouse.RIGHT:|
+|        neighbor_count = 0|
+|        |
+|        print('Finding neighbors of grid[' +|
+|            str(selected_y) + '][' + str(selected_x) + ']')|
+|        |
+|        for dy in range(-1, 2):|
+|            for dx in range(-1, 2):|
+|                |
+|                print(' Checking grid[' +|
+|                    str(selected_y + dy) + '][' + str(selected_x + dx) + ']')|
+|                |
+|                if (not (dy == 0 and dx == 0)|
+|                    and 0 <= (selected_y + dy) < grid_y_count|
+|                    and 0 <= (selected_x + dx) < grid_x_count|
+|                    and grid[selected_y + dy][selected_x + dx]):|
+|                    |
+|                    print('  Neighbor found')|
+|                    neighbor_count += 1|
+|        |
+|        print('Total neighbors: ' + str(neighbor_count))|
+|        print()|
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            cell_draw_size = cell_size - 1
+
+            if x == selected_x and y == selected_y:
+                color = (0, 255, 255)
+            elif grid[y][x]:
+                color = (255, 0, 255)
+            else:
+                color = (220, 220, 220)
+
+            screen.draw.filled_rect(
+                Rect(
+                    (x * cell_size, y * cell_size),
+                    (cell_draw_size, cell_draw_size)
+                ),
+                color=color
+            )
+``
+`
+# Temporary
+def on_mouse_down(pos, button):
+    if button == mouse.RIGHT:
+        neighbor_count = 0
+
+        print('Finding neighbors of grid[' +
+            str(selected_y) + '][' + str(selected_x) + ']')
+
+        for dy in range(-1, 2):
+            for dx in range(-1, 2):
+
+                print(' Checking grid[' +
+                    str(selected_y + dy) + '][' + str(selected_x + dx) + ']')
+
+                if (not (dy == 0 and dx == 0)
+                    and 0 <= (selected_y + dy) < grid_y_count
+                    and 0 <= (selected_x + dx) < grid_x_count
+                    and grid[selected_y + dy][selected_x + dx]):
+
+                    print('  Neighbor found')
+                    neighbor_count += 1
+
+        print('Total neighbors: ' + str(neighbor_count))
+        print()
+`
+
+~
+Finding neighbors of grid[10][10]
+ Checking grid[9][9]
+ Checking grid[9][10]
+ Checking grid[9][11]
+  Neighbor found
+ Checking grid[10][9]
+ Checking grid[10][11]
+ Checking grid[11][9]
+ Checking grid[11][10]
+  Neighbor found
+ Checking grid[11][11]
+Total neighbors: 2
+~
+
+### Changing grid on key press
+
+When a key is pressed, a new grid is created, and the old grid is replaced by the new grid.
+
+For now, all of the cells in the new grid will be alive.
+
+``
+import pygame
+import math
+
+cell_size = 5
+
+grid_x_count = 70
+grid_y_count = 50
+
+grid = []
+
+for y in range(grid_y_count):
+    grid.append([])
+    for x in range(grid_x_count):
+        grid[y].append(False)
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = min(math.floor(mouse_x / cell_size), grid_x_count - 1)
+    selected_y = min(math.floor(mouse_y / cell_size), grid_y_count - 1)
+
+    if pygame.mouse.get_pressed()[0]:
+        grid[selected_y][selected_x] = True
+
+|def on_key_down():|
+|    global grid|
+|    |
+|    next_grid = []|
+|    |
+|    for y in range(grid_y_count):|
+|        next_grid.append([])|
+|        for x in range(grid_x_count):|
+|            next_grid[y].append(True)|
+|    |
+|    grid = next_grid|
+
+# Temporary
+def on_mouse_down(pos, button):
+    if button == mouse.RIGHT:
+        neighbor_count = 0
+
+        print('Finding neighbors of grid[' +
+            str(selected_y) + '][' + str(selected_x) + ']')
+
+        for dy in range(-1, 2):
+            for dx in range(-1, 2):
+
+                print(' Checking grid[' +
+                    str(selected_y + dy) + '][' + str(selected_x + dx) + ']')
+
+                if (not (dy == 0 and dx == 0)
+                    and 0 <= (selected_y + dy) < grid_y_count
+                    and 0 <= (selected_x + dx) < grid_x_count
+                    and grid[selected_y + dy][selected_x + dx]):
+
+                    print('  Neighbor found')
+                    neighbor_count += 1
+
+        print('Total neighbors: ' + str(neighbor_count))
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            cell_draw_size = cell_size - 1
+
+            if x == selected_x and y == selected_y:
+                color = (0, 255, 255)
+            elif grid[y][x]:
+                color = (255, 0, 255)
+            else:
+                color = (220, 220, 220)
+
+            screen.draw.filled_rect(
+                Rect(
+                    (x * cell_size, y * cell_size),
+                    (cell_draw_size, cell_draw_size)
+                ),
+                color=color
+            )
+``
+`
+def on_key_down():
+    global grid
+
+    next_grid = []
+
+    for y in range(grid_y_count):
+        next_grid.append([])
+        for x in range(grid_x_count):
+            next_grid[y].append(True)
+
+    grid = next_grid
+`
+
+!
+
+### Changing grid based on neighbors
+
+The code for finding the number of alive neighbors a cell has is moved to here.
+
+A cell in the new grid is alive if it has 3 neighbors, or it is alive in the old grid and has 2 neighbors.
+
+``
+import pygame
+import math
+
+cell_size = 5
+
+grid_x_count = 70
+grid_y_count = 50
+
+grid = []
+
+for y in range(grid_y_count):
+    grid.append([])
+    for x in range(grid_x_count):
+        grid[y].append(False)
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = min(math.floor(mouse_x / cell_size), grid_x_count - 1)
+    selected_y = min(math.floor(mouse_y / cell_size), grid_y_count - 1)
+
+    if pygame.mouse.get_pressed()[0]:
+        grid[selected_y][selected_x] = True
+
+def on_key_down():
+    global grid
+
+    next_grid = []
+
+    for y in range(grid_y_count):
+        next_grid.append([])
+        for x in range(grid_x_count):
+            |# Moved|
+            neighbor_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (not (dy == 0 and dx == 0)
+                        and 0 <= (|y| + dy) < grid_y_count
+                        and 0 <= (|x| + dx) < grid_x_count
+                        and grid[|y| + dy][|x| + dx]):
+
+                        neighbor_count += 1
+
+            next_grid[y].append(
+                |neighbor_count == 3 or|
+                |(grid[y][x] and neighbor_count == 2)|
+            )
+
+    grid = next_grid
+
+|# Removed: def on_mouse_down(pos, button):|
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            cell_draw_size = cell_size - 1
+
+            if x == selected_x and y == selected_y:
+                color = (0, 255, 255)
+            elif grid[y][x]:
+                color = (255, 0, 255)
+            else:
+                color = (220, 220, 220)
+
+            screen.draw.filled_rect(
+                Rect(
+                    (x * cell_size, y * cell_size),
+                    (cell_draw_size, cell_draw_size)
+                ),
+                color=color
+            )
+``
+`
+def on_key_down():
+    global grid
+
+    next_grid = []
+
+    for y in range(grid_y_count):
+        next_grid.append([])
+        for x in range(grid_x_count):
+            |# Moved|
+            neighbor_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (not (dy == 0 and dx == 0)
+                        and 0 <= (|y| + dy) < grid_y_count
+                        and 0 <= (|x| + dx) < grid_x_count
+                        and grid[|y| + dy][|x| + dx]):
+
+                        neighbor_count += 1
+
+            next_grid[y].append(
+                |neighbor_count == 3 or|
+                |(grid[y][x] and neighbor_count == 2)|
+            )
+
+    grid = next_grid
+
+# Removed: def on_mouse_down(pos, button):
+`
+
+!
+
+### Making cells dead with right click
+
+When a cell is right clicked it becomes dead.
+
+``
+import pygame
+import math
+
+cell_size = 5
+
+grid_x_count = 70
+grid_y_count = 50
+
+grid = []
+
+for y in range(grid_y_count):
+    grid.append([])
+    for x in range(grid_x_count):
+        grid[y].append(False)
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = min(math.floor(mouse_x / cell_size), grid_x_count - 1)
+    selected_y = min(math.floor(mouse_y / cell_size), grid_y_count - 1)
+
+    if pygame.mouse.get_pressed()[0]:
+        grid[selected_y][selected_x] = True
+    |elif pygame.mouse.get_pressed()[2]:|
+    |    grid[selected_y][selected_x] = False|
+
+def on_key_down():
+    global grid
+
+    next_grid = []
+
+    for y in range(grid_y_count):
+        next_grid.append([])
+        for x in range(grid_x_count):
+            neighbor_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < grid_y_count
+                        and 0 <= (x + dx) < grid_x_count
+                        and grid[y + dy][x + dx]):
+
+                        neighbor_count += 1
+
+            next_grid[y].append(
+                neighbor_count == 3 or
+                (grid[y][x] and neighbor_count == 2)
+            )
+
+    grid = next_grid
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            cell_draw_size = cell_size - 1
+
+            if x == selected_x and y == selected_y:
+                color = (0, 255, 255)
+            elif grid[y][x]:
+                color = (255, 0, 255)
+            else:
+                color = (220, 220, 220)
+
+            screen.draw.filled_rect(
+                Rect(
+                    (x * cell_size, y * cell_size),
+                    (cell_draw_size, cell_draw_size)
+                ),
+                color=color
+            )
+``
+`
+def update():
+    # etc.
+
+    if pygame.mouse.get_pressed()[0]:
+        grid[selected_y][selected_x] = True
+    |elif pygame.mouse.get_pressed()[2]:|
+    |    grid[selected_y][selected_x] = False|
+`
+

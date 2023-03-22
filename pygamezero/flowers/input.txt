@@ -1,0 +1,3728 @@
+<a href="flowers.zip" class="download">Download flowers.zip</a>
+
+!
+
+## Rules
+
+The game starts with a grid of covered cells. Under some of the cells are flowers. The game is over when a flower is uncovered.
+
+Left clicking a cell uncovers it, and if none of its adjacent cells contain flowers, they are also uncovered, and for <i>those</i> uncovered cells, if none of <i>their</i> adjacent cells contain flowers, they are also uncovered, and so on.
+
+Right clicking a cell toggles between the cell having a flag, a question mark, or nothing. Flags prevent a cell from being uncovered with a left click. Question marks are visual markers which don't affect what happens when the cell is clicked.
+
+The game is complete when all non-flower cells are uncovered.
+
+### Controls
+
+& *Left click* & Uncover a cell
+& *Right click* & Cycle a covered cell through having a flag, a question mark, or nothing
+
+## Overview
+
+The cells are represented by dictionaries containing a boolean value indicating whether or not it contains a flower, and a string value indicating which of four states the cell is in: covered, covered with a flag, covered with a question mark, or uncovered.
+
+The cells which have flowers are chosen randomly. The first cell clicked is excluded from the possible options.
+
+When a cell is clicked, its position is added to the "uncover stack" list.
+
+While there is anything left in the uncover stack...
+
+- A position is removed from the end of the stack.
+- This position is set to *uncovered*.
+- If there are no flowers surrounding this position, the surrounding *covered* and *question marked* positions (i.e. not the *uncovered* and *flagged* positions) are added to the uncover stack.
+
+The cells are drawn by assembling the following images:
+
+!
+
+## Coding
+
+### Drawing tiles
+
+The covered cell image is drawn for every cell.
+
+You can access the image files used in this tutorial by downloading and unzipping the .zip file linked to at the top of this page.
+
+``
+|def draw():|
+|    screen.fill((0, 0, 0))|
+|    |
+|    for y in range(14):|
+|        for x in range(19):|
+|            cell_size = 18|
+|            screen.blit('covered', (x * cell_size, y * cell_size))|
+``
+`
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(14):
+        for x in range(19):
+            cell_size = 18
+            screen.blit('covered', (x * cell_size, y * cell_size))
+`
+
+!
+
+### Selecting cells
+
+The cell position under the mouse is updated every frame.
+
+This needs the cell size, so it is moved to be global.
+
+For now, this position is drawn as text.
+
+The *pygame* module is imported so that `pygame.mouse.get_pos` can be used.
+
+The *math* module is imported so that `math.floor` can be used.
+
+``
+|import pygame|
+|import math|
+
+|cell_size = 18|
+
+|def update():|
+|    global selected_x|
+|    global selected_y|
+|    |
+|    mouse_x, mouse_y = pygame.mouse.get_pos()|
+|    selected_x = math.floor(mouse_x / cell_size)|
+|    selected_y = math.floor(mouse_y / cell_size)|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(14):
+        for x in range(19):
+            |# Removed: cell_size = 18|
+            screen.blit('covered', (x * cell_size, y * cell_size))
+
+    |# Temporary|
+    |screen.draw.text(|
+    |    'selected x: ' + str(selected_x) + 'selected y: ' + str(selected_y),|
+    |    (0, 0), color=(0, 0, 0)|
+    |)|
+``
+`
+import pygame
+import math
+
+cell_size = 18
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(14):
+        for x in range(19):
+            # Removed: cell_size = 18
+            screen.blit('covered', (x * cell_size, y * cell_size))
+
+    # Temporary
+    screen.draw.text(
+        'selected x: ' + str(selected_x) + 'selected y: ' + str(selected_y),
+        (0, 0), color=(0, 0, 0)
+    )
+`
+
+!
+
+### Keeping selected cell within grid
+
+If the mouse position is greater than the grid's X or Y cell count (i.e. it is off the right or bottom of the grid), then the selected position is set to the last cell on that axis.
+
+The grid's X and Y cell count is reused from drawing the cells, so variables are made for them.
+
+``
+import pygame
+import math
+
+cell_size = 18
+
+|grid_x_count = 19|
+|grid_y_count = 14|
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    |if selected_x > grid_x_count - 1:|
+    |    selected_x = grid_x_count - 1|
+    |if selected_y > grid_y_count - 1:|
+    |    selected_y = grid_y_count - 1|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(|grid_y_count|):
+        for x in range(|grid_x_count|):
+            screen.blit('covered', (x * cell_size, y * cell_size))
+
+    # Temporary
+    screen.draw.text(
+        'selected x: ' + str(selected_x) + 'selected y: ' + str(selected_y),
+        (0, 0), color=(0, 0, 0)
+    )
+``
+`
+# etc.
+
+grid_x_count = 19
+grid_y_count = 14
+
+def update():
+    # etc.
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(|grid_y_count|):
+        for x in range(|grid_x_count|):
+            # etc.
+`
+
+!
+
+### Highlighting cells
+
+The selected cell is a drawn with the highlighted image.
+
+``
+import pygame
+import math
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            |if x == selected_x and y == selected_y:|
+            |    image = 'covered_highlighted'|
+            |else:|
+            |    image = 'covered'|
+            screen.blit(|image|, (x * cell_size, y * cell_size))
+``
+`
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            |if x == selected_x and y == selected_y:|
+            |    image = 'covered_highlighted'|
+            |else:|
+            |    image = 'covered'|
+            screen.blit(|image|, (x * cell_size, y * cell_size))
+`
+
+!
+
+### Change cell image when left mouse button is down
+
+When the left mouse button is down, the selected cell is drawn as an uncovered cell.
+
+``
+import pygame
+import math
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            if x == selected_x and y == selected_y:
+                |if pygame.mouse.get_pressed()[0] == 1:|
+                |    image = 'uncovered'|
+                |else:|
+                    image = 'covered_highlighted'
+            else:
+                image = 'covered'
+            screen.blit(image, (x * cell_size, y * cell_size))
+``
+`
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            if x == selected_x and y == selected_y:
+                |if pygame.mouse.get_pressed()[0] == 1:|
+                |    image = 'uncovered'|
+                |else:|
+                    image = 'covered_highlighted'
+            else:
+                image = 'covered'
+            screen.blit(image, (x * cell_size, y * cell_size))
+`
+
+!
+
+### Drawing flowers
+
+A grid is created to store the state of the cells.
+
+Each cell will be represented by a dictionary which stores two values: whether it has a flower, and whether it is uncovered/flagged/question marked/nothing.
+
+For now, it will only store the flower value.
+
+If a cell's `'flower'` key is true, for now, the flower image is drawn over the cell image.
+
+``
+import pygame
+import math
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+|grid = []|
+
+|for y in range(grid_y_count):|
+|    grid.append([])|
+|    for x in range(grid_x_count):|
+|        grid[y].append({|
+|            'flower': False|
+|        })|
+|    |
+|    # Temporary|
+|    grid[0][0]['flower'] = True|
+|    grid[0][1]['flower'] = True|
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            if x == selected_x and y == selected_y:
+                if pygame.mouse.get_pressed()[0] == 1:
+                    image = 'uncovered'
+                else:
+                    image = 'covered_highlighted'
+            else:
+                image = 'covered'
+            screen.blit(image, (x * cell_size, y * cell_size))
+
+            |if grid[y][x]['flower']:|
+            |    screen.blit('flower', (x * cell_size, y * cell_size))|
+
+``
+`
+# etc.
+
+grid = []
+
+for y in range(grid_y_count):
+    grid.append([])
+    for x in range(grid_x_count):
+        grid[y].append({
+            'flower': False
+        })
+
+    # Temporary
+    grid[0][0]['flower'] = True
+    grid[0][1]['flower'] = True
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            # etc.
+
+            |if grid[y][x]['flower']:|
+            |    screen.blit('flower', (x * cell_size, y * cell_size))|
+`
+
+!
+
+### Simplifying code
+
+The code for drawing cells and drawing the flower is the same except for the image to draw, so a function is created with the image and the X and Y values as parameters.
+
+``
+import pygame
+import math
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+grid = []
+
+for y in range(grid_y_count):
+    grid.append([])
+    for x in range(grid_x_count):
+        grid[y].append({
+            'flower': False
+        })
+
+    # Temporary
+    grid[0][0]['flower'] = True
+    grid[0][1]['flower'] = True
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            |def draw_cell(image, x, y):|
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if x == selected_x and y == selected_y:
+                if pygame.mouse.get_pressed()[0] == 1:
+                    |draw_cell('uncovered', x, y)|
+                else:
+                    |draw_cell('covered_highlighted', x, y)|
+            else:
+                |draw_cell('covered', x, y)|
+
+            if grid[y][x]['flower']:
+                |draw_cell('flower', x, y)|
+``
+`
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            |def draw_cell(image, x, y):|
+                screen.blit(|image|, (x * cell_size, y * cell_size))
+
+            if x == selected_x and y == selected_y:
+                if pygame.mouse.get_pressed()[0] == 1:
+                    |draw_cell('uncovered', x, y)|
+                else:
+                    |draw_cell('covered_highlighted', x, y)|
+            else:
+                |draw_cell('covered', x, y)|
+
+            if grid[y][x]['flower']:
+                |draw_cell('flower', x, y)|
+`
+
+### Toggling flowers
+
+For testing purposes, right clicking a cell will toggle its flower.
+
+``
+import pygame
+import math
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+grid = []
+
+for y in range(grid_y_count):
+    grid.append([])
+    for x in range(grid_x_count):
+        grid[y].append({
+            'flower': False
+        })
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+|def on_mouse_up(button):|
+|    # Temporary|
+|    if button == mouse.RIGHT:|
+|        grid[selected_y][selected_x]['flower'] = not grid[selected_y][selected_x]['flower']|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if x == selected_x and y == selected_y:
+                if pygame.mouse.get_pressed()[0] == 1:
+                    draw_cell('uncovered', x, y)
+                else:
+                    draw_cell('covered_highlighted', x, y)
+            else:
+                draw_cell('covered', x, y)
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+``
+`
+def on_mouse_up(button):
+    # Temporary
+    if button == mouse.RIGHT:
+        grid[selected_y][selected_x]['flower'] = not grid[selected_y][selected_x]['flower']
+`
+
+### Showing surrounding flower count
+
+To find the surrounding flower count, each position in the 8 directions around each cell is looped through. If any of these positions is inside the grid and the cell at the position has a flower, then 1 is added to the surrounding flower count.
+
+If the surrounding flower count is greater than 0, then, for now, the appropriate number image is drawn over the cell.
+
+``
+import pygame
+import math
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+grid = []
+
+for y in range(grid_y_count):
+    grid.append([])
+    for x in range(grid_x_count):
+        grid[y].append({
+            'flower': False
+        })
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_mouse_up(button):
+    # Temporary
+    if button == mouse.RIGHT:
+        grid[selected_y][selected_x]['flower'] = not grid[selected_y][selected_x]['flower']
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if x == selected_x and y == selected_y:
+                if pygame.mouse.get_pressed()[0] == 1:
+                    draw_cell('uncovered', x, y)
+                else:
+                    draw_cell('covered_highlighted', x, y)
+            else:
+                draw_cell('covered', x, y)
+
+            |surrounding_flower_count = 0|
+
+            |for dy in range(-1, 2):|
+            |    for dx in range(-1, 2):|
+            |        if (|
+            |            not (dy == 0 and dx == 0)|
+            |            and 0 <= (y + dy) < len(grid)|
+            |            and 0 <= (x + dx) < len(grid[y + dy])|
+            |            and grid[y + dy][x + dx]['flower']|
+            |        ):|
+            |            surrounding_flower_count += 1|
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            |elif surrounding_flower_count > 0:|
+            |    draw_cell(str(surrounding_flower_count), x, y)|
+``
+`
+def draw():
+    # etc.
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            # etc.
+
+            |surrounding_flower_count = 0|
+
+            |for dy in range(-1, 2):|
+            |    for dx in range(-1, 2):|
+            |        if (|
+            |            not (dy == 0 and dx == 0)|
+            |            and 0 <= (y + dy) < len(grid)|
+            |            and 0 <= (x + dx) < len(grid[y + dy])|
+            |            and grid[y + dy][x + dx]['flower']|
+            |        ):|
+            |            surrounding_flower_count += 1|
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            |elif surrounding_flower_count > 0:|
+            |    draw_cell(str(surrounding_flower_count), x, y)|
+`
+
+!
+
+### Random flower placement
+
+A list is created containing every X and Y position in the grid.
+
+Random positions are repeatedly removed from this list and the cells at these positions are set to have a flower.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+grid = []
+
+for y in range(grid_y_count):
+    grid.append([])
+    for x in range(grid_x_count):
+        grid[y].append({
+            'flower': False
+        })
+
+|possible_flower_positions = []|
+
+|for y in range(grid_y_count):|
+|    for x in range(grid_x_count):|
+|        possible_flower_positions.append({'x': x, 'y': y})|
+
+|for flower_index in range(40):|
+|    position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))|
+|    grid[position['y']][position['x']]['flower'] = True|
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_mouse_up(button):
+    # Temporary
+    if button == mouse.RIGHT:
+        grid[selected_y][selected_x]['flower'] = not grid[selected_y][selected_x]['flower']
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if x == selected_x and y == selected_y:
+                if pygame.mouse.get_pressed()[0] == 1:
+                    draw_cell('uncovered', x, y)
+                else:
+                    draw_cell('covered_highlighted', x, y)
+            else:
+                draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif surrounding_flower_count > 0:
+                draw_cell(str(surrounding_flower_count), x, y)
+``
+`
+import random
+
+# etc.
+
+possible_flower_positions = []
+
+for y in range(grid_y_count):
+    for x in range(grid_x_count):
+        possible_flower_positions.append({'x': x, 'y': y})
+
+for flower_index in range(40):
+    position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+    grid[position['y']][position['x']]['flower'] = True
+`
+
+!
+
+### Resetting the game
+
+A function is made which sets the initial state of the game.
+
+This function is called before the game begins and when any key is pressed.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+|def reset():|
+    |global grid|
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+|reset()|
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+|def on_key_down():|
+|    reset()|
+
+def on_mouse_up(button):
+    # Temporary
+    if button == mouse.RIGHT:
+        grid[selected_y][selected_x]['flower'] = not grid[selected_y][selected_x]['flower']
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if x == selected_x and y == selected_y:
+                if pygame.mouse.get_pressed()[0] == 1:
+                    draw_cell('uncovered', x, y)
+                else:
+                    draw_cell('covered_highlighted', x, y)
+            else:
+                draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif surrounding_flower_count > 0:
+                draw_cell(str(surrounding_flower_count), x, y)
+``
+`
+|def reset():|
+    |global grid|
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+|reset()|
+
+def on_key_down(key):
+    reset()
+`
+
+### Uncovering cells
+
+The cells are given a new key for the state of the cell. For now, this is only whether the cell is covered or uncovered.
+
+For now, when a cell is left clicked its state is set to `'uncovered'`.
+
+If a cell's state is `'uncovered'`, then the uncovered image is drawn instead of the covered image.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                |'state': 'covered', # 'covered', 'uncovered'|
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+reset()
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    |if button == mouse.LEFT:|
+    |    grid[selected_y][selected_x]['state'] = 'uncovered'|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            |if grid[y][x]['state'] == 'uncovered':|
+            |    draw_cell('uncovered', x, y)|
+            |else:|
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif surrounding_flower_count > 0:
+                draw_cell(str(surrounding_flower_count), x, y)
+``
+`
+def reset():
+    global grid
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                |'state': 'covered', # 'covered', 'uncovered'|
+            })
+
+    # etc.
+
+def on_mouse_up(button):
+    if button == mouse.LEFT:
+        grid[selected_y][selected_x]['state'] = 'uncovered'
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            |if grid[y][x]['state'] == 'uncovered':|
+            |    draw_cell('uncovered', x, y)|
+            |else:|
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            # etc.
+`
+
+!
+
+### Flood fill: uncover stack
+
+A list of cell positions is created, and eventually all of the cell positions to be uncovered will be added to this list.
+
+For now, this "uncover stack" will just contain the selected position, so it will only uncover the selected cell like before.
+
+While there are positions in the uncover stack, a position is removed from it and the cell at this position on the grid is uncovered.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+reset()
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    if button == mouse.LEFT:
+
+        |stack = [|
+        |    {|
+        |        'x': selected_x,|
+        |        'y': selected_y,|
+        |    }|
+        |]|
+
+        |while len(stack) > 0:|
+            |current = stack.pop()|
+            |x = current['x']|
+            |y = current['y']|
+
+            grid[|y|][|x|]['state'] = 'uncovered'
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif surrounding_flower_count > 0:
+                draw_cell(str(surrounding_flower_count), x, y)
+``
+`
+def on_mouse_up(button):
+    if button == mouse.LEFT:
+        stack = [
+            {
+                'x': selected_x,
+                'y': selected_y,
+            }
+        ]
+
+        while len(stack) > 0:
+            current = stack.pop()
+            x = current['x']
+            y = current['y']
+
+            grid[y][x]['state'] = 'uncovered'
+`
+
+### Flood fill: adding to the stack
+
+Each position in the 8 directions around each cell is looped through, and if the position is inside the grid and it is covered, then, for now, it added to the uncover stack.
+
+This results in all of the cells becoming uncovered.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+reset()
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    if button == mouse.LEFT:
+
+        stack = [
+            {
+                'x': selected_x,
+                'y': selected_y,
+            }
+        ]
+
+        while len(stack) > 0:
+            current = stack.pop()
+            x = current['x']
+            y = current['y']
+
+            grid[y][x]['state'] = 'uncovered'
+
+            |for dy in range(-1, 2):|
+            |    for dx in range(-1, 2):|
+            |        if (|
+            |            not (dy == 0 and dx == 0)|
+            |            and 0 <= (y + dy) < len(grid)|
+            |            and 0 <= (x + dx) < len(grid[y + dy])|
+            |            and grid[y + dy][x + dx]['state'] == 'covered'|
+            |        ):|
+            |            stack.append({|
+            |                'x': x + dx,|
+            |                'y': y + dy,|
+            |            })|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif surrounding_flower_count > 0:
+                draw_cell(str(surrounding_flower_count), x, y)
+``
+`
+def on_mouse_up(button):
+    if button == mouse.LEFT:
+
+        stack = [
+            {
+                'x': selected_x,
+                'y': selected_y,
+            }
+        ]
+
+        while len(stack) > 0:
+            current = stack.pop()
+            x = current['x']
+            y = current['y']
+
+            grid[y][x]['state'] = 'uncovered'
+
+            |for dy in range(-1, 2):|
+            |    for dx in range(-1, 2):|
+            |        if (|
+            |            not (dy == 0 and dx == 0)|
+            |            and 0 <= (y + dy) < len(grid)|
+            |            and 0 <= (x + dx) < len(grid[y + dy])|
+            |            and grid[y + dy][x + dx]['state'] == 'covered'|
+            |        ):|
+            |            stack.append({|
+            |                'x': x + dx,|
+            |                'y': y + dy,|
+            |            })|
+`
+
+!
+
+### Flood fill: using surrounding flower count
+
+The surrounding cells of a position removed from the uncover stack are only added to the stack if none of the surrounding cells have flowers.
+
+Finding the number of surrounding flowers is reused from drawing it, so a function is made.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+reset()
+
+|def get_surrounding_flower_count(x, y):|
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    |return surrounding_flower_count|
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    if button == mouse.LEFT:
+
+        stack = [
+            {
+                'x': selected_x,
+                'y': selected_y,
+            }
+        ]
+
+        while len(stack) > 0:
+            current = stack.pop()
+            x = current['x']
+            y = current['y']
+
+            grid[y][x]['state'] = 'uncovered'
+
+            |if get_surrounding_flower_count(x, y) == 0:|
+                for dy in range(-1, 2):
+                    for dx in range(-1, 2):
+                        if (
+                            not (dy == 0 and dx == 0)
+                            and 0 <= (y + dy) < len(grid)
+                            and 0 <= (x + dx) < len(grid[y + dy])
+                            and grid[y + dy][x + dx]['state'] == 'covered'
+                        ):
+                            stack.append({
+                                'x': x + dx,
+                                'y': y + dy,
+                            })
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif |get_surrounding_flower_count(x, y)| > 0:
+                draw_cell(str(|get_surrounding_flower_count(x, y)|), x, y)
+``
+`
+|def get_surrounding_flower_count(x, y):|
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    |return surrounding_flower_count|
+
+def on_mouse_up(button):
+    if button == mouse.LEFT:
+
+        stack = [
+            {
+                'x': selected_x,
+                'y': selected_y,
+            }
+        ]
+
+        while len(stack) > 0:
+            current = stack.pop()
+            x = current['x']
+            y = current['y']
+
+            grid[y][x]['state'] = 'uncovered'
+
+            |if get_surrounding_flower_count(x, y) == 0:|
+                for dy in range(-1, 2):
+                    for dx in range(-1, 2):
+                        if (
+                            not (dy == 0 and dx == 0)
+                            and 0 <= (y + dy) < len(grid)
+                            and 0 <= (x + dx) < len(grid[y + dy])
+                            and grid[y + dy][x + dx]['state'] == 'covered'
+                        ):
+                            stack.append({
+                                'x': x + dx,
+                                'y': y + dy,
+                            })
+
+def draw():
+    # etc.
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif |get_surrounding_flower_count(x, y)| > 0:
+                draw_cell(str(|get_surrounding_flower_count(x, y)|), x, y)
+`
+
+!
+
+### Drawing flags and question marks
+
+A cell's state can also be a flag or a question mark.
+
+If a cell's state is a flag/question mark, the flag/question mark image is drawn over the cell.
+
+To test this, the state of two cells are changed to have a flag and a question mark.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered'|, 'flag', 'question'|
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+reset()
+
+|# Temporary|
+|grid[0][0]['state'] = 'flag'|
+|grid[0][1]['state'] = 'question'|
+
+def get_surrounding_flower_count(x, y):
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    return surrounding_flower_count
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    if button == mouse.LEFT:
+
+        stack = [
+            {
+                'x': selected_x,
+                'y': selected_y,
+            }
+        ]
+
+        while len(stack) > 0:
+            current = stack.pop()
+            x = current['x']
+            y = current['y']
+
+            grid[y][x]['state'] = 'uncovered'
+
+            if get_surrounding_flower_count(x, y) == 0:
+                for dy in range(-1, 2):
+                    for dx in range(-1, 2):
+                        if (
+                            not (dy == 0 and dx == 0)
+                            and 0 <= (y + dy) < len(grid)
+                            and 0 <= (x + dx) < len(grid[y + dy])
+                            and grid[y + dy][x + dx]['state'] == 'covered'
+                        ):
+                            stack.append({
+                                'x': x + dx,
+                                'y': y + dy,
+                            })
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            |if grid[y][x]['state'] == 'flag':|
+            |    draw_cell('flag', x, y)|
+            |elif grid[y][x]['state'] == 'question':|
+            |    draw_cell('question', x, y)|
+``
+`
+def reset():
+    # etc.
+
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered'|, 'flag', 'question'|
+            })
+
+# Temporary
+grid[0][0]['state'] = 'flag'
+grid[0][1]['state'] = 'question'
+
+def draw():
+    # etc.
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            |if grid[y][x]['state'] == 'flag':|
+            |    draw_cell('flag', x, y)|
+            |elif grid[y][x]['state'] == 'question':|
+            |    draw_cell('question', x, y)|
+`
+
+!
+
+### Cycling flags and question marks
+
+Right clicking a cell cycles its state through having nothing, a flag, and a question mark.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered', 'flag', 'question'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+reset()
+
+def get_surrounding_flower_count(x, y):
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    return surrounding_flower_count
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    if button == mouse.LEFT:
+
+        stack = [
+            {
+                'x': selected_x,
+                'y': selected_y,
+            }
+        ]
+
+        while len(stack) > 0:
+            current = stack.pop()
+            x = current['x']
+            y = current['y']
+
+            grid[y][x]['state'] = 'uncovered'
+
+            if get_surrounding_flower_count(x, y) == 0:
+                for dy in range(-1, 2):
+                    for dx in range(-1, 2):
+                        if (
+                            not (dy == 0 and dx == 0)
+                            and 0 <= (y + dy) < len(grid)
+                            and 0 <= (x + dx) < len(grid[y + dy])
+                            and grid[y + dy][x + dx]['state'] == 'covered'
+                        ):
+                            stack.append({
+                                'x': x + dx,
+                                'y': y + dy,
+                            })
+
+    |elif button == mouse.RIGHT:|
+    |    if grid[selected_y][selected_x]['state'] == 'covered':|
+    |        grid[selected_y][selected_x]['state'] = 'flag'|
+    |    |
+    |    elif grid[selected_y][selected_x]['state'] == 'flag':|
+    |        grid[selected_y][selected_x]['state'] = 'question'|
+    |    |
+    |    elif grid[selected_y][selected_x]['state'] == 'question':|
+    |        grid[selected_y][selected_x]['state'] = 'covered'|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            if grid[y][x]['state'] == 'flag':
+                draw_cell('flag', x, y)
+            elif grid[y][x]['state'] == 'question':
+                draw_cell('question', x, y)
+``
+`
+def on_mouse_up(button):
+    if button == mouse.LEFT:
+        # etc.
+
+    elif button == mouse.RIGHT:
+        if grid[selected_y][selected_x]['state'] == 'covered':
+            grid[selected_y][selected_x]['state'] = 'flag'
+
+        elif grid[selected_y][selected_x]['state'] == 'flag':
+            grid[selected_y][selected_x]['state'] = 'question'
+
+        elif grid[selected_y][selected_x]['state'] == 'question':
+            grid[selected_y][selected_x]['state'] = 'covered'
+`
+
+### Prevent uncovering flags
+
+If a cell has a flag, then it can't be uncovered by a left click.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered', 'flag', 'question'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+reset()
+
+def get_surrounding_flower_count(x, y):
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    return surrounding_flower_count
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    if button == mouse.LEFT |and grid[selected_y][selected_x]['state'] != 'flag'|:
+
+        stack = [
+            {
+                'x': selected_x,
+                'y': selected_y,
+            }
+        ]
+
+        while len(stack) > 0:
+            current = stack.pop()
+            x = current['x']
+            y = current['y']
+
+            grid[y][x]['state'] = 'uncovered'
+
+            if get_surrounding_flower_count(x, y) == 0:
+                for dy in range(-1, 2):
+                    for dx in range(-1, 2):
+                        if (
+                            not (dy == 0 and dx == 0)
+                            and 0 <= (y + dy) < len(grid)
+                            and 0 <= (x + dx) < len(grid[y + dy])
+                            and grid[y + dy][x + dx]['state'] == 'covered'
+                        ):
+                            stack.append({
+                                'x': x + dx,
+                                'y': y + dy,
+                            })
+
+    elif button == mouse.RIGHT:
+        if grid[selected_y][selected_x]['state'] == 'covered':
+            grid[selected_y][selected_x]['state'] = 'flag'
+
+        elif grid[selected_y][selected_x]['state'] == 'flag':
+            grid[selected_y][selected_x]['state'] = 'question'
+
+        elif grid[selected_y][selected_x]['state'] == 'question':
+            grid[selected_y][selected_x]['state'] = 'covered'
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            if grid[y][x]['state'] == 'flag':
+                draw_cell('flag', x, y)
+            elif grid[y][x]['state'] == 'question':
+                draw_cell('question', x, y)
+``
+`
+def on_mouse_up(button):
+    if button == mouse.LEFT |and grid[selected_y][selected_x]['state'] != 'flag'|:
+        # etc.
+`
+
+### Question marks don't stop fill
+
+Positions are added to the uncover stack if the cell's state is covered or a question mark (but not a flag).
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered', 'flag', 'question'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+reset()
+
+def get_surrounding_flower_count(x, y):
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    return surrounding_flower_count
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    if button == mouse.LEFT and grid[selected_y][selected_x]['state'] != 'flag':
+
+        stack = [
+            {
+                'x': selected_x,
+                'y': selected_y,
+            }
+        ]
+
+        while len(stack) > 0:
+            current = stack.pop()
+            x = current['x']
+            y = current['y']
+
+            grid[y][x]['state'] = 'uncovered'
+
+            if get_surrounding_flower_count(x, y) == 0:
+                for dy in range(-1, 2):
+                    for dx in range(-1, 2):
+                        if (
+                            not (dy == 0 and dx == 0)
+                            and 0 <= (y + dy) < len(grid)
+                            and 0 <= (x + dx) < len(grid[y + dy])
+                            and grid[y + dy][x + dx]['state'] |in (|'covered'|, 'question')|
+                        ):
+                            stack.append({
+                                'x': x + dx,
+                                'y': y + dy,
+                            })
+
+    elif button == mouse.RIGHT:
+        if grid[selected_y][selected_x]['state'] == 'covered':
+            grid[selected_y][selected_x]['state'] = 'flag'
+
+        elif grid[selected_y][selected_x]['state'] == 'flag':
+            grid[selected_y][selected_x]['state'] = 'question'
+
+        elif grid[selected_y][selected_x]['state'] == 'question':
+            grid[selected_y][selected_x]['state'] = 'covered'
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            if grid[y][x]['state'] == 'flag':
+                draw_cell('flag', x, y)
+            elif grid[y][x]['state'] == 'question':
+                draw_cell('question', x, y)
+``
+`
+def on_mouse_up(button):
+    # etc.
+
+            if get_surrounding_flower_count(x, y) == 0:
+                for dy in range(-1, 2):
+                    for dx in range(-1, 2):
+                        if (
+                            not (dy == 0 and dx == 0)
+                            and 0 <= (y + dy) < len(grid)
+                            and 0 <= (x + dx) < len(grid[y + dy])
+                            and grid[y + dy][x + dx]['state'] |in (|'covered'|, 'question')|
+                        ):
+                            stack.append({
+                                'x': x + dx,
+                                'y': y + dy,
+                            })
+
+    # etc.
+`
+
+### Change cell image when left mouse button is down over flag
+
+If the left mouse button is down when the mouse is on a cell with a flag, then the cell is drawn with the covered image.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered', 'flag', 'question'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+reset()
+
+def get_surrounding_flower_count(x, y):
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    return surrounding_flower_count
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    if button == mouse.LEFT and grid[selected_y][selected_x]['state'] != 'flag':
+
+        stack = [
+            {
+                'x': selected_x,
+                'y': selected_y,
+            }
+        ]
+
+        while len(stack) > 0:
+            current = stack.pop()
+            x = current['x']
+            y = current['y']
+
+            grid[y][x]['state'] = 'uncovered'
+
+            if get_surrounding_flower_count(x, y) == 0:
+                for dy in range(-1, 2):
+                    for dx in range(-1, 2):
+                        if (
+                            not (dy == 0 and dx == 0)
+                            and 0 <= (y + dy) < len(grid)
+                            and 0 <= (x + dx) < len(grid[y + dy])
+                            and grid[y + dy][x + dx]['state'] in ('covered', 'question')
+                        ):
+                            stack.append({
+                                'x': x + dx,
+                                'y': y + dy,
+                            })
+
+    elif button == mouse.RIGHT:
+        if grid[selected_y][selected_x]['state'] == 'covered':
+            grid[selected_y][selected_x]['state'] = 'flag'
+
+        elif grid[selected_y][selected_x]['state'] == 'flag':
+            grid[selected_y][selected_x]['state'] = 'question'
+
+        elif grid[selected_y][selected_x]['state'] == 'question':
+            grid[selected_y][selected_x]['state'] = 'covered'
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        |if grid[y][x]['state'] == 'flag':|
+                        |    draw_cell('covered', x, y)|
+                        |else:|
+                            draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            if grid[y][x]['state'] == 'flag':
+                draw_cell('flag', x, y)
+            elif grid[y][x]['state'] == 'question':
+                draw_cell('question', x, y)
+``
+`
+def draw():
+    # etc.
+
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        |if grid[y][x]['state'] == 'flag':|
+                        |    draw_cell('covered', x, y)|
+                        |else:|
+                            draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+    # etc.
+`
+
+### Game over
+
+If a flower is uncovered, then the game is over.
+
+A variable is made to store whether the game is over or not.
+
+For now, clicking cells does nothing if the game is over.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+    |global game_over|
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered', 'flag', 'question'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+    |game_over = False|
+
+reset()
+
+def get_surrounding_flower_count(x, y):
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    return surrounding_flower_count
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    |global game_over|
+
+    |if not game_over:|
+        if button == mouse.LEFT and grid[selected_y][selected_x]['state'] != 'flag':
+            |if grid[selected_y][selected_x]['flower']:|
+            |    grid[selected_y][selected_x]['state'] = 'uncovered'|
+            |    game_over = True|
+            |else:|
+                stack = [
+                    {
+                        'x': selected_x,
+                        'y': selected_y,
+                    }
+                ]
+
+                while len(stack) > 0:
+                    current = stack.pop()
+                    x = current['x']
+                    y = current['y']
+
+                    grid[y][x]['state'] = 'uncovered'
+
+                    if get_surrounding_flower_count(x, y) == 0:
+                        for dy in range(-1, 2):
+                            for dx in range(-1, 2):
+                                if (
+                                    not (dy == 0 and dx == 0)
+                                    and 0 <= (y + dy) < len(grid)
+                                    and 0 <= (x + dx) < len(grid[y + dy])
+                                    and grid[y + dy][x + dx]['state'] in ('covered', 'question')
+                                ):
+                                    stack.append({
+                                        'x': x + dx,
+                                        'y': y + dy,
+                                    })
+
+        elif button == mouse.RIGHT:
+            if grid[selected_y][selected_x]['state'] == 'covered':
+                grid[selected_y][selected_x]['state'] = 'flag'
+            elif grid[selected_y][selected_x]['state'] == 'flag':
+                grid[selected_y][selected_x]['state'] = 'question'
+            elif grid[selected_y][selected_x]['state'] == 'question':
+                grid[selected_y][selected_x]['state'] = 'covered'
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        if grid[y][x]['state'] == 'flag':
+                            draw_cell('covered', x, y)
+                        else:
+                            draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            if grid[y][x]['state'] == 'flag':
+                draw_cell('flag', x, y)
+            elif grid[y][x]['state'] == 'question':
+                draw_cell('question', x, y)
+``
+`
+def reset():
+    global grid
+    global game_over
+
+    # etc.
+
+    game_over = False
+
+def on_mouse_up(button):
+    |global game_over|
+
+    |if not game_over:|
+        if button == mouse.LEFT and grid[selected_y][selected_x]['state'] != 'flag':
+            |if grid[selected_y][selected_x]['flower']:|
+            |    grid[selected_y][selected_x]['state'] = 'uncovered'|
+            |    game_over = True|
+            |else:|
+                stack = [
+                # etc.
+`
+
+### Game won
+
+If there are no cells which are covered and don't have a flower, then the game is won.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+    global game_over
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered', 'flag', 'question'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+    game_over = False
+
+reset()
+
+def get_surrounding_flower_count(x, y):
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    return surrounding_flower_count
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    global game_over
+
+    if not game_over:
+        if button == mouse.LEFT and grid[selected_y][selected_x]['state'] != 'flag':
+            if grid[selected_y][selected_x]['flower']:
+                grid[selected_y][selected_x]['state'] = 'uncovered'
+                game_over = True
+            else:
+                stack = [
+                    {
+                        'x': selected_x,
+                        'y': selected_y,
+                    }
+                ]
+
+                while len(stack) > 0:
+                    current = stack.pop()
+                    x = current['x']
+                    y = current['y']
+
+                    grid[y][x]['state'] = 'uncovered'
+
+                    if get_surrounding_flower_count(x, y) == 0:
+                        for dy in range(-1, 2):
+                            for dx in range(-1, 2):
+                                if (
+                                    not (dy == 0 and dx == 0)
+                                    and 0 <= (y + dy) < len(grid)
+                                    and 0 <= (x + dx) < len(grid[y + dy])
+                                    and grid[y + dy][x + dx]['state'] in ('covered', 'question')
+                                ):
+                                    stack.append({
+                                        'x': x + dx,
+                                        'y': y + dy,
+                                    })
+
+                |complete = True|
+
+                |for y in range(grid_y_count):|
+                |    for x in range(grid_x_count):|
+                |        if grid[y][x]['state'] != 'uncovered' and not grid[y][x]['flower']:|
+                |            complete = False|
+
+                |if complete:|
+                |    game_over = True|
+
+        elif button == mouse.RIGHT:
+            if grid[selected_y][selected_x]['state'] == 'covered':
+                grid[selected_y][selected_x]['state'] = 'flag'
+            elif grid[selected_y][selected_x]['state'] == 'flag':
+                grid[selected_y][selected_x]['state'] = 'question'
+            elif grid[selected_y][selected_x]['state'] == 'question':
+                grid[selected_y][selected_x]['state'] = 'covered'
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        if grid[y][x]['state'] == 'flag':
+                            draw_cell('covered', x, y)
+                        else:
+                            draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            if grid[y][x]['state'] == 'flag':
+                draw_cell('flag', x, y)
+            elif grid[y][x]['state'] == 'question':
+                draw_cell('question', x, y)
+``
+`
+def on_mouse_up(button):
+    global game_over
+
+    if not game_over:
+        if button == mouse.LEFT and grid[selected_y][selected_x]['state'] != 'flag':
+            if grid[selected_y][selected_x]['flower']:
+                # etc.
+            else:
+                # etc.
+
+                complete = True
+
+                for y in range(grid_y_count):
+                    for x in range(grid_x_count):
+                        if grid[y][x]['state'] != 'uncovered' and not grid[y][x]['flower']:
+                            complete = False
+
+                if complete:
+                    game_over = True
+
+    # etc.
+`
+
+### New game on next click
+
+If the game is over and a mouse button is clicked, then the game is reset.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+    global game_over
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered', 'flag', 'question'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+    game_over = False
+
+reset()
+
+def get_surrounding_flower_count(x, y):
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    return surrounding_flower_count
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    global game_over
+
+    if not game_over:
+        if button == mouse.LEFT and grid[selected_y][selected_x]['state'] != 'flag':
+            if grid[selected_y][selected_x]['flower']:
+                grid[selected_y][selected_x]['state'] = 'uncovered'
+                game_over = True
+            else:
+                stack = [
+                    {
+                        'x': selected_x,
+                        'y': selected_y,
+                    }
+                ]
+
+                while len(stack) > 0:
+                    current = stack.pop()
+                    x = current['x']
+                    y = current['y']
+
+                    grid[y][x]['state'] = 'uncovered'
+
+                    if get_surrounding_flower_count(x, y) == 0:
+                        for dy in range(-1, 2):
+                            for dx in range(-1, 2):
+                                if (
+                                    not (dy == 0 and dx == 0)
+                                    and 0 <= (y + dy) < len(grid)
+                                    and 0 <= (x + dx) < len(grid[y + dy])
+                                    and grid[y + dy][x + dx]['state'] in ('covered', 'question')
+                                ):
+                                    stack.append({
+                                        'x': x + dx,
+                                        'y': y + dy,
+                                    })
+
+                complete = True
+
+                for y in range(grid_y_count):
+                    for x in range(grid_x_count):
+                        if grid[y][x]['state'] != 'uncovered' and not grid[y][x]['flower']:
+                            complete = False
+
+                if complete:
+                    game_over = True
+
+        elif button == mouse.RIGHT:
+            if grid[selected_y][selected_x]['state'] == 'covered':
+                grid[selected_y][selected_x]['state'] = 'flag'
+            elif grid[selected_y][selected_x]['state'] == 'flag':
+                grid[selected_y][selected_x]['state'] = 'question'
+            elif grid[selected_y][selected_x]['state'] == 'question':
+                grid[selected_y][selected_x]['state'] = 'covered'
+
+    |else:|
+    |    reset()|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        if grid[y][x]['state'] == 'flag':
+                            draw_cell('covered', x, y)
+                        else:
+                            draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            if grid[y][x]['state'] == 'flag':
+                draw_cell('flag', x, y)
+            elif grid[y][x]['state'] == 'question':
+                draw_cell('question', x, y)
+``
+`
+def on_mouse_up(button):
+    global game_over
+
+    if not game_over:
+        # etc.
+
+    |else:|
+    |    reset()|
+`
+
+### Don't highlight when game is over
+
+When the game is over, the mouse no longer highlights cells.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+    global game_over
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered', 'flag', 'question'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+    game_over = False
+
+reset()
+
+def get_surrounding_flower_count(x, y):
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    return surrounding_flower_count
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    global game_over
+
+    if not game_over:
+        if button == mouse.LEFT and grid[selected_y][selected_x]['state'] != 'flag':
+            if grid[selected_y][selected_x]['flower']:
+                grid[selected_y][selected_x]['state'] = 'uncovered'
+                game_over = True
+            else:
+                stack = [
+                    {
+                        'x': selected_x,
+                        'y': selected_y,
+                    }
+                ]
+
+                while len(stack) > 0:
+                    current = stack.pop()
+                    x = current['x']
+                    y = current['y']
+
+                    grid[y][x]['state'] = 'uncovered'
+
+                    if get_surrounding_flower_count(x, y) == 0:
+                        for dy in range(-1, 2):
+                            for dx in range(-1, 2):
+                                if (
+                                    not (dy == 0 and dx == 0)
+                                    and 0 <= (y + dy) < len(grid)
+                                    and 0 <= (x + dx) < len(grid[y + dy])
+                                    and grid[y + dy][x + dx]['state'] in ('covered', 'question')
+                                ):
+                                    stack.append({
+                                        'x': x + dx,
+                                        'y': y + dy,
+                                    })
+
+                complete = True
+
+                for y in range(grid_y_count):
+                    for x in range(grid_x_count):
+                        if grid[y][x]['state'] != 'uncovered' and not grid[y][x]['flower']:
+                            complete = False
+
+                if complete:
+                    game_over = True
+
+        elif button == mouse.RIGHT:
+            if grid[selected_y][selected_x]['state'] == 'covered':
+                grid[selected_y][selected_x]['state'] = 'flag'
+            elif grid[selected_y][selected_x]['state'] == 'flag':
+                grid[selected_y][selected_x]['state'] = 'question'
+            elif grid[selected_y][selected_x]['state'] == 'question':
+                grid[selected_y][selected_x]['state'] = 'covered'
+
+    else:
+        reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y |and not game_over|:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        if grid[y][x]['state'] == 'flag':
+                            draw_cell('covered', x, y)
+                        else:
+                            draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower']:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            if grid[y][x]['state'] == 'flag':
+                draw_cell('flag', x, y)
+            elif grid[y][x]['state'] == 'question':
+                draw_cell('question', x, y)
+``
+`
+def draw():
+    # etc.
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y |and not game_over|:
+
+    # etc.
+`
+
+### Hide flowers until game is over
+
+The flowers aren't drawn until the game is over.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+    global game_over
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered', 'flag', 'question'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+    game_over = False
+
+reset()
+
+def get_surrounding_flower_count(x, y):
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    return surrounding_flower_count
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    global game_over
+
+    if not game_over:
+        if button == mouse.LEFT and grid[selected_y][selected_x]['state'] != 'flag':
+            if grid[selected_y][selected_x]['flower']:
+                grid[selected_y][selected_x]['state'] = 'uncovered'
+                game_over = True
+            else:
+                stack = [
+                    {
+                        'x': selected_x,
+                        'y': selected_y,
+                    }
+                ]
+
+                while len(stack) > 0:
+                    current = stack.pop()
+                    x = current['x']
+                    y = current['y']
+
+                    grid[y][x]['state'] = 'uncovered'
+
+                    if get_surrounding_flower_count(x, y) == 0:
+                        for dy in range(-1, 2):
+                            for dx in range(-1, 2):
+                                if (
+                                    not (dy == 0 and dx == 0)
+                                    and 0 <= (y + dy) < len(grid)
+                                    and 0 <= (x + dx) < len(grid[y + dy])
+                                    and grid[y + dy][x + dx]['state'] in ('covered', 'question')
+                                ):
+                                    stack.append({
+                                        'x': x + dx,
+                                        'y': y + dy,
+                                    })
+
+                complete = True
+
+                for y in range(grid_y_count):
+                    for x in range(grid_x_count):
+                        if grid[y][x]['state'] != 'uncovered' and not grid[y][x]['flower']:
+                            complete = False
+
+                if complete:
+                    game_over = True
+
+        elif button == mouse.RIGHT:
+            if grid[selected_y][selected_x]['state'] == 'covered':
+                grid[selected_y][selected_x]['state'] = 'flag'
+            elif grid[selected_y][selected_x]['state'] == 'flag':
+                grid[selected_y][selected_x]['state'] = 'question'
+            elif grid[selected_y][selected_x]['state'] == 'question':
+                grid[selected_y][selected_x]['state'] = 'covered'
+
+    else:
+        reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y and not game_over:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        if grid[y][x]['state'] == 'flag':
+                            draw_cell('covered', x, y)
+                        else:
+                            draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower'] |and game_over|:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            if grid[y][x]['state'] == 'flag':
+                draw_cell('flag', x, y)
+            elif grid[y][x]['state'] == 'question':
+                draw_cell('question', x, y)
+``
+`
+def draw():
+    # etc.
+
+            if grid[y][x]['flower'] |and game_over|:
+                draw_cell('flower', x, y)
+
+    # etc.
+`
+
+!
+
+### Hide numbers for covered cells
+
+If a cell is not uncovered, then its surrounding flower count is not shown.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+    global game_over
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered', 'flag', 'question'
+            })
+
+    possible_flower_positions = []
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+            possible_flower_positions.append({'x': x, 'y': y})
+
+    for flower_index in range(40):
+        position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+        grid[position['y']][position['x']]['flower'] = True
+
+    game_over = False
+
+reset()
+
+def get_surrounding_flower_count(x, y):
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    return surrounding_flower_count
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    global game_over
+
+    if not game_over:
+        if button == mouse.LEFT and grid[selected_y][selected_x]['state'] != 'flag':
+            if grid[selected_y][selected_x]['flower']:
+                grid[selected_y][selected_x]['state'] = 'uncovered'
+                game_over = True
+            else:
+                stack = [
+                    {
+                        'x': selected_x,
+                        'y': selected_y,
+                    }
+                ]
+
+                while len(stack) > 0:
+                    current = stack.pop()
+                    x = current['x']
+                    y = current['y']
+
+                    grid[y][x]['state'] = 'uncovered'
+
+                    if get_surrounding_flower_count(x, y) == 0:
+                        for dy in range(-1, 2):
+                            for dx in range(-1, 2):
+                                if (
+                                    not (dy == 0 and dx == 0)
+                                    and 0 <= (y + dy) < len(grid)
+                                    and 0 <= (x + dx) < len(grid[y + dy])
+                                    and grid[y + dy][x + dx]['state'] in ('covered', 'question')
+                                ):
+                                    stack.append({
+                                        'x': x + dx,
+                                        'y': y + dy,
+                                    })
+
+                complete = True
+
+                for y in range(grid_y_count):
+                    for x in range(grid_x_count):
+                        if grid[y][x]['state'] != 'uncovered' and not grid[y][x]['flower']:
+                            complete = False
+
+                if complete:
+                    game_over = True
+
+        elif button == mouse.RIGHT:
+            if grid[selected_y][selected_x]['state'] == 'covered':
+                grid[selected_y][selected_x]['state'] = 'flag'
+            elif grid[selected_y][selected_x]['state'] == 'flag':
+                grid[selected_y][selected_x]['state'] = 'question'
+            elif grid[selected_y][selected_x]['state'] == 'question':
+                grid[selected_y][selected_x]['state'] = 'covered'
+
+    else:
+        reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y and not game_over:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        if grid[y][x]['state'] == 'flag':
+                            draw_cell('covered', x, y)
+                        else:
+                            draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower'] and game_over:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0 |and grid[y][x]['state'] == 'uncovered'|:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            if grid[y][x]['state'] == 'flag':
+                draw_cell('flag', x, y)
+            elif grid[y][x]['state'] == 'question':
+                draw_cell('question', x, y)
+``
+`
+def draw():
+    # etc.
+
+            if grid[y][x]['flower'] and game_over:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0 |and grid[y][x]['state'] == 'uncovered'|:
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+    # etc.
+`
+
+!
+
+### Preventing clicking on flower on the first click
+
+So that the first click doesn't uncover a flower, the code for placing flowers is moved so that it runs when the left mouse button is clicked, and the cell under the mouse cursor is not added to the possible flower positions.
+
+A variable is created to store whether a click is the first click of the game.
+
+``
+import pygame
+import math
+import random
+
+cell_size = 18
+
+grid_x_count = 19
+grid_y_count = 14
+
+def reset():
+    global grid
+    global game_over
+    |global first_click|
+
+    grid = []
+
+    for y in range(grid_y_count):
+        grid.append([])
+        for x in range(grid_x_count):
+            grid[y].append({
+                'flower': False,
+                'state': 'covered', # 'covered', 'uncovered', 'flag', 'question'
+            })
+
+    game_over = False
+    |first_click = True|
+
+reset()
+
+def get_surrounding_flower_count(x, y):
+    surrounding_flower_count = 0
+
+    for dy in range(-1, 2):
+        for dx in range(-1, 2):
+            if (
+                not (dy == 0 and dx == 0)
+                and 0 <= (y + dy) < len(grid)
+                and 0 <= (x + dx) < len(grid[y + dy])
+                and grid[y + dy][x + dx]['flower']
+            ):
+                surrounding_flower_count += 1
+
+    return surrounding_flower_count
+
+def update():
+    global selected_x
+    global selected_y
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    selected_x = math.floor(mouse_x / cell_size)
+    selected_y = math.floor(mouse_y / cell_size)
+
+    if selected_x > grid_x_count - 1:
+        selected_x = grid_x_count - 1
+    if selected_y > grid_y_count - 1:
+        selected_y = grid_y_count - 1
+
+def on_key_down(key):
+    reset()
+
+def on_mouse_up(button):
+    global game_over
+    |global first_click|
+
+    if not game_over:
+        if button == mouse.LEFT and grid[selected_y][selected_x]['state'] != 'flag':
+            |if first_click:|
+                |first_click = False|
+
+                possible_flower_positions = []
+
+                for y in range(grid_y_count):
+                    for x in range(grid_x_count):
+                        |if not (x == selected_x and y == selected_y):|
+                            possible_flower_positions.append({'x': x, 'y': y})
+
+                for flower_index in range(40):
+                    position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+                    grid[position['y']][position['x']]['flower'] = True
+
+            if grid[selected_y][selected_x]['flower']:
+                grid[selected_y][selected_x]['state'] = 'uncovered'
+                game_over = True
+            else:
+                stack = [
+                    {
+                        'x': selected_x,
+                        'y': selected_y,
+                    }
+                ]
+
+                while len(stack) > 0:
+                    current = stack.pop()
+                    x = current['x']
+                    y = current['y']
+
+                    grid[y][x]['state'] = 'uncovered'
+
+                    if get_surrounding_flower_count(x, y) == 0:
+                        for dy in range(-1, 2):
+                            for dx in range(-1, 2):
+                                if (
+                                    not (dy == 0 and dx == 0)
+                                    and 0 <= (y + dy) < len(grid)
+                                    and 0 <= (x + dx) < len(grid[y + dy])
+                                    and grid[y + dy][x + dx]['state'] in ('covered', 'question')
+                                ):
+                                    stack.append({
+                                        'x': x + dx,
+                                        'y': y + dy,
+                                    })
+
+                complete = True
+
+                for y in range(grid_y_count):
+                    for x in range(grid_x_count):
+                        if grid[y][x]['state'] != 'uncovered' and not grid[y][x]['flower']:
+                            complete = False
+
+                if complete:
+                    game_over = True
+
+        elif button == mouse.RIGHT:
+            if grid[selected_y][selected_x]['state'] == 'covered':
+                grid[selected_y][selected_x]['state'] = 'flag'
+            elif grid[selected_y][selected_x]['state'] == 'flag':
+                grid[selected_y][selected_x]['state'] = 'question'
+            elif grid[selected_y][selected_x]['state'] == 'question':
+                grid[selected_y][selected_x]['state'] = 'covered'
+
+    else:
+        reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y in range(grid_y_count):
+        for x in range(grid_x_count):
+
+            def draw_cell(image, x, y):
+                screen.blit(image, (x * cell_size, y * cell_size))
+
+            if grid[y][x]['state'] == 'uncovered':
+                draw_cell('uncovered', x, y)
+            else:
+                if x == selected_x and y == selected_y and not game_over:
+                    if pygame.mouse.get_pressed()[0] == 1:
+                        if grid[y][x]['state'] == 'flag':
+                            draw_cell('covered', x, y)
+                        else:
+                            draw_cell('uncovered', x, y)
+                    else:
+                        draw_cell('covered_highlighted', x, y)
+                else:
+                    draw_cell('covered', x, y)
+
+            surrounding_flower_count = 0
+
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if (
+                        not (dy == 0 and dx == 0)
+                        and 0 <= (y + dy) < len(grid)
+                        and 0 <= (x + dx) < len(grid[y + dy])
+                        and grid[y + dy][x + dx]['flower']
+                    ):
+                        surrounding_flower_count += 1
+
+            if grid[y][x]['flower'] and game_over:
+                draw_cell('flower', x, y)
+            elif get_surrounding_flower_count(x, y) > 0 and grid[y][x]['state'] == 'uncovered':
+                draw_cell(str(get_surrounding_flower_count(x, y)), x, y)
+
+            if grid[y][x]['state'] == 'flag':
+                draw_cell('flag', x, y)
+            elif grid[y][x]['state'] == 'question':
+                draw_cell('question', x, y)
+``
+`
+def reset():
+    |global first_click|
+    # etc.
+
+    first_click = True
+
+def on_mouse_up(button):
+    global game_over
+    |global first_click|
+
+    if not game_over:
+        if button == mouse.LEFT and grid[selected_y][selected_x]['state'] != 'flag':
+            |if first_click:|
+                |first_click = False|
+
+                possible_flower_positions = []
+
+                for y in range(grid_y_count):
+                    for x in range(grid_x_count):
+                        |if not (x == selected_x and y == selected_y):|
+                            possible_flower_positions.append({'x': x, 'y': y})
+
+                for flower_index in range(40):
+                    position = possible_flower_positions.pop(random.randrange(len(possible_flower_positions)))
+                    grid[position['y']][position['x']]['flower'] = True
+
+            if grid[selected_y][selected_x]['flower']:
+                grid[selected_y][selected_x]['state'] = 'uncovered'
+                game_over = True
+            else:
+
+    # etc.
+`

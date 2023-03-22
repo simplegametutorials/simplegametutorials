@@ -1,0 +1,1 @@
+lovec ../../ images sokoban pygamezero

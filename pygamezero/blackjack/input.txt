@@ -1,0 +1,4315 @@
+<a href="blackjack.zip" class="download">Download blackjack.zip</a>
+
+!
+
+## Rules
+
+The dealer and player are dealt two cards each. The dealer's first card is hidden from the player.
+
+The player can hit (i.e. take another card) or stand (i.e. stop taking cards).
+
+If the total value of the player's hand goes over 21, then they have gone bust.
+
+Face cards (king, queen and jack) have a value of 10, and aces have a value of 11 unless this would make the total value of the hand go above 21, in which case they have a value of 1.
+
+After the player has stood or gone bust, the dealer takes cards until the total of their hand is 17 or over.
+
+The round is then over, and the hand with the highest total (if the total is 21 or under) wins the round.
+
+### Controls
+& *Left click* & Click on hit or stand button
+
+## Overview
+
+Each card is represented by a dictionary containing a string representing its suit, and a number representing its rank. Jacks, queens and kings are represented by the numbers 11, 12 and 13.
+
+The deck is represented by a list which initially contains one of every card.
+
+!
+
+The player's and dealer's hands are represented by lists, and cards are removed from the deck at random positions and appended to their hands when they take cards.
+
+## Coding
+
+### The deck of cards
+
+Each card is represented by a dictionary containing a string representing its suit, and a number representing its rank. Jacks, queens and kings are represented by the numbers 11, 12 and 13.
+
+A list for the deck is created containing one of every card.
+
+``
+|deck = []|
+|for suit in ('club', 'diamond', 'heart', 'spade'):|
+|    for rank in range(1, 14):|
+|        deck.append({'suit': suit, 'rank': rank})|
+|        # Temporary|
+|        print('suit: ' + suit + ', rank: ' + str(rank))|
+
+|# Temporary|
+|print('Total number of cards in deck: ' + str(len(deck)))|
+``
+`
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+        # Temporary
+        print('suit: ' + suit + ', rank: ' + str(rank))
+
+# Temporary
+print('Total number of cards in deck: ' + str(len(deck)))
+`
+
+~
+suit: club, rank: 1
+suit: club, rank: 2
+suit: club, rank: 3
+suit: club, rank: 4
+suit: club, rank: 5
+suit: club, rank: 6
+suit: club, rank: 7
+suit: club, rank: 8
+suit: club, rank: 9
+suit: club, rank: 10
+suit: club, rank: 11
+suit: club, rank: 12
+suit: club, rank: 13
+suit: diamond, rank: 1
+suit: diamond, rank: 2
+suit: diamond, rank: 3
+suit: diamond, rank: 4
+suit: diamond, rank: 5
+suit: diamond, rank: 6
+suit: diamond, rank: 7
+suit: diamond, rank: 8
+suit: diamond, rank: 9
+suit: diamond, rank: 10
+suit: diamond, rank: 11
+suit: diamond, rank: 12
+suit: diamond, rank: 13
+suit: heart, rank: 1
+suit: heart, rank: 2
+suit: heart, rank: 3
+suit: heart, rank: 4
+suit: heart, rank: 5
+suit: heart, rank: 6
+suit: heart, rank: 7
+suit: heart, rank: 8
+suit: heart, rank: 9
+suit: heart, rank: 10
+suit: heart, rank: 11
+suit: heart, rank: 12
+suit: heart, rank: 13
+suit: spade, rank: 1
+suit: spade, rank: 2
+suit: spade, rank: 3
+suit: spade, rank: 4
+suit: spade, rank: 5
+suit: spade, rank: 6
+suit: spade, rank: 7
+suit: spade, rank: 8
+suit: spade, rank: 9
+suit: spade, rank: 10
+suit: spade, rank: 11
+suit: spade, rank: 12
+suit: spade, rank: 13
+Total number of cards in deck: 52
+~
+
+### Dealing the player's hand
+
+A list for the player's hand is created.
+
+A card is removed from the deck list at a random index between 1 and the number of cards in the deck. This card is appended to the player's hand.
+
+This happens again for the player's second card.
+
+The *random* module is imported so that `random.randrage` can be used.
+
+``
+|import random|
+
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+
+|player_hand = []|
+|player_hand.append(deck.pop(random.randrange(len(deck))))|
+|player_hand.append(deck.pop(random.randrange(len(deck))))|
+
+|# Temporary|
+|print('Player hand:')|
+|for card in player_hand:|
+|    print('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))|
+
+# Temporary
+print('Total number of cards in deck: ' + str(len(deck)))
+``
+`
+import random
+
+# etc.
+
+player_hand = []
+player_hand.append(deck.pop(random.randrange(len(deck))))
+player_hand.append(deck.pop(random.randrange(len(deck))))
+
+# Temporary
+print('Player hand:')
+for card in player_hand:
+    print('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+# Temporary
+print('Total number of cards in deck: ' + str(len(deck)))
+`
+
+~
+Player hand:
+suit: heart, rank: 1
+suit: spade, rank: 12
+Total number of cards in deck: 50
+~
+
+### Displaying the state of the game
+
+For now, information about the state of the game will be displayed as text.
+
+A list is created for the output strings, and is concatenated and drawn to the screen.
+
+``
+import random
+
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+
+player_hand = []
+player_hand.append(deck.pop(random.randrange(len(deck))))
+player_hand.append(deck.pop(random.randrange(len(deck))))
+
+|def draw():|
+|    screen.fill((0, 0, 0))|
+|    |
+|    output = []|
+|    |
+|    output.append('Player hand:')|
+|    for card in player_hand:|
+|        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))|
+|    |
+|    screen.draw.text('\n'.join(output), (15, 15))|
+``
+`
+def draw():
+    screen.fill((0, 0, 0))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    screen.draw.text('\n'.join(output), (15, 15))
+`
+
+!
+
+### Dealing the dealer's hand
+
+A list is created for the dealer's hand and two random cards from the deck are appended to it.
+
+``
+import random
+
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+
+player_hand = []
+player_hand.append(deck.pop(random.randrange(len(deck))))
+player_hand.append(deck.pop(random.randrange(len(deck))))
+
+|dealer_hand = []|
+|dealer_hand.append(deck.pop(random.randrange(len(deck))))|
+|dealer_hand.append(deck.pop(random.randrange(len(deck))))|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    |output.append('')|
+
+    |output.append('Dealer hand:')|
+    |for card in dealer_hand:|
+    |    output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))|
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+# etc.
+
+player_hand = []
+player_hand.append(deck.pop(random.randrange(len(deck))))
+player_hand.append(deck.pop(random.randrange(len(deck))))
+
+|dealer_hand = []|
+|dealer_hand.append(deck.pop(random.randrange(len(deck))))|
+|dealer_hand.append(deck.pop(random.randrange(len(deck))))|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    |output.append('')|
+
+    |output.append('Dealer hand:')|
+    |for card in dealer_hand:|
+    |    output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))|
+
+    screen.draw.text('\n'.join(output), (15, 15))
+`
+
+!
+
+### Simplifying code
+
+The only difference between the code for appending a card to the player's hand and appending a card to the dealer's hand is the hand to append the card to, so a function is made with the hand as a parameter.
+
+``
+import random
+
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+
+|def take_card(hand):|
+    |hand.append|(deck.pop(random.randrange(len(deck))))
+
+player_hand = []
+|take_card(player_hand)|
+|take_card(player_hand)|
+
+dealer_hand = []
+|take_card(dealer_hand)|
+|take_card(dealer_hand)|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card in dealer_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+|def take_card(hand):|
+    |hand.append|(deck.pop(random.randrange(len(deck))))
+
+player_hand = []
+|take_card(player_hand)|
+|take_card(player_hand)|
+
+dealer_hand = []
+|take_card(dealer_hand)|
+|take_card(dealer_hand)|
+`
+
+### Hitting
+
+For now, the keyboard is used for input instead of on-screen buttons.
+
+When the *h* key is pressed, the player takes a card from the deck.
+
+``
+import random
+
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+player_hand = []
+take_card(player_hand)
+take_card(player_hand)
+
+dealer_hand = []
+take_card(dealer_hand)
+take_card(dealer_hand)
+
+|def on_key_down(key):|
+|    if key == keys.H:|
+|        take_card(player_hand)|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card in dealer_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+def on_key_down(key):
+    if key == keys.H:
+        take_card(player_hand)
+`
+
+!
+
+### Getting the total value of a hand
+
+For each hand, the rank of each card is added together to get the total value of the hand.
+
+Currently this does not account for face cards having a value of 10 or for the value of aces sometimes being 11.
+
+``
+import random
+
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+player_hand = []
+take_card(player_hand)
+take_card(player_hand)
+
+dealer_hand = []
+take_card(dealer_hand)
+take_card(dealer_hand)
+
+def on_key_down(key):
+    if key == keys.H:
+        take_card(player_hand)
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    |def get_total(hand):|
+    |    total = 0|
+
+    |    for card in hand:|
+    |        total += card['rank']|
+
+    |    return total|
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    |output.append('Total: ' + str(get_total(player_hand)))|
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card in dealer_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    |output.append('Total: ' + str(get_total(dealer_hand)))|
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+def draw():
+    screen.fill((0, 0, 0))
+
+    def get_total(hand):
+        total = 0
+
+        for card in hand:
+            total += card['rank']
+
+        return total
+
+    # etc.
+
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    # etc.
+
+    output.append('Total: ' + str(get_total(dealer_hand)))
+
+    # etc.
+`
+
+!
+
+### Total accounting for face cards
+
+If a card's rank is higher than 10 (i.e. 11, 12 or 13), then it is a face card and its value is 10.
+
+``
+import random
+
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+player_hand = []
+take_card(player_hand)
+take_card(player_hand)
+
+dealer_hand = []
+take_card(dealer_hand)
+take_card(dealer_hand)
+
+def on_key_down(key):
+    if key == keys.H:
+        take_card(player_hand)
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def get_total(hand):
+        total = 0
+
+        for card in hand:
+            |if card['rank'] > 10:|
+            |    total += 10|
+            |else:|
+                total += card['rank']
+
+        return total
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card in dealer_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(dealer_hand)))
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+def draw():
+    # etc.
+
+    def get_total(hand):
+        total = 0
+
+        for card in hand:
+            |if card['rank'] > 10:|
+            |    total += 10|
+            |else:|
+                total += card['rank']
+
+        return total
+
+    # etc.
+`
+
+!
+
+### Total accounting for ace
+
+Aces have a value of 11 instead of 1 unless the value of the hand would go over 21.
+
+First, the values of all of the cards in the hand are added together, counting aces as 1 instead of 11.
+
+Then, if the hand has an ace and the total value of the hand is 11 or less, 10 is added to the total (10 is added instead of 11 because 1 has already been added to it). If the total value of the hand was 12 (or more), then an ace counting as 11 would make the value of the hand 22 (or more).
+
+``
+import random
+
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+player_hand = []
+take_card(player_hand)
+take_card(player_hand)
+
+dealer_hand = []
+take_card(dealer_hand)
+take_card(dealer_hand)
+
+def on_key_down(key):
+    if key == keys.H:
+        take_card(player_hand)
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def get_total(hand):
+        total = 0
+        |has_ace = False|
+
+        for card in hand:
+            if card['rank'] > 10:
+                total += 10
+            else:
+                total += card['rank']
+
+            |if card['rank'] == 1:|
+            |    has_ace = True|
+
+        |if has_ace and total <= 11:|
+        |    total += 10|
+
+        return total
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card in dealer_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(dealer_hand)))
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+def draw():
+    # etc.
+
+    def get_total(hand):
+        total = 0
+        |has_ace = False|
+
+        for card in hand:
+            if card['rank'] > 10:
+                total += 10
+            else:
+                total += card['rank']
+
+            |if card['rank'] == 1:|
+            |    has_ace = True|
+
+        |if has_ace and total <= 11:|
+        |    total += 10|
+
+        return total
+
+    # etc.
+`
+
+!
+
+### Standing
+
+When the *s* key is pressed, the player stands and the round is over.
+
+The player can hit only when the round is not over.
+
+``
+import random
+
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+player_hand = []
+take_card(player_hand)
+take_card(player_hand)
+
+dealer_hand = []
+take_card(dealer_hand)
+take_card(dealer_hand)
+
+|round_over = False|
+
+def on_key_down(key):
+    |global round_over|
+
+    if key == keys.H |and not round_over|:
+        take_card(player_hand)
+    |elif key == keys.S:|
+    |    round_over = True|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def get_total(hand):
+        total = 0
+        has_ace = False
+
+        for card in hand:
+            if card['rank'] > 10:
+                total += 10
+            else:
+                total += card['rank']
+
+            if card['rank'] == 1:
+                has_ace = True
+
+        if has_ace and total <= 11:
+            total += 10
+
+        return total
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card in dealer_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(dealer_hand)))
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+# etc.
+
+round_over = False
+
+def on_key_down(key):
+    |global round_over|
+
+    if key == keys.H |and not round_over|:
+        take_card(player_hand)
+    |elif key == keys.S:|
+    |    round_over = True|
+`
+
+### Displaying the winner
+
+When the round is over, the total of the player's hand is compared to the total of the dealer's hand and the winner is displayed.
+
+Currently this does not account for busts (i.e. hands with a value of over 21).
+
+``
+import random
+
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+player_hand = []
+take_card(player_hand)
+take_card(player_hand)
+
+dealer_hand = []
+take_card(dealer_hand)
+take_card(dealer_hand)
+
+round_over = False
+
+def on_key_down(key):
+    global round_over
+
+    if key == keys.H and not round_over:
+        take_card(player_hand)
+    elif key == keys.S:
+        round_over = True
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def get_total(hand):
+        total = 0
+        has_ace = False
+
+        for card in hand:
+            if card['rank'] > 10:
+                total += 10
+            else:
+                total += card['rank']
+
+            if card['rank'] == 1:
+                has_ace = True
+
+        if has_ace and total <= 11:
+            total += 10
+
+        return total
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card in dealer_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(dealer_hand)))
+
+    |if round_over:|
+    |    output.append('')|
+
+    |    if get_total(player_hand) > get_total(dealer_hand):|
+    |        output.append('Player wins')|
+    |    elif get_total(dealer_hand) > get_total(player_hand):|
+    |        output.append('Dealer wins')|
+    |    else:|
+    |        output.append('Draw')|
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+def draw():
+    # etc.
+
+    if round_over:
+        output.append('')
+
+        if get_total(player_hand) > get_total(dealer_hand):
+            output.append('Player wins')
+        elif get_total(dealer_hand) > get_total(player_hand):
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    # etc.
+`
+
+!
+
+### Winner accounting for bust
+
+The player or dealer wins if they haven't gone bust, and...
+- their opponent has gone bust, or...
+- their hand has a greater total than that of their opponent.
+
+``
+import random
+
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+player_hand = []
+take_card(player_hand)
+take_card(player_hand)
+
+dealer_hand = []
+take_card(dealer_hand)
+take_card(dealer_hand)
+
+round_over = False
+
+def on_key_down(key):
+    global round_over
+
+    if key == keys.H and not round_over:
+        take_card(player_hand)
+    elif key == keys.S:
+        round_over = True
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def get_total(hand):
+        total = 0
+        has_ace = False
+
+        for card in hand:
+            if card['rank'] > 10:
+                total += 10
+            else:
+                total += card['rank']
+
+            if card['rank'] == 1:
+                has_ace = True
+
+        if has_ace and total <= 11:
+            total += 10
+
+        return total
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card in dealer_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(dealer_hand)))
+
+    if round_over:
+        output.append('')
+
+        if |(|
+            |get_total(player_hand) <= 21|
+            |and (|
+            |    get_total(dealer_hand) > 21|
+            |    or| get_total(player_hand) > get_total(dealer_hand)
+            |)|
+        |)|:
+            output.append('Player wins')
+        elif |(|
+            |get_total(dealer_hand) <= 21|
+            |and (|
+            |    get_total(player_hand) > 21|
+            |    or| get_total(dealer_hand) > get_total(player_hand)
+            |)|
+        |)|:
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+def draw():
+    # etc.
+
+    if round_over:
+        output.append('')
+
+        if |(|
+        |    get_total(player_hand) <= 21|
+        |    and (|
+        |        get_total(dealer_hand) > 21|
+        |        or| get_total(player_hand) > get_total(dealer_hand)
+        |    )|
+        |)|:
+            output.append('Player wins')
+        elif |(|
+        |    get_total(dealer_hand) <= 21|
+        |    and (|
+        |        get_total(player_hand) > 21|
+        |        or| get_total(dealer_hand) > get_total(player_hand)
+        |    )|
+        |)|:
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+        # etc.
+`
+
+!
+
+### Simplifying code
+
+The only differences in the code determining if a hand has won is the hand in question and the opponent's hand, so a function is made.
+
+``
+import random
+
+deck = []
+for suit in ('club', 'diamond', 'heart', 'spade'):
+    for rank in range(1, 14):
+        deck.append({'suit': suit, 'rank': rank})
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+player_hand = []
+take_card(player_hand)
+take_card(player_hand)
+
+dealer_hand = []
+take_card(dealer_hand)
+take_card(dealer_hand)
+
+round_over = False
+
+def on_key_down(key):
+    global round_over
+
+    if key == keys.H and not round_over:
+        take_card(player_hand)
+    elif key == keys.S:
+        round_over = True
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def get_total(hand):
+        total = 0
+        has_ace = False
+
+        for card in hand:
+            if card['rank'] > 10:
+                total += 10
+            else:
+                total += card['rank']
+
+            if card['rank'] == 1:
+                has_ace = True
+
+        if has_ace and total <= 11:
+            total += 10
+
+        return total
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card in dealer_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(dealer_hand)))
+
+    if round_over:
+        output.append('')
+
+        |def has_hand_won(this_hand, other_hand):|
+            |return| (
+                get_total(|this_hand|) <= 21
+                and (
+                    get_total(|other_hand|) > 21
+                    or get_total(|this_hand|) > get_total(|other_hand|)
+                )
+            )
+
+        if |has_hand_won(player_hand, dealer_hand)|:
+            output.append('Player wins')
+        elif |has_hand_won(dealer_hand, player_hand)|:
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+def draw():
+    # etc.
+
+    if round_over:
+        output.append('')
+
+        |def has_hand_won(this_hand, other_hand):|
+            |return| (
+                get_total(|this_hand|) <= 21
+                and (
+                    get_total(|other_hand|) > 21
+                    or get_total(|this_hand|) > get_total(|other_hand|)
+                )
+            )
+
+        if |has_hand_won(player_hand, dealer_hand)|:
+            output.append('Player wins')
+        elif |has_hand_won(dealer_hand, player_hand)|:
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+`
+
+### Resetting the game
+
+A function is made which sets the initial state of the game.
+
+This function is called before the game begins and when a key is pressed after the round is over.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+|def reset():|
+    |global deck|
+    |global player_hand|
+    |global dealer_hand|
+    |global round_over|
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+|reset()|
+
+def on_key_down(key):
+    global round_over
+
+    |if not round_over:|
+        |if key == keys.H:|
+            take_card(player_hand)
+        elif key == keys.S:
+            round_over = True
+    |else:|
+    |    reset()|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def get_total(hand):
+        total = 0
+        has_ace = False
+
+        for card in hand:
+            if card['rank'] > 10:
+                total += 10
+            else:
+                total += card['rank']
+
+            if card['rank'] == 1:
+                has_ace = True
+
+        if has_ace and total <= 11:
+            total += 10
+
+        return total
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card in dealer_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(dealer_hand)))
+
+    if round_over:
+        output.append('')
+
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        if has_hand_won(player_hand, dealer_hand):
+            output.append('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+|def reset():|
+    |global deck|
+    |global player_hand|
+    |global dealer_hand|
+    |global round_over|
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+|reset()|
+
+def on_key_down(key):
+    global round_over
+
+    |if not round_over:|
+        |if key == keys.H:|
+            take_card(player_hand)
+        elif key == keys.S:
+            round_over = True
+    |else:|
+    |    reset()|
+`
+
+### End round on bust or 21
+
+If the player has gone bust or the value of their hand is already 21, the round is automatically over.
+
+Since this requires getting the total value of a hand, `get_total` is moved to be global.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+|# Moved|
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            |if get_total(player_hand) >= 21:|
+            |    round_over = True|
+        elif key == keys.S:
+            round_over = True
+    else:
+        reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card in dealer_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(dealer_hand)))
+
+    if round_over:
+        output.append('')
+
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        if has_hand_won(player_hand, dealer_hand):
+            output.append('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+# Moved
+def get_total(hand):
+    # etc.
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            |if get_total(player_hand) >= 21:|
+            |    round_over = True|
+        elif key == keys.S:
+            round_over = True
+    else:
+        reset()
+`
+
+### Dealer hitting
+
+If the player has stood, gone bust or has 21, the dealer takes cards while the value of their hand is less than 17.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        |if round_over:|
+        |    while get_total(dealer_hand) < 17:|
+        |        take_card(dealer_hand)|
+    else:
+        reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card in dealer_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(dealer_hand)))
+
+    if round_over:
+        output.append('')
+
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        if has_hand_won(player_hand, dealer_hand):
+            output.append('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        |if round_over:|
+        |    while get_total(dealer_hand) < 17:|
+        |        take_card(dealer_hand)|
+    else:
+        reset()
+`
+
+!
+
+### Hiding the dealer's first card
+
+Until the round is over, the dealer's first card (i.e. the first item of the dealer's hand list) is hidden.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for |card_index,| card in |enumerate(|dealer_hand|)|:
+        |if not round_over and card_index == 0:|
+        |    output.append('(Card hidden)')|
+        |else:|
+            output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(dealer_hand)))
+
+    if round_over:
+        output.append('')
+
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        if has_hand_won(player_hand, dealer_hand):
+            output.append('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+def draw():
+    # etc.
+
+    output.append('Dealer hand:')
+    for |card_index,| card in |enumerate(|dealer_hand|)|:
+        |if not round_over and card_index == 0:|
+        |    output.append('(Card hidden)')|
+        |else:|
+            output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    # etc.
+`
+
+!
+
+### Hiding the dealer's total
+
+Until the round is over, the total of the dealer's hand is hidden.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card_index, card in enumerate(dealer_hand):
+        if not round_over and card_index == 0:
+            output.append('(Card hidden)')
+        else:
+            output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    |if round_over:|
+        output.append('Total: ' + str(get_total(dealer_hand)))
+    |else:|
+    |    output.append('Total: ?')|
+
+    if round_over:
+        output.append('')
+
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        if has_hand_won(player_hand, dealer_hand):
+            output.append('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    screen.draw.text('\n'.join(output), (15, 15))
+``
+`
+def draw():
+    # etc.
+
+    |if round_over:|
+        output.append('Total: ' + str(get_total(dealer_hand)))
+    |else:|
+    |    output.append('Total: ?')|
+
+    # etc.
+`
+
+!
+
+### Drawing the player's hand
+
+The code which displays the text is commented out.
+
+The background is changed to be white.
+
+The cards in the player's hand are looped through and the corresponding card image is drawn for each one.
+
+You can access the image files used in this tutorial by downloading and unzipping the .zip file linked to at the top of this page.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((|255|, |255|, |255|))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card_index, card in enumerate(dealer_hand):
+        if not round_over and card_index == 0:
+            output.append('(Card hidden)')
+        else:
+            output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    if round_over:
+        output.append('Total: ' + str(get_total(dealer_hand)))
+    else:
+        output.append('Total: ?')
+
+    if round_over:
+        output.append('')
+
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        if has_hand_won(player_hand, dealer_hand):
+            output.append('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    |# Removed: screen.draw.text('\n'.join(output), (15, 15))|
+
+    |for card_index, card in enumerate(player_hand):|
+    |    screen.blit(card['suit'] + '_' + str(card['rank']),|
+    |        (card_index * 60, 0))|
+``
+`
+def draw():
+    screen.fill((|255|, |255|, |255|))
+
+    # etc.
+
+    # Removed: screen.draw.text('\n'.join(output), (15, 15))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * 60, 0))
+`
+
+!
+
+### Drawing the dealer's hand
+
+The dealer's hand is drawn.
+
+The dealer's hand and the player's hand use the same space between the cards, and the same offset on the X axis, so variables are made for them.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card_index, card in enumerate(dealer_hand):
+        if not round_over and card_index == 0:
+            output.append('(Card hidden)')
+        else:
+            output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    if round_over:
+        output.append('Total: ' + str(get_total(dealer_hand)))
+    else:
+        output.append('Total: ?')
+
+    if round_over:
+        output.append('')
+
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        if has_hand_won(player_hand, dealer_hand):
+            output.append('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    |card_spacing = 60|
+    |margin_x = 10|
+
+    |for card_index, card in enumerate(dealer_hand):|
+    |    screen.blit(card['suit'] + '_' + str(card['rank']),|
+    |        (card_index * card_spacing + margin_x, 10))|
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * |card_spacing + margin_x|, |140|))
+``
+`
+def draw():
+    # etc.
+
+    |card_spacing = 60|
+    |margin_x = 10|
+
+    |for card_index, card in enumerate(dealer_hand):|
+    |    screen.blit(card['suit'] + '_' + str(card['rank']),|
+    |        (card_index * card_spacing + margin_x, 10))|
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * |card_spacing + margin_x|, |140|))
+`
+
+!
+
+### Hiding the dealer's first card
+
+Until the round is over, the dealer's first card is hidden. Instead of drawing a blank card, the face down card image is used.
+
+The image name of the dealer's card is made into a variable, and is set to the face down card if the round is not over and it's the first card in the hand.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card_index, card in enumerate(dealer_hand):
+        if not round_over and card_index == 0:
+            output.append('(Card hidden)')
+        else:
+            output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    if round_over:
+        output.append('Total: ' + str(get_total(dealer_hand)))
+    else:
+        output.append('Total: ?')
+
+    if round_over:
+        output.append('')
+
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        if has_hand_won(player_hand, dealer_hand):
+            output.append('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        |image =| card['suit'] + '_' + str(card['rank'])
+        |if not round_over and card_index == 0:|
+        |    image = 'card_face_down'|
+        screen.blit(|image|, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+``
+`
+def draw():
+    # etc.
+
+    for card_index, card in enumerate(dealer_hand):
+        |image =| card['suit'] + '_' + str(card['rank'])
+        |if not round_over and card_index == 0:|
+        |    image = 'card_face_down'|
+        screen.blit(|image|, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+`
+
+!
+
+### Displaying totals
+
+The total of each hand are drawn.
+
+The dealer's total is drawn only when the round is over.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card_index, card in enumerate(dealer_hand):
+        if not round_over and card_index == 0:
+            output.append('(Card hidden)')
+        else:
+            output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    if round_over:
+        output.append('Total: ' + str(get_total(dealer_hand)))
+    else:
+        output.append('Total: ?')
+
+    if round_over:
+        output.append('')
+
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        if has_hand_won(player_hand, dealer_hand):
+            output.append('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        image = card['suit'] + '_' + str(card['rank'])
+        if not round_over and card_index == 0:
+            image = 'card_face_down'
+        screen.blit(image, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+
+    |if round_over:|
+    |    screen.draw.text('Total: ' + str(get_total(dealer_hand)),|
+    |        (margin_x, 10), color=(0, 0, 0))|
+    |else:|
+    |    screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))|
+
+    |screen.draw.text('Total: ' + str(get_total(player_hand)),|
+    |    (margin_x, 120), color=(0, 0, 0))|
+``
+`
+def draw():
+    # etc.
+
+    if round_over:
+        screen.draw.text('Total: ' + str(get_total(dealer_hand)),
+            (margin_x, 10), color=(0, 0, 0))
+    else:
+        screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))
+
+    screen.draw.text('Total: ' + str(get_total(player_hand)),
+        (margin_x, 120), color=(0, 0, 0))
+`
+
+!
+
+### Displaying winner
+
+When the round is over, the result of the game is drawn.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    output = []
+
+    output.append('Player hand:')
+    for card in player_hand:
+        output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+    output.append('Total: ' + str(get_total(player_hand)))
+
+    output.append('')
+
+    output.append('Dealer hand:')
+    for card_index, card in enumerate(dealer_hand):
+        if not round_over and card_index == 0:
+            output.append('(Card hidden)')
+        else:
+            output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))
+
+    if round_over:
+        output.append('Total: ' + str(get_total(dealer_hand)))
+    else:
+        output.append('Total: ?')
+
+    if round_over:
+        output.append('')
+
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        if has_hand_won(player_hand, dealer_hand):
+            output.append('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            output.append('Dealer wins')
+        else:
+            output.append('Draw')
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        image = card['suit'] + '_' + str(card['rank'])
+        if not round_over and card_index == 0:
+            image = 'card_face_down'
+        screen.blit(image, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+
+    if round_over:
+        screen.draw.text('Total: ' + str(get_total(dealer_hand)),
+            (margin_x, 10), color=(0, 0, 0))
+    else:
+        screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))
+
+    screen.draw.text('Total: ' + str(get_total(player_hand)),
+        (margin_x, 120), color=(0, 0, 0))
+
+    if round_over:
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        |def draw_winner(message):|
+        |    screen.draw.text(message, (margin_x, 268), color=(0, 0, 0))|
+
+        |if has_hand_won(player_hand, dealer_hand):|
+        |    draw_winner('Player wins')|
+        |elif has_hand_won(dealer_hand, player_hand):|
+        |    draw_winner('Dealer wins')|
+        |else:|
+        |    draw_winner('Draw')|
+``
+`
+def draw():
+    # etc.
+
+    if round_over:
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        |def draw_winner(message):|
+        |    screen.draw.text(message, (margin_x, 268), color=(0, 0, 0))|
+
+        if has_hand_won(player_hand, dealer_hand):
+            |draw_winner('Player wins')|
+        elif has_hand_won(dealer_hand, player_hand):
+            |draw_winner('Dealer wins')|
+        else:
+            |draw_winner('Draw')|
+`
+
+!
+
+### Removing text output code
+
+The code relating to text output is removed.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    |# Removed:|
+    |# output = []|
+
+    |# output.append('Player hand:')|
+    |# for card in player_hand:|
+    |#     output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))|
+    |# output.append('Total: ' + str(get_total(player_hand)))|
+
+    |# output.append('')|
+
+    |# output.append('Dealer hand:')|
+    |# for card_index, card in enumerate(dealer_hand):|
+    |#     if not round_over and card_index == 0:|
+    |#         output.append('(Card hidden)')|
+    |#     else:|
+    |#         output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))|
+
+    |# if round_over:|
+    |#     output.append('Total: ' + str(get_total(dealer_hand)))|
+    |# else:|
+    |#     output.append('Total: ?')|
+
+    |# if round_over:|
+    |#     output.append('')|
+
+    |#     def has_hand_won(this_hand, other_hand):|
+    |#         return (|
+    |#             get_total(this_hand) <= 21|
+    |#             and (|
+    |#                 get_total(other_hand) > 21|
+    |#                 or get_total(this_hand) > get_total(other_hand)|
+    |#             )|
+    |#         )|
+
+    |#     if has_hand_won(player_hand, dealer_hand):|
+    |#         output.append('Player wins')|
+    |#     elif has_hand_won(dealer_hand, player_hand):|
+    |#         output.append('Dealer wins')|
+    |#     else:|
+    |#         output.append('Draw')|
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        image = card['suit'] + '_' + str(card['rank'])
+        if not round_over and card_index == 0:
+            image = 'card_face_down'
+        screen.blit(image, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+
+    if round_over:
+        screen.draw.text('Total: ' + str(get_total(dealer_hand)),
+            (margin_x, 10), color=(0, 0, 0))
+    else:
+        screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))
+
+    screen.draw.text('Total: ' + str(get_total(player_hand)),
+        (margin_x, 120), color=(0, 0, 0))
+
+    if round_over:
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        def draw_winner(message):
+            screen.draw.text(message, (margin_x, 268), color=(0, 0, 0))
+
+        if has_hand_won(player_hand, dealer_hand):
+            draw_winner('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            draw_winner('Dealer wins')
+        else:
+            draw_winner('Draw')
+``
+`
+def draw():
+    screen.fill((255, 255, 255))
+
+    |# Removed:|
+    |# output = []|
+
+    |# output.append('Player hand:')|
+    |# for card in player_hand:|
+    |#     output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))|
+    |# output.append('Total: ' + str(get_total(player_hand)))|
+
+    |# output.append('')|
+
+    |# output.append('Dealer hand:')|
+    |# for card_index, card in enumerate(dealer_hand):|
+    |#     if not round_over and card_index == 0:|
+    |#         output.append('(Card hidden)')|
+    |#     else:|
+    |#         output.append('suit: ' + card['suit'] + ', rank: ' + str(card['rank']))|
+
+    |# if round_over:|
+    |#     output.append('Total: ' + str(get_total(dealer_hand)))|
+    |# else:|
+    |#     output.append('Total: ?')|
+
+    |# if round_over:|
+    |#     output.append('')|
+
+    |#     def has_hand_won(this_hand, other_hand):|
+    |#         return (|
+    |#             get_total(this_hand) <= 21|
+    |#             and (|
+    |#                 get_total(other_hand) > 21|
+    |#                 or get_total(this_hand) > get_total(other_hand)|
+    |#             )|
+    |#         )|
+
+    |#     if has_hand_won(player_hand, dealer_hand):|
+    |#         output.append('Player wins')|
+    |#     elif has_hand_won(dealer_hand, player_hand):|
+    |#         output.append('Dealer wins')|
+    |#     else:|
+    |#         output.append('Draw')|
+
+    # etc.
+`
+
+### Drawing hit and stand buttons
+
+The hit and stand buttons are drawn as rectangles with text on top.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        image = card['suit'] + '_' + str(card['rank'])
+        if not round_over and card_index == 0:
+            image = 'card_face_down'
+        screen.blit(image, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+
+    if round_over:
+        screen.draw.text('Total: ' + str(get_total(dealer_hand)),
+            (margin_x, 10), color=(0, 0, 0))
+    else:
+        screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))
+
+    screen.draw.text('Total: ' + str(get_total(player_hand)),
+        (margin_x, 120), color=(0, 0, 0))
+
+    if round_over:
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        def draw_winner(message):
+            screen.draw.text(message, (margin_x, 268), color=(0, 0, 0))
+
+        if has_hand_won(player_hand, dealer_hand):
+            draw_winner('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            draw_winner('Dealer wins')
+        else:
+            draw_winner('Draw')
+
+    |screen.draw.filled_rect(Rect(10, 230, 53, 25), color=(255, 127, 57))|
+    |screen.draw.text('Hit!', (23, 236))|
+
+    |screen.draw.filled_rect(Rect(70, 230, 53, 25), color=(255, 127, 57))|
+    |screen.draw.text('Stand', (74, 236))|
+``
+`
+def draw():
+    # etc.
+
+    screen.draw.filled_rect(Rect(10, 230, 53, 25), color=(255, 127, 57))
+    screen.draw.text('Hit!', (23, 236))
+
+    screen.draw.filled_rect(Rect(70, 230, 53, 25), color=(255, 127, 57))
+    screen.draw.text('Stand', (74, 236))
+`
+
+!
+
+### Drawing play again button
+
+The "play again" button is drawn occupying the same position as the other buttons, since it will only be visible when the round is over.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        image = card['suit'] + '_' + str(card['rank'])
+        if not round_over and card_index == 0:
+            image = 'card_face_down'
+        screen.blit(image, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+
+    if round_over:
+        screen.draw.text('Total: ' + str(get_total(dealer_hand)),
+            (margin_x, 10), color=(0, 0, 0))
+    else:
+        screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))
+
+    screen.draw.text('Total: ' + str(get_total(player_hand)), (margin_x, 120), color=(0, 0, 0))
+
+    if round_over:
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        def draw_winner(message):
+            screen.draw.text(message, (margin_x, 268), color=(0, 0, 0))
+
+        if has_hand_won(player_hand, dealer_hand):
+            draw_winner('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            draw_winner('Dealer wins')
+        else:
+            draw_winner('Draw')
+
+|##    screen.draw.filled_rect(Rect(10, 230, 53, 25), color=(255, 127, 57))|
+|##    screen.draw.text('Hit!', (23, 236))|
+|##|
+|##    screen.draw.filled_rect(Rect(70, 230, 53, 25), color=(255, 127, 57))|
+|##    screen.draw.text('Stand', (74, 236))|
+
+    |screen.draw.filled_rect(Rect(10, 230, 113, 25), color=(255, 127, 57))|
+    |screen.draw.text('Play again', (27, 236))|
+``
+`
+def draw():
+    # etc.
+
+##    screen.draw.filled_rect(Rect(10, 230, 53, 25), color=(255, 127, 57))
+##    screen.draw.text('Hit!', (23, 236))
+##
+##    screen.draw.filled_rect(Rect(70, 230, 53, 25), color=(255, 127, 57))
+##    screen.draw.text('Stand', (74, 236))
+
+    screen.draw.filled_rect(Rect(10, 230, 113, 25), color=(255, 127, 57))
+    screen.draw.text('Play again', (27, 236))
+`
+
+!
+
+### Basing text position on button position
+
+The X and Y positions of the button text is based on the X and Y positions of the buttons plus an offset.
+
+Each button's X position is used twice, so they are made into variables.
+
+The same Y position is used by all buttons, so it is made into a variable.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        image = card['suit'] + '_' + str(card['rank'])
+        if not round_over and card_index == 0:
+            image = 'card_face_down'
+        screen.blit(image, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+
+    if round_over:
+        screen.draw.text('Total: ' + str(get_total(dealer_hand)),
+            (margin_x, 10), color=(0, 0, 0))
+    else:
+        screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))
+
+    screen.draw.text('Total: ' + str(get_total(player_hand)),
+        (margin_x, 120), color=(0, 0, 0))
+
+    if round_over:
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        def draw_winner(message):
+            screen.draw.text(message, (margin_x, 268), color=(0, 0, 0))
+
+        if has_hand_won(player_hand, dealer_hand):
+            draw_winner('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            draw_winner('Dealer wins')
+        else:
+            draw_winner('Draw')
+
+    |button_y = 230|
+
+    |button_hit_x = 10|
+    screen.draw.filled_rect(
+        Rect(|button_hit_x|, |button_y|, 53, 25),
+        color=(255, 127, 57)
+    )
+    screen.draw.text('Hit!', (|button_hit_x + 13|, |button_y + 6|))
+
+    |button_stand_x = 70|
+    screen.draw.filled_rect(
+        Rect(|button_stand_x|, |button_y|, 53, 25),
+        color=(255, 127, 57)
+    )
+    screen.draw.text('Stand', (|button_stand_x + 4|, |button_y + 6|))
+
+##    |button_play_again_x = 10|
+##    screen.draw.filled_rect(
+##        Rect(|button_play_again_x|, |button_y|, 113, 25),
+##        color=(255, 127, 57)
+##    )
+##    screen.draw.text('Play again', (|button_play_again_x + 17|, |button_y + 6|))
+``
+`
+def draw():
+    # etc.
+
+    |button_y = 230|
+
+    |button_hit_x = 10|
+    screen.draw.filled_rect(
+        Rect(|button_hit_x|, |button_y|, 53, 25),
+        color=(255, 127, 57)
+    )
+    screen.draw.text('Hit!', (|button_hit_x + 13|, |button_y + 6|))
+
+    |button_stand_x = 70|
+    screen.draw.filled_rect(
+        Rect(|button_stand_x|, |button_y|, 53, 25),
+        color=(255, 127, 57)
+    )
+    screen.draw.text('Stand', (|button_stand_x + 4|, |button_y + 6|))
+
+##    |button_play_again_x = 10|
+##    screen.draw.filled_rect(
+##        Rect(|button_play_again_x|, |button_y|, 113, 25),
+##        color=(255, 127, 57)
+##    )
+##    screen.draw.text('Play again', (|button_play_again_x + 17|, |button_y + 6|))
+`
+
+### Simplifying code
+
+The only difference between the code for drawing each button is the button's text, X position, width, and text offset on the X axis. A function is made with these as parameters.
+
+``
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        image = card['suit'] + '_' + str(card['rank'])
+        if not round_over and card_index == 0:
+            image = 'card_face_down'
+        screen.blit(image, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+
+    if round_over:
+        screen.draw.text('Total: ' + str(get_total(dealer_hand)),
+            (margin_x, 10), color=(0, 0, 0))
+    else:
+        screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))
+
+    screen.draw.text('Total: ' + str(get_total(player_hand)),
+        (margin_x, 120), color=(0, 0, 0))
+
+    if round_over:
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        def draw_winner(message):
+            screen.draw.text(message, (margin_x, 268), color=(0, 0, 0))
+
+        if has_hand_won(player_hand, dealer_hand):
+            draw_winner('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            draw_winner('Dealer wins')
+        else:
+            draw_winner('Draw')
+
+    |def draw_button(text, button_x, button_width, text_offset_x):|
+        button_y = 230
+        screen.draw.filled_rect(
+            Rect(|button_x|, button_y, |button_width|, 25),
+            color=(255, 127, 57)
+        )
+        screen.draw.text(|text|, (|button_x| + |text_offset_x|, button_y + 6))
+
+    |draw_button('Hit!', 10, 53, 13)|
+    |draw_button('Stand', 70, 53, 4)|
+    |# draw_button('Play again', 10, 113, 17)|
+``
+`
+def draw():
+    # etc.
+
+    |def draw_button(text, button_x, button_width, text_offset_x):|
+        button_y = 230
+        screen.draw.filled_rect(
+            Rect(|button_x|, button_y, |button_width|, 25),
+            color=(255, 127, 57)
+        )
+        screen.draw.text(|text|, (|button_x| + |text_offset_x|, button_y + 6))
+
+    |draw_button('Hit!', 10, 53, 13)|
+    |draw_button('Stand', 70, 53, 4)|
+    |# draw_button('Play again', 10, 113, 17)|
+`
+
+### Highlighting button when cursor is over it
+
+The color of the rectangle changes when the mouse cursor is over it.
+
+The cursor is over the button if...
+- the mouse's X position is to the right of the button's left edge
+- the mouse's X position is to the left of the button's right edge (i.e less than the position of the button plus the width of the button)
+- the mouse's Y position is below the button's top edge
+- the mouse's Y position is above the button's bottom edge (i.e. less than the position of the button plus the height of the button)
+
+The button height is reused from drawing the button, so a variable is made.
+
+The *pygame* module is imported so that `pygame.mouse.get_pos` can be used.
+
+An empty `update` function is created so that the `draw` function will update on every frame.
+
+``
+|import pygame|
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+|def update():|
+|    pass|
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        image = card['suit'] + '_' + str(card['rank'])
+        if not round_over and card_index == 0:
+            image = 'card_face_down'
+        screen.blit(image, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+
+    if round_over:
+        screen.draw.text('Total: ' + str(get_total(dealer_hand)),
+            (margin_x, 10), color=(0, 0, 0))
+    else:
+        screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))
+
+    screen.draw.text('Total: ' + str(get_total(player_hand)),
+        (margin_x, 120), color=(0, 0, 0))
+
+    if round_over:
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        def draw_winner(message):
+            screen.draw.text(message, (margin_x, 268), color=(0, 0, 0))
+
+        if has_hand_won(player_hand, dealer_hand):
+            draw_winner('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            draw_winner('Dealer wins')
+        else:
+            draw_winner('Draw')
+
+    def draw_button(text, button_x, button_width, text_offset_x):
+        button_y = 230
+        |button_height = 25|
+
+        |mouse_x, mouse_y = pygame.mouse.get_pos()|
+
+        |if (|
+        |    mouse_x >= button_x|
+        |    and mouse_x < button_x + button_width|
+        |    and mouse_y >= button_y|
+        |    and mouse_y < button_y + button_height|
+        |):|
+        |    color = (255, 202, 75)|
+        |else:|
+        |    color = (255, 127, 57)|
+
+        screen.draw.filled_rect(
+            Rect(button_x, button_y, button_width, |button_height|),
+            color=|color|
+        )
+        screen.draw.text(text, (button_x + text_offset_x, button_y + 6))
+
+    draw_button('Hit!', 10, 53, 13)
+    draw_button('Stand', 70, 53, 4)
+    # draw_button('Play again', 10, 113, 17)
+``
+`
+import pygame
+
+def update():
+    pass
+
+def draw():
+    # etc.
+
+    def draw_button(text, button_x, button_width, text_offset_x):
+        button_y = 230
+        |button_height = 25|
+
+        |mouse_x, mouse_y = pygame.mouse.get_pos()|
+
+        |if (|
+        |    mouse_x >= button_x|
+        |    and mouse_x < button_x + button_width|
+        |    and mouse_y >= button_y|
+        |    and mouse_y < button_y + button_height|
+        |):|
+        |    color = (255, 202, 75)|
+        |else:|
+        |    color = (255, 127, 57)|
+
+        screen.draw.filled_rect(
+            Rect(button_x, button_y, button_width, |button_height|),
+            color=|color|
+        )
+        screen.draw.text(text, (button_x + text_offset_x, button_y + 6))
+`
+
+!
+
+### Clicking buttons
+
+If a mouse button is released and the mouse is over a button, then the button has been clicked, and (for now) the name of the button is printed.
+
+Checking if the mouse is over a button is reused from drawing the button, so it is made into a function.
+
+``
+import pygame
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+|def is_mouse_in_button(button_x, button_width):|
+    button_y = 230
+    button_height = 25
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+    |return| (
+        mouse_x >= button_x
+        and mouse_x < button_x + button_width
+        and mouse_y >= button_y
+        and mouse_y < button_y + button_height
+    )
+
+def update():
+    pass
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+|def on_mouse_up():|
+|    if is_mouse_in_button(10, 53):|
+|        print('Hit!')|
+|    elif is_mouse_in_button(70, 53):|
+|        print('Stand')|
+|    # elif is_mouse_in_button(10, 113):|
+|    #     print('Play again')|
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        image = card['suit'] + '_' + str(card['rank'])
+        if not round_over and card_index == 0:
+            image = 'card_face_down'
+        screen.blit(image, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+
+    if round_over:
+        screen.draw.text('Total: ' + str(get_total(dealer_hand)),
+            (margin_x, 10), color=(0, 0, 0))
+    else:
+        screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))
+
+    screen.draw.text('Total: ' + str(get_total(player_hand)),
+        (margin_x, 120), color=(0, 0, 0))
+
+    if round_over:
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        def draw_winner(message):
+            screen.draw.text(message, (margin_x, 268), color=(0, 0, 0))
+
+        if has_hand_won(player_hand, dealer_hand):
+            draw_winner('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            draw_winner('Dealer wins')
+        else:
+            draw_winner('Draw')
+
+    def draw_button(text, button_x, button_width, text_offset_x):
+        button_y = 230
+        button_height = 25
+
+        |# Removed: mouse_x, mouse_y = pygame.mouse.get_pos()|
+
+        if |is_mouse_in_button(button_x, button_width)|:
+            color = (255, 202, 75)
+        else:
+            color = (255, 127, 57)
+
+        screen.draw.filled_rect(
+            Rect(button_x, button_y, button_width, button_height),
+            color=color
+        )
+        screen.draw.text(text, (button_x + text_offset_x, button_y + 6))
+
+    draw_button('Hit!', 10, 53, 13)
+    draw_button('Stand', 70, 53, 4)
+    # draw_button('Play again', 10, 113, 17)
+``
+`
+|def is_mouse_in_button(button_x, button_width):|
+    button_y = 230
+    button_height = 25
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+    |return| (
+        mouse_x >= button_x
+        and mouse_x < button_x + button_width
+        and mouse_y >= button_y
+        and mouse_y < button_y + button_height
+    )
+
+def on_mouse_up():
+    if is_mouse_in_button(10, 53):
+        print('Hit!')
+    elif is_mouse_in_button(70, 53):
+        print('Stand')
+    # elif is_mouse_in_button(10, 113):
+    #     print('Play again')
+
+def draw():
+    # etc.
+
+    def draw_button(text, button_x, button_width, text_offset_x):
+        button_y = 230
+        button_height = 25
+
+        # Removed: mouse_x, mouse_y = pygame.mouse.get_pos()
+
+        if |is_mouse_in_button(button_x, button_width)|:
+            color = (255, 202, 75)
+        else:
+            color = (255, 127, 57)
+
+        # etc.
+`
+
+### Button dictionaries
+
+So that the information for each button is stored in one place, a dictionary is created for each button.
+
+``
+import pygame
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+|button_y = 230|
+|button_height = 25|
+|text_offset_y = 6|
+
+|button_hit = {|
+|    'x': 10,|
+|    'y': button_y,|
+|    'width': 53,|
+|    'height': 25,|
+|    'text': 'Hit!',|
+|    'text_offset_x': 13,|
+|    'text_offset_y': text_offset_y,|
+|}|
+
+|button_stand = {|
+|    'x': 70,|
+|    'y': button_y,|
+|    'width': 53,|
+|    'height': 25,|
+|    'text': 'Stand',|
+|    'text_offset_x': 4,|
+|    'text_offset_y': text_offset_y,|
+|}|
+
+|button_play_again = {|
+|    'x': 10,|
+|    'y': button_y,|
+|    'width': 113,|
+|    'height': 25,|
+|    'text': 'Play again',|
+|    'text_offset_x': 17,|
+|    'text_offset_y': text_offset_y,|
+|}|
+
+def is_mouse_in_button(|button|):
+    |# Removed: button_y = 230|
+    |# Removed: button_height = 25|
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+    return (
+        mouse_x >= |button['x']|
+        and mouse_x < |button['x']| + |button['width']|
+        and mouse_y >= |button['y']|
+        and mouse_y < |button['y']| + |button['height']|
+    )
+
+def update():
+    pass
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def on_mouse_up():
+    if is_mouse_in_button(|button_hit|):
+        print('Hit!')
+    elif is_mouse_in_button(|button_stand|):
+        print('Stand')
+    # elif is_mouse_in_button(|button_play_again|):
+    #     print('Play again')
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        image = card['suit'] + '_' + str(card['rank'])
+        if not round_over and card_index == 0:
+            image = 'card_face_down'
+        screen.blit(image, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+
+    if round_over:
+        screen.draw.text('Total: ' + str(get_total(dealer_hand)),
+            (margin_x, 10), color=(0, 0, 0))
+    else:
+        screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))
+
+    screen.draw.text('Total: ' + str(get_total(player_hand)),
+        (margin_x, 120), color=(0, 0, 0))
+
+    if round_over:
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        def draw_winner(message):
+            screen.draw.text(message, (margin_x, 268), color=(0, 0, 0))
+
+        if has_hand_won(player_hand, dealer_hand):
+            draw_winner('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            draw_winner('Dealer wins')
+        else:
+            draw_winner('Draw')
+
+    def draw_button(|button|):
+        |# Removed: button_y = 230|
+        |# Removed: button_height = 25|
+
+        if is_mouse_in_button(|button|):
+            color = (255, 202, 75)
+        else:
+            color = (255, 127, 57)
+
+        screen.draw.filled_rect(
+            Rect(|button['x']|, |button['y']|, |button['width']|, |button['height']|),
+            color=color
+        )
+        screen.draw.text(
+            |button['text']|,
+            (|button['x']| + |button['text_offset_x']|,
+            |button['y']| + |button['text_offset_y']|)
+        )
+
+    draw_button(|button_hit|)
+    draw_button(|button_stand|)
+    # draw_button(|button_play_again|)
+``
+`
+button_y = 230
+button_height = 25
+text_offset_y = 6
+
+button_hit = {
+    'x': 10,
+    'y': button_y,
+    'width': 53,
+    'height': 25,
+    'text': 'Hit!',
+    'text_offset_x': 13,
+    'text_offset_y': text_offset_y,
+}
+
+button_stand = {
+    'x': 70,
+    'y': button_y,
+    'width': 53,
+    'height': 25,
+    'text': 'Stand',
+    'text_offset_x': 4,
+    'text_offset_y': text_offset_y,
+}
+
+button_play_again = {
+    'x': 10,
+    'y': button_y,
+    'width': 113,
+    'height': 25,
+    'text': 'Play again',
+    'text_offset_x': 17,
+    'text_offset_y': text_offset_y,
+}
+
+def is_mouse_in_button(|button|):
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+    return (
+        mouse_x >= |button['x']|
+        and mouse_x < |button['x']| + |button['width']|
+        and mouse_y >= |button['y']|
+        and mouse_y < |button['y']| + |button['height']|
+    )
+
+def on_mouse_up():
+    if is_mouse_in_button(|button_hit|):
+        print('Hit!')
+    elif is_mouse_in_button(|button_stand|):
+        print('Stand')
+    # elif is_mouse_in_button(|button_play_again|):
+    #     print('Play again')
+
+def draw():
+    # etc.
+
+    def draw_button(|button|):
+        # Removed: button_y = 230
+        # Removed: button_height = 25
+
+        if is_mouse_in_button(|button|):
+            color = (255, 202, 75)
+        else:
+            color = (255, 127, 57)
+
+        screen.draw.filled_rect(
+            Rect(|button['x']|, |button['y']|, |button['width']|, |button['height']|),
+            color=color
+        )
+        screen.draw.text(
+            |button['text']|,
+            (|button['x']| + |button['text_offset_x']|,
+            |button['y']| + |button['text_offset_y']|)
+        )
+
+    draw_button(|button_hit|)
+    draw_button(|button_stand|)
+    # draw_button(|button_play_again|)
+`
+
+### Showing play again button after round is over
+
+The hit and stand buttons are shown while the round is in progress, and the play again button is shown when the round is over.
+
+``
+import pygame
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+button_y = 230
+button_height = 25
+text_offset_y = 6
+
+button_hit = {
+    'x': 10,
+    'y': button_y,
+    'width': 53,
+    'height': 25,
+    'text': 'Hit!',
+    'text_offset_x': 13,
+    'text_offset_y': text_offset_y,
+}
+
+button_stand = {
+    'x': 70,
+    'y': button_y,
+    'width': 53,
+    'height': 25,
+    'text': 'Stand',
+    'text_offset_x': 4,
+    'text_offset_y': text_offset_y,
+}
+
+button_play_again = {
+    'x': 10,
+    'y': button_y,
+    'width': 113,
+    'height': 25,
+    'text': 'Play again',
+    'text_offset_x': 17,
+    'text_offset_y': text_offset_y,
+}
+
+def is_mouse_in_button(button):
+    # Removed: button_y = 230
+    # Removed: button_height = 25
+
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+    return (
+        mouse_x >= button['x']
+        and mouse_x < button['x'] + button['width']
+        and mouse_y >= button['y']
+        and mouse_y < button['y'] + button['height']
+    )
+
+def update():
+    pass
+
+def on_key_down(key):
+    global round_over
+
+    if not round_over:
+        if key == keys.H:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif key == keys.S:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    else:
+        reset()
+
+def on_mouse_up():
+    if is_mouse_in_button(button_hit):
+        print('Hit!')
+    elif is_mouse_in_button(button_stand):
+        print('Stand')
+    # elif is_mouse_in_button(button_play_again):
+    #     print('Play again')
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        image = card['suit'] + '_' + str(card['rank'])
+        if not round_over and card_index == 0:
+            image = 'card_face_down'
+        screen.blit(image, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+
+    if round_over:
+        screen.draw.text('Total: ' + str(get_total(dealer_hand)),
+            (margin_x, 10), color=(0, 0, 0))
+    else:
+        screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))
+
+    screen.draw.text('Total: ' + str(get_total(player_hand)),
+        (margin_x, 120), color=(0, 0, 0))
+
+    if round_over:
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        def draw_winner(message):
+            screen.draw.text(message, (margin_x, 268), color=(0, 0, 0))
+
+        if has_hand_won(player_hand, dealer_hand):
+            draw_winner('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            draw_winner('Dealer wins')
+        else:
+            draw_winner('Draw')
+
+    def draw_button(button):
+        if is_mouse_in_button(button):
+            color = (255, 202, 75)
+        else:
+            color = (255, 127, 57)
+
+        screen.draw.filled_rect(
+            Rect(button['x'], button['y'], button['width'], button['height']),
+            color=color
+        )
+        screen.draw.text(
+            button['text'],
+            (button['x'] + button['text_offset_x'],
+            button['y'] + button['text_offset_y'])
+        )
+
+    |if not round_over:|
+        draw_button(button_hit)
+        draw_button(button_stand)
+    |else:|
+        draw_button(button_play_again)
+``
+`
+def draw():
+    # etc.
+
+    |if not round_over:|
+        draw_button(button_hit)
+        draw_button(button_stand)
+    |else:|
+        draw_button(button_play_again)
+`
+
+### Using buttons
+
+The code from `on_key_down` is moved to `on_mouse_up`, and instead of using the keys it uses the on-screen buttons.
+
+``
+import pygame
+import random
+
+def take_card(hand):
+    hand.append(deck.pop(random.randrange(len(deck))))
+
+def reset():
+    global deck
+    global player_hand
+    global dealer_hand
+    global round_over
+
+    deck = []
+    for suit in ('club', 'diamond', 'heart', 'spade'):
+        for rank in range(1, 14):
+            deck.append({'suit': suit, 'rank': rank})
+
+    player_hand = []
+    take_card(player_hand)
+    take_card(player_hand)
+
+    dealer_hand = []
+    take_card(dealer_hand)
+    take_card(dealer_hand)
+
+    round_over = False
+
+reset()
+
+def get_total(hand):
+    total = 0
+    has_ace = False
+
+    for card in hand:
+        if card['rank'] > 10:
+            total += 10
+        else:
+            total += card['rank']
+
+        if card['rank'] == 1:
+            has_ace = True
+
+    if has_ace and total <= 11:
+        total += 10
+
+    return total
+
+button_y = 230
+button_height = 25
+text_offset_y = 6
+
+button_hit = {
+    'x': 10,
+    'y': button_y,
+    'width': 53,
+    'height': 25,
+    'text': 'Hit!',
+    'text_offset_x': 13,
+    'text_offset_y': text_offset_y,
+}
+
+button_stand = {
+    'x': 70,
+    'y': button_y,
+    'width': 53,
+    'height': 25,
+    'text': 'Stand',
+    'text_offset_x': 4,
+    'text_offset_y': text_offset_y,
+}
+
+button_play_again = {
+    'x': 10,
+    'y': button_y,
+    'width': 113,
+    'height': 25,
+    'text': 'Play again',
+    'text_offset_x': 17,
+    'text_offset_y': text_offset_y,
+}
+
+def is_mouse_in_button(button):
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+
+    return (
+        mouse_x >= button['x']
+        and mouse_x < button['x'] + button['width']
+        and mouse_y >= button['y']
+        and mouse_y < button['y'] + button['height']
+    )
+
+def update():
+    pass
+
+def |on_mouse_up|():
+    global round_over
+
+    if not round_over:
+        if |is_mouse_in_button(button_hit)|:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif |is_mouse_in_button(button_stand)|:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    |elif is_mouse_in_button(button_play_again):|
+        reset()
+
+def draw():
+    screen.fill((255, 255, 255))
+
+    card_spacing = 60
+    margin_x = 10
+
+    for card_index, card in enumerate(dealer_hand):
+        image = card['suit'] + '_' + str(card['rank'])
+        if not round_over and card_index == 0:
+            image = 'card_face_down'
+        screen.blit(image, (card_index * card_spacing + margin_x, 30))
+
+    for card_index, card in enumerate(player_hand):
+        screen.blit(card['suit'] + '_' + str(card['rank']),
+            (card_index * card_spacing + margin_x, 140))
+
+    if round_over:
+        screen.draw.text('Total: ' + str(get_total(dealer_hand)),
+            (margin_x, 10), color=(0, 0, 0))
+    else:
+        screen.draw.text('Total: ?', (margin_x, 10), color=(0, 0, 0))
+
+    screen.draw.text('Total: ' + str(get_total(player_hand)),
+        (margin_x, 120), color=(0, 0, 0))
+
+    if round_over:
+        def has_hand_won(this_hand, other_hand):
+            return (
+                get_total(this_hand) <= 21
+                and (
+                    get_total(other_hand) > 21
+                    or get_total(this_hand) > get_total(other_hand)
+                )
+            )
+
+        def draw_winner(message):
+            screen.draw.text(message, (margin_x, 268), color=(0, 0, 0))
+
+        if has_hand_won(player_hand, dealer_hand):
+            draw_winner('Player wins')
+        elif has_hand_won(dealer_hand, player_hand):
+            draw_winner('Dealer wins')
+        else:
+            draw_winner('Draw')
+
+    def draw_button(button):
+        if is_mouse_in_button(button):
+            color = (255, 202, 75)
+        else:
+            color = (255, 127, 57)
+
+        screen.draw.filled_rect(
+            Rect(button['x'], button['y'], button['width'], button['height']),
+            color=color
+        )
+        screen.draw.text(
+            button['text'],
+            (button['x'] + button['text_offset_x'],
+            button['y'] + button['text_offset_y'])
+        )
+
+    if not round_over:
+        draw_button(button_hit)
+        draw_button(button_stand)
+    else:
+        draw_button(button_play_again)
+``
+`
+def |on_mouse_up|():
+    global round_over
+
+    if not round_over:
+        if |is_mouse_in_button(button_hit)|:
+            take_card(player_hand)
+            if get_total(player_hand) >= 21:
+                round_over = True
+        elif |is_mouse_in_button(button_stand)|:
+            round_over = True
+
+        if round_over:
+            while get_total(dealer_hand) < 17:
+                take_card(dealer_hand)
+    |elif is_mouse_in_button(button_play_again):|
+        reset()
+`

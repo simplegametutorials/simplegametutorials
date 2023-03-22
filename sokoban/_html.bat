@@ -1,1 +1,0 @@
-love ../ html sokoban

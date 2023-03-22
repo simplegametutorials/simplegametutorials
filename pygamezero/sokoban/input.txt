@@ -1,0 +1,4247 @@
+<a href="sokoban.py" class="download">Download sokoban.py</a>
+
+!
+
+<a href="http://git.rockbox.org/?p=rockbox.git;a=blob_plain;f=apps/plugins/sokoban.levels">The levels used in this tutorial are from Rockbox.</a>
+
+## Rules
+
+Push all the boxes on to the storage locations.
+
+Boxes can only be moved if there is a free space beyond it (not a wall or another box).
+
+### Legend
+
+& ! & Player
+& ! & Player on storage
+& ! & Box
+& ! & Box on storage
+& ! & Storage
+& ! & Wall
+
+### Controls
+
+& *Arrow keys* & Move
+& *r* & Reset level
+& *n* & Next level
+& *p* & Previous level
+
+## Overview
+
+The different states a cell can be in are represented by the following strings:
+
+& `'@'` & Player
+& `'+'` & Player on storage
+& `'$'` & Box
+& `'*'` & Box on storage
+& `'.'` & Storage
+& `'#'` & Wall
+
+The level is stored as a grid of these strings.
+
+!
+
+When an arrow key is pressed, the grid is looped through to find where the player is.
+
+If the position on the grid adjacent to the player in the direction of the arrow pressed is movable (i.e. empty or a storage location), the values of the grid are changed to reflect the new player position.
+
+!
+
+If the position adjacent to the player is a box and the position beyond the box is movable, the grid is changed to reflect the new player and new box positions.
+
+!
+
+If there are no boxes left which aren't on storage locations then the level is complete.
+
+## Coding
+
+### Drawing a level
+
+Each level is stored as a grid of strings. For now, a single level is stored, and a square is drawn for every cell which isn't a space (i.e. empty).
+
+``
+|level = [|
+|    [' ', ' ', '#', '#', '#'],|
+|    [' ', ' ', '#', '.', '#'],|
+|    [' ', ' ', '#', ' ', '#', '#', '#', '#'],|
+|    ['#', '#', '#', '$', ' ', '$', '.', '#'],|
+|    ['#', '.', ' ', '$', '@', '#', '#', '#'],|
+|    ['#', '#', '#', '#', '$', '#'],|
+|    [' ', ' ', ' ', '#', '.', '#'],|
+|    [' ', ' ', ' ', '#', '#', '#'],|
+|]|
+
+|def draw():|
+|    screen.fill((0, 0, 0))|
+|    |
+|    for y, row in enumerate(level):|
+|        for x, cell in enumerate(row):|
+|            if cell != ' ':|
+|                cell_size = 23|
+|                |
+|                screen.draw.filled_rect(|
+|                    Rect(|
+|                        (x * cell_size, y * cell_size),|
+|                        (cell_size, cell_size)|
+|                    ),|
+|                    color=(255, 255, 255)|
+|                )|
+``
+`
+level = [
+    [' ', ' ', '#', '#', '#'],
+    [' ', ' ', '#', '.', '#'],
+    [' ', ' ', '#', ' ', '#', '#', '#', '#'],
+    ['#', '#', '#', '$', ' ', '$', '.', '#'],
+    ['#', '.', ' ', '$', '@', '#', '#', '#'],
+    ['#', '#', '#', '#', '$', '#'],
+    [' ', ' ', ' ', '#', '.', '#'],
+    [' ', ' ', ' ', '#', '#', '#'],
+]
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != ' ':
+                cell_size = 23
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=(255, 255, 255)
+                )
+`
+
+!
+
+### Drawing cell types
+
+The cell's string is drawn on top of the cell.
+
+``
+level = [
+    [' ', ' ', '#', '#', '#'],
+    [' ', ' ', '#', '.', '#'],
+    [' ', ' ', '#', ' ', '#', '#', '#', '#'],
+    ['#', '#', '#', '$', ' ', '$', '.', '#'],
+    ['#', '.', ' ', '$', '@', '#', '#', '#'],
+    ['#', '#', '#', '#', '$', '#'],
+    [' ', ' ', ' ', '#', '.', '#'],
+    [' ', ' ', ' ', '#', '#', '#'],
+]
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != ' ':
+                cell_size = 23
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=(255, 255, 255)
+                )
+
+                |screen.draw.text(|
+                |    cell,|
+                |    (x * cell_size, y * cell_size),|
+                |    color=(0, 0, 0)|
+                |)|
+``
+`
+def draw():
+    screen.fill((0, 0, 0))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != ' ':
+                # etc.
+
+                |screen.draw.text(|
+                |    cell,|
+                |    (x * cell_size, y * cell_size),|
+                |    color=(0, 0, 0)|
+                |)|
+`
+
+!
+
+### Setting colors
+
+The background color is changed, and the color of each cell is set based on its type.
+
+``
+level = [
+    [' ', ' ', '#', '#', '#'],
+    [' ', ' ', '#', '.', '#'],
+    [' ', ' ', '#', ' ', '#', '#', '#', '#'],
+    ['#', '#', '#', '$', ' ', '$', '.', '#'],
+    ['#', '.', ' ', '$', '@', '#', '#', '#'],
+    ['#', '#', '#', '#', '$', '#'],
+    [' ', ' ', ' ', '#', '.', '#'],
+    [' ', ' ', ' ', '#', '#', '#'],
+]
+
+def draw():
+    screen.fill((|255|, |255|, |190|))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != ' ':
+                cell_size = 23
+
+                |colors = {|
+                |    '@': (167, 135, 255),|
+                |    '+': (158, 119, 255),|
+                |    '$': (255, 201, 126),|
+                |    '*': (150, 255, 127),|
+                |    '.': (156, 229, 255),|
+                |    '#': (255, 147, 209),|
+                |}|
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    |color=colors[cell]|
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(|255|, |255|, |255|)
+                )
+``
+`
+def draw():
+    screen.fill((|255|, |255|, |190|))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != ' ':
+                cell_size = 23
+
+                |colors = {|
+                |    '@': (167, 135, 255),|
+                |    '+': (158, 119, 255),|
+                |    '$': (255, 201, 126),|
+                |    '*': (150, 255, 127),|
+                |    '.': (156, 229, 255),|
+                |    '#': (255, 147, 209),|
+                |}|
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    |color=colors[cell]|
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(|255|, |255|, |255|)
+                )
+`
+
+!
+
+### Naming cell types
+
+So we don't have to remember which string refers to which cell type, the cell type strings are stored in variables.
+
+``
+level = [
+    [' ', ' ', '#', '#', '#'],
+    [' ', ' ', '#', '.', '#'],
+    [' ', ' ', '#', ' ', '#', '#', '#', '#'],
+    ['#', '#', '#', '$', ' ', '$', '.', '#'],
+    ['#', '.', ' ', '$', '@', '#', '#', '#'],
+    ['#', '#', '#', '#', '$', '#'],
+    [' ', ' ', ' ', '#', '.', '#'],
+    [' ', ' ', ' ', '#', '#', '#'],
+]
+
+|player = '@'|
+|player_on_storage = '+'|
+|box = '$'|
+|box_on_storage = '*'|
+|storage = '.'|
+|wall = '#'|
+|empty = ' '|
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != |empty|:
+                cell_size = 23
+
+                colors = {
+                    |player|: (167, 135, 255),
+                    |player_on_storage|: (158, 119, 255),
+                    |box|: (255, 201, 126),
+                    |box_on_storage|: (150, 255, 127),
+                    |storage|: (156, 229, 255),
+                    |wall|: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != |empty|:
+                cell_size = 23
+
+                colors = {
+                    |player|: (167, 135, 255),
+                    |player_on_storage|: (158, 119, 255),
+                    |box|: (255, 201, 126),
+                    |box_on_storage|: (150, 255, 127),
+                    |storage|: (156, 229, 255),
+                    |wall|: (255, 147, 209),
+                }
+
+    # etc.
+`
+
+### Finding player cell
+
+The first step in moving the player is finding which cell position they are at.
+
+The cells in the level are looped through, and if the cell type is a player or a player on storage, then, for now, the player's position is printed.
+
+``
+level = [
+    [' ', ' ', '#', '#', '#'],
+    [' ', ' ', '#', '.', '#'],
+    [' ', ' ', '#', ' ', '#', '#', '#', '#'],
+    ['#', '#', '#', '$', ' ', '$', '.', '#'],
+    ['#', '.', ' ', '$', '@', '#', '#', '#'],
+    ['#', '#', '#', '#', '$', '#'],
+    [' ', ' ', ' ', '#', '.', '#'],
+    [' ', ' ', ' ', '#', '#', '#'],
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+|def on_key_down(key):|
+|    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):|
+|        for test_y, row in enumerate(level):|
+|            for test_x, cell in enumerate(row):|
+|                if cell == player or cell == player_on_storage:|
+|                    player_x = test_x|
+|                    player_y = test_y|
+|        |
+|        # Temporary|
+|        print(player_x, player_y)|
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        # Temporary
+        print(player_x, player_y)
+`
+
+~
+4       4
+~
+
+### Finding cell type in direction of key pressed
+
+The cell type of the player's current position and the cell type of the adjacent position in the direction of the arrow key pressed are stored in variables, and, for now, are printed.
+
+``
+level = [
+    [' ', ' ', '#', '#', '#'],
+    [' ', ' ', '#', '.', '#'],
+    [' ', ' ', '#', ' ', '#', '#', '#', '#'],
+    ['#', '#', '#', '$', ' ', '$', '.', '#'],
+    ['#', '.', ' ', '$', '@', '#', '#', '#'],
+    ['#', '#', '#', '#', '$', '#'],
+    [' ', ' ', ' ', '#', '.', '#'],
+    [' ', ' ', ' ', '#', '#', '#'],
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        |dx = 0|
+        |dy = 0|
+        |if key == keys.LEFT:|
+        |    dx = -1|
+        |elif key == keys.RIGHT:|
+        |    dx = 1|
+        |elif key == keys.UP:|
+        |    dy = -1|
+        |elif key == keys.DOWN:|
+        |    dy = 1|
+
+        |current = level[player_y][player_x]|
+        |adjacent = level[player_y + dy][player_x + dx]|
+
+        |# Temporary|
+        |print('current = level[' + str(player_y) + '][' + str(player_x) + '] (' + current + ')')|
+        |print('adjacent = level[' + str(player_y + dy) + '][' + str(player_x + dx) + '] (' + adjacent + ')')|
+        |print()|
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        # etc.
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+
+        # Temporary
+        print('current = level[' + str(player_y) + '][' + str(player_x) + '] (' + current + ')')
+        print('adjacent = level[' + str(player_y + dy) + '][' + str(player_x + dx) + '] (' + adjacent + ')')
+        print()
+`
+
+~
+current = level[4][4] (@)
+adjacent = level[3][4] ( )
+
+current = level[4][4] (@)
+adjacent = level[4][5] (#)
+
+current = level[4][4] (@)
+adjacent = level[5][4] ($)
+
+current = level[4][4] (@)
+adjacent = level[4][3] ($)
+~
+
+### Creating test level
+
+A test level is made for testing player movement.
+
+``
+level = [
+|    ['#', '#', '#', '#', '#'],|
+|    ['#', '@', ' ', '.', '#'],|
+|    ['#', ' ', '$', ' ', '#'],|
+|    ['#', '.', '$', ' ', '#'],|
+|    ['#', ' ', '$', '.', '#'],|
+|    ['#', '.', '$', '.', '#'],|
+|    ['#', '.', '*', ' ', '#'],|
+|    ['#', ' ', '*', '.', '#'],|
+|    ['#', ' ', '*', ' ', '#'],|
+|    ['#', '.', '*', '.', '#'],|
+|    ['#', '#', '#', '#', '#'],|
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+level = [
+    ['#', '#', '#', '#', '#'],
+    ['#', '@', ' ', '.', '#'],
+    ['#', ' ', '$', ' ', '#'],
+    ['#', '.', '$', ' ', '#'],
+    ['#', ' ', '$', '.', '#'],
+    ['#', '.', '$', '.', '#'],
+    ['#', '.', '*', ' ', '#'],
+    ['#', ' ', '*', '.', '#'],
+    ['#', ' ', '*', ' ', '#'],
+    ['#', '.', '*', '.', '#'],
+    ['#', '#', '#', '#', '#'],
+]
+`
+
+!
+
+### Moving player to empty location
+
+If the value at the player's current position is `player` (i.e. not `player_on_storage`) and the adjacent cell is `empty`, then the player's position becomes `empty` and the adjacent position becomes `player`.
+
+``
+level = [
+    ['#', '#', '#', '#', '#'],
+    ['#', '@', ' ', '.', '#'],
+    ['#', ' ', '$', ' ', '#'],
+    ['#', '.', '$', ' ', '#'],
+    ['#', ' ', '$', '.', '#'],
+    ['#', '.', '$', '.', '#'],
+    ['#', '.', '*', ' ', '#'],
+    ['#', ' ', '*', '.', '#'],
+    ['#', ' ', '*', ' ', '#'],
+    ['#', '.', '*', '.', '#'],
+    ['#', '#', '#', '#', '#'],
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+
+        |if current == player and adjacent == empty:|
+        |    level[player_y][player_x] = empty|
+        |    level[player_y + dy][player_x + dx] = player|
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    # etc.
+
+        if current == player and adjacent == empty:
+            level[player_y][player_x] = empty
+            level[player_y + dy][player_x + dx] = player
+`
+
+!
+
+### Moving player to storage
+
+If the adjacent position is `storage`, then the new adjacent position becomes `player_on_storage`.
+
+Currently the player can move on to storage, but not off storage.
+
+``
+level = [
+    ['#', '#', '#', '#', '#'],
+    ['#', '@', ' ', '.', '#'],
+    ['#', ' ', '$', ' ', '#'],
+    ['#', '.', '$', ' ', '#'],
+    ['#', ' ', '$', '.', '#'],
+    ['#', '.', '$', '.', '#'],
+    ['#', '.', '*', ' ', '#'],
+    ['#', ' ', '*', '.', '#'],
+    ['#', ' ', '*', ' ', '#'],
+    ['#', '.', '*', '.', '#'],
+    ['#', '#', '#', '#', '#'],
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+
+        if current == player:
+            |if| adjacent == empty:
+                level[player_y][player_x] = empty
+                level[player_y + dy][player_x + dx] = player
+            |elif adjacent == storage:|
+            |    level[player_y][player_x] = empty|
+            |    level[player_y + dy][player_x + dx] = player_on_storage|
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    # etc.
+
+        if current == player:
+            |if| adjacent == empty:
+                level[player_y][player_x] = empty
+                level[player_y + dy][player_x + dx] = player
+            |elif adjacent == storage:|
+            |    level[player_y][player_x] = empty|
+            |    level[player_y + dy][player_x + dx] = player_on_storage|
+`
+
+!
+
+### Simplifying code
+
+The new adjacent position (either `player` or `player_on_storage`) is set based on the type of `adjacent`, so a dictionary is made which returns the next adjacent cell type when indexed by the current adjacent cell type.
+
+It is also used to check if the player can move to the adjacent position by checking if it has a key with the value of `adjacent`.
+
+``
+level = [
+    ['#', '#', '#', '#', '#'],
+    ['#', '@', ' ', '.', '#'],
+    ['#', ' ', '$', ' ', '#'],
+    ['#', '.', '$', ' ', '#'],
+    ['#', ' ', '$', '.', '#'],
+    ['#', '.', '$', '.', '#'],
+    ['#', '.', '*', ' ', '#'],
+    ['#', ' ', '*', '.', '#'],
+    ['#', ' ', '*', ' ', '#'],
+    ['#', '.', '*', '.', '#'],
+    ['#', '#', '#', '#', '#'],
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+
+        |next_adjacent = {|
+        |    empty: player,|
+        |    storage: player_on_storage,|
+        |}|
+
+        if current == player and |adjacent in next_adjacent|:
+            level[player_y][player_x] = empty
+            level[player_y + dy][player_x + dx] = |next_adjacent[adjacent]|
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    # etc.
+
+        |next_adjacent = {|
+        |    empty: player,|
+        |    storage: player_on_storage,|
+        |}|
+
+        if current == player and |adjacent in next_adjacent|:
+            level[player_y][player_x] = empty
+            level[player_y + dy][player_x + dx] = |next_adjacent[adjacent]|
+`
+
+### Moving player from storage
+
+If the player is on storage, then the player's current position is set to `storage`.
+
+``
+level = [
+    ['#', '#', '#', '#', '#'],
+    ['#', '@', ' ', '.', '#'],
+    ['#', ' ', '$', ' ', '#'],
+    ['#', '.', '$', ' ', '#'],
+    ['#', ' ', '$', '.', '#'],
+    ['#', '.', '$', '.', '#'],
+    ['#', '.', '*', ' ', '#'],
+    ['#', ' ', '*', '.', '#'],
+    ['#', ' ', '*', ' ', '#'],
+    ['#', '.', '*', '.', '#'],
+    ['#', '#', '#', '#', '#'],
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+
+        if adjacent in next_adjacent:
+            |if| current == player:
+                level[player_y][player_x] = empty
+                level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+            |elif current == player_on_storage:|
+            |    level[player_y][player_x] = storage|
+            |    level[player_y + dy][player_x + dx] = next_adjacent[adjacent]|
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    # etc.
+
+        if adjacent in next_adjacent:
+            |if| current == player:
+                level[player_y][player_x] = empty
+                level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+            |elif current == player_on_storage:|
+            |    level[player_y][player_x] = storage|
+            |    level[player_y + dy][player_x + dx] = next_adjacent[adjacent]|
+`
+
+!
+
+### Simplifying code
+
+A dictionary is made which returns the next cell type for the player's previous position when indexed by the current player cell type.
+
+``
+level = [
+    ['#', '#', '#', '#', '#'],
+    ['#', '@', ' ', '.', '#'],
+    ['#', ' ', '$', ' ', '#'],
+    ['#', '.', '$', ' ', '#'],
+    ['#', ' ', '$', '.', '#'],
+    ['#', '.', '$', '.', '#'],
+    ['#', '.', '*', ' ', '#'],
+    ['#', ' ', '*', '.', '#'],
+    ['#', ' ', '*', ' ', '#'],
+    ['#', '.', '*', '.', '#'],
+    ['#', '#', '#', '#', '#'],
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        |next_current = {|
+        |    player: empty,|
+        |    player_on_storage: storage,|
+        |}|
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = |next_current[current]|
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    # etc.
+
+        |next_current = {|
+        |    player: empty,|
+        |    player_on_storage: storage,|
+        |}|
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = |next_current[current]|
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+`
+
+### Pushing box on to empty location
+
+The cell beyond the adjacent cell is stored in a variable.
+
+`player_y + dy + dy` is checked to see if it is greater than or equal to 0 and less than `len(level)`, i.e. it is within the level height-wise, and `player_x + dx + dx` is checked to see if it is greater than or equal to 0 and less than `len(level[player_y + dy + dy])`, i.e. it is within the level width-wise.
+
+(The adjacent position isn't checked in the same way because there is always a border of walls around each level, so `player_y + dy` or `player_x + dx` won't ever be outside the level.)
+
+If the adjacent cell is a box and the beyond cell is empty, then the adjacent position is set to `player` and the beyond position is set to `box`.
+
+``
+level = [
+    ['#', '#', '#', '#', '#'],
+    ['#', '@', ' ', '.', '#'],
+    ['#', ' ', '$', ' ', '#'],
+    ['#', '.', '$', ' ', '#'],
+    ['#', ' ', '$', '.', '#'],
+    ['#', '.', '$', '.', '#'],
+    ['#', '.', '*', ' ', '#'],
+    ['#', ' ', '*', '.', '#'],
+    ['#', ' ', '*', ' ', '#'],
+    ['#', '.', '*', '.', '#'],
+    ['#', '#', '#', '#', '#'],
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+        |beyond = ''|
+        |if (|
+        |    0 <= player_y + dy + dy < len(level)|
+        |    and 0 <= player_x + dx + dx < len(level[player_y + dy + dy])|
+        |):|
+        |    beyond = level[player_y + dy + dy][player_x + dx + dx]|
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        next_current = {
+            player: empty,
+            player_on_storage: storage,
+        }
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        |elif adjacent == box and beyond == empty:|
+        |    level[player_y][player_x] = next_current[current]|
+        |    level[player_y + dy][player_x + dx] = player|
+        |    level[player_y + dy + dy][player_x + dx + dx] = box|
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    # etc.
+
+        |beyond = ''|
+        |if (|
+        |    0 <= player_y + dy + dy < len(level)|
+        |    and 0 <= player_x + dx + dx < len(level[player_y + dy + dy])|
+        |):|
+        |    beyond = level[player_y + dy + dy][player_x + dx + dx]|
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        next_current = {
+            player: empty,
+            player_on_storage: storage,
+        }
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        |elif adjacent == box and beyond == empty:|
+        |    level[player_y][player_x] = next_current[current]|
+        |    level[player_y + dy][player_x + dx] = player|
+        |    level[player_y + dy + dy][player_x + dx + dx] = box|
+`
+
+!
+
+### Pushing box on to storage
+
+If the beyond position is `storage`, then beyond position is set to `box_on_storage`.
+
+``
+level = [
+    ['#', '#', '#', '#', '#'],
+    ['#', '@', ' ', '.', '#'],
+    ['#', ' ', '$', ' ', '#'],
+    ['#', '.', '$', ' ', '#'],
+    ['#', ' ', '$', '.', '#'],
+    ['#', '.', '$', '.', '#'],
+    ['#', '.', '*', ' ', '#'],
+    ['#', ' ', '*', '.', '#'],
+    ['#', ' ', '*', ' ', '#'],
+    ['#', '.', '*', '.', '#'],
+    ['#', '#', '#', '#', '#'],
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+        beyond = ''
+        if (
+            0 <= player_y + dy + dy < len(level)
+            and 0 <= player_x + dx + dx < len(level[player_y + dy + dy])
+        ):
+            beyond = level[player_y + dy + dy][player_x + dx + dx]
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        next_current = {
+            player: empty,
+            player_on_storage: storage,
+        }
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif adjacent == box:
+            |if| beyond == empty:
+                level[player_y][player_x] = next_current[current]
+                level[player_y + dy][player_x + dx] = player
+                level[player_y + dy + dy][player_x + dx + dx] = box
+            |elif beyond == storage:|
+            |    level[player_y][player_x] = next_current[current]|
+            |    level[player_y + dy][player_x + dx] = player|
+            |    level[player_y + dy + dy][player_x + dx + dx] = box_on_storage|
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    # etc.
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif adjacent == box:
+            |if| beyond == empty:
+                level[player_y][player_x] = next_current[current]
+                level[player_y + dy][player_x + dx] = player
+                level[player_y + dy + dy][player_x + dx + dx] = box
+            |elif beyond == storage:|
+            |    level[player_y][player_x] = next_current[current]|
+            |    level[player_y + dy][player_x + dx] = player|
+            |    level[player_y + dy + dy][player_x + dx + dx] = box_on_storage|
+`
+
+!
+
+### Simplifying code
+
+A dictionary is made which returns the next beyond cell type when indexed by the current beyond cell type.
+
+``
+level = [
+    ['#', '#', '#', '#', '#'],
+    ['#', '@', ' ', '.', '#'],
+    ['#', ' ', '$', ' ', '#'],
+    ['#', '.', '$', ' ', '#'],
+    ['#', ' ', '$', '.', '#'],
+    ['#', '.', '$', '.', '#'],
+    ['#', '.', '*', ' ', '#'],
+    ['#', ' ', '*', '.', '#'],
+    ['#', ' ', '*', ' ', '#'],
+    ['#', '.', '*', '.', '#'],
+    ['#', '#', '#', '#', '#'],
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+        beyond = ''
+        if (
+            0 <= player_y + dy + dy < len(level)
+            and 0 <= player_x + dx + dx < len(level[player_y + dy + dy])
+        ):
+            beyond = level[player_y + dy + dy][player_x + dx + dx]
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        next_current = {
+            player: empty,
+            player_on_storage: storage,
+        }
+        |next_beyond = {|
+        |    empty: box,|
+        |    storage: box_on_storage,|
+        |}|
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif adjacent == box |and beyond in next_beyond|:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = player
+            level[player_y + dy + dy][player_x + dx + dx] = |next_beyond[beyond]|
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    # etc.
+
+        |next_beyond = {|
+        |    empty: box,|
+        |    storage: box_on_storage,|
+        |}|
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif adjacent == box |and beyond in next_beyond|:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = player
+            level[player_y + dy + dy][player_x + dx + dx] = |next_beyond[beyond]|
+`
+
+### Pushing box on storage
+
+If the adjacent cell is a box on storage, then the adjacent position is set to `box_on_storage`.
+
+``
+level = [
+    ['#', '#', '#', '#', '#'],
+    ['#', '@', ' ', '.', '#'],
+    ['#', ' ', '$', ' ', '#'],
+    ['#', '.', '$', ' ', '#'],
+    ['#', ' ', '$', '.', '#'],
+    ['#', '.', '$', '.', '#'],
+    ['#', '.', '*', ' ', '#'],
+    ['#', ' ', '*', '.', '#'],
+    ['#', ' ', '*', ' ', '#'],
+    ['#', '.', '*', '.', '#'],
+    ['#', '#', '#', '#', '#'],
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+        beyond = ''
+        if (
+            0 <= player_y + dy + dy < len(level)
+            and 0 <= player_x + dx + dx < len(level[player_y + dy + dy])
+        ):
+            beyond = level[player_y + dy + dy][player_x + dx + dx]
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        next_current = {
+            player: empty,
+            player_on_storage: storage,
+        }
+        next_beyond = {
+            empty: box,
+            storage: box_on_storage,
+        }
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif beyond in next_beyond:
+            level[player_y][player_x] = next_current[current]
+
+            |if| adjacent == box:
+                level[player_y + dy][player_x + dx] = player
+            |elif adjacent == box_on_storage:|
+                level[player_y + dy][player_x + dx] = |player_on_storage|
+
+            level[player_y + dy + dy][player_x + dx + dx] = next_beyond[beyond]
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    # etc.
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif beyond in next_beyond:
+            level[player_y][player_x] = next_current[current]
+
+            |if| adjacent == box:
+                level[player_y + dy][player_x + dx] = player
+            |elif adjacent == box_on_storage:|
+                level[player_y + dy][player_x + dx] = |player_on_storage|
+
+            level[player_y + dy + dy][player_x + dx + dx] = next_beyond[beyond]
+`
+
+!
+
+### Simplifying code
+
+A dictionary is made which returns the next adjacent cell type when a box is pushed when indexed by the current adjacent cell type.
+
+``
+level = [
+    ['#', '#', '#', '#', '#'],
+    ['#', '@', ' ', '.', '#'],
+    ['#', ' ', '$', ' ', '#'],
+    ['#', '.', '$', ' ', '#'],
+    ['#', ' ', '$', '.', '#'],
+    ['#', '.', '$', '.', '#'],
+    ['#', '.', '*', ' ', '#'],
+    ['#', ' ', '*', '.', '#'],
+    ['#', ' ', '*', ' ', '#'],
+    ['#', '.', '*', '.', '#'],
+    ['#', '#', '#', '#', '#'],
+]
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+        beyond = ''
+        if (
+            0 <= player_y + dy + dy < len(level)
+            and 0 <= player_x + dx + dx < len(level[player_y + dy + dy])
+        ):
+            beyond = level[player_y + dy + dy][player_x + dx + dx]
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        next_current = {
+            player: empty,
+            player_on_storage: storage,
+        }
+        next_beyond = {
+            empty: box,
+            storage: box_on_storage,
+        }
+        |next_adjacent_push = {|
+        |    box: player,|
+        |    box_on_storage: player_on_storage,|
+        |}|
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif beyond in next_beyond |and adjacent in next_adjacent_push|:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = |next_adjacent_push[adjacent]|
+            level[player_y + dy + dy][player_x + dx + dx] = next_beyond[beyond]
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    # etc.
+
+        |next_adjacent_push = {|
+        |    box: player,|
+        |    box_on_storage: player_on_storage,|
+        |}|
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif beyond in next_beyond |and adjacent in next_adjacent_push|:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = |next_adjacent_push[adjacent]|
+            level[player_y + dy + dy][player_x + dx + dx] = next_beyond[beyond]
+`
+
+### Loading level from levels list
+
+The levels are stored in a list.
+
+The number of the current level is also stored.
+
+The current level is copied from the list containing all the levels.
+
+The *copy* module is imported so that `copy.deepcopy` can be used.
+
+``
+|import copy|
+
+|levels = [|
+|    [|
+|        [' ', ' ', '#', '#', '#'],|
+|        [' ', ' ', '#', '.', '#'],|
+|        [' ', ' ', '#', ' ', '#', '#', '#', '#'],|
+|        ['#', '#', '#', '$', ' ', '$', '.', '#'],|
+|        ['#', '.', ' ', '$', '@', '#', '#', '#'],|
+|        ['#', '#', '#', '#', '$', '#'],|
+|        [' ', ' ', ' ', '#', '.', '#'],|
+|        [' ', ' ', ' ', '#', '#', '#'],|
+|    ],|
+|    [|
+|        ['#', '#', '#', '#', '#'],|
+|        ['#', ' ', ' ', ' ', '#'],|
+|        ['#', '@', '$', '$', '#', ' ', '#', '#', '#'],|
+|        ['#', ' ', '$', ' ', '#', ' ', '#', '.', '#'],|
+|        ['#', '#', '#', ' ', '#', '#', '#', '.', '#'],|
+|        [' ', '#', '#', ' ', ' ', ' ', ' ', '.', '#'],|
+|        [' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'],|
+|        [' ', '#', ' ', ' ', ' ', '#', '#', '#', '#'],|
+|        [' ', '#', '#', '#', '#', '#'],|
+|    ],|
+|    [|
+|        [' ', '#', '#', '#', '#', '#', '#', '#'],|
+|        [' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'],|
+|        ['#', '#', '$', '#', '#', '#', ' ', ' ', ' ', '#'],|
+|        ['#', ' ', '@', ' ', '$', ' ', ' ', '$', ' ', '#'],|
+|        ['#', ' ', '.', '.', '#', ' ', '$', ' ', '#', '#'],|
+|        ['#', '#', '.', '.', '#', ' ', ' ', ' ', '#'],|
+|        [' ', '#', '#', '#', '#', '#', '#', '#', '#'],|
+|    ],|
+|]|
+
+|current_level = 0|
+
+level = |copy.deepcopy(levels[current_level])|
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+        beyond = ''
+        if (
+            0 <= player_y + dy + dy < len(level)
+            and 0 <= player_x + dx + dx < len(level[player_y + dy + dy])
+        ):
+            beyond = level[player_y + dy + dy][player_x + dx + dx]
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        next_current = {
+            player: empty,
+            player_on_storage: storage,
+        }
+        next_beyond = {
+            empty: box,
+            storage: box_on_storage,
+        }
+        next_adjacent_push = {
+            box: player,
+            box_on_storage: player_on_storage,
+        }
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif beyond in next_beyond and adjacent in next_adjacent_push:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent_push[adjacent]
+            level[player_y + dy + dy][player_x + dx + dx] = next_beyond[beyond]
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+import copy
+
+levels = [
+    [
+        [' ', ' ', '#', '#', '#'],
+        [' ', ' ', '#', '.', '#'],
+        [' ', ' ', '#', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '$', ' ', '$', '.', '#'],
+        ['#', '.', ' ', '$', '@', '#', '#', '#'],
+        ['#', '#', '#', '#', '$', '#'],
+        [' ', ' ', ' ', '#', '.', '#'],
+        [' ', ' ', ' ', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#'],
+        ['#', '@', '$', '$', '#', ' ', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '#', ' ', '#', '.', '#'],
+        ['#', '#', '#', ' ', '#', '#', '#', '.', '#'],
+        [' ', '#', '#', ' ', ' ', ' ', ' ', '.', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        ['#', '#', '$', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '@', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', '.', '.', '#', ' ', '$', ' ', '#', '#'],
+        ['#', '#', '.', '.', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+]
+
+current_level = 0
+
+level = |copy.deepcopy(levels[current_level])|
+
+# etc.
+`
+
+!
+
+### Resetting level
+
+When the *r* key is pressed the level is reset.
+
+The code for copying the current level is reused, so a function is made.
+
+``
+import copy
+
+levels = [
+    [
+        [' ', ' ', '#', '#', '#'],
+        [' ', ' ', '#', '.', '#'],
+        [' ', ' ', '#', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '$', ' ', '$', '.', '#'],
+        ['#', '.', ' ', '$', '@', '#', '#', '#'],
+        ['#', '#', '#', '#', '$', '#'],
+        [' ', ' ', ' ', '#', '.', '#'],
+        [' ', ' ', ' ', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#'],
+        ['#', '@', '$', '$', '#', ' ', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '#', ' ', '#', '.', '#'],
+        ['#', '#', '#', ' ', '#', '#', '#', '.', '#'],
+        [' ', '#', '#', ' ', ' ', ' ', ' ', '.', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        ['#', '#', '$', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '@', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', '.', '.', '#', ' ', '$', ' ', '#', '#'],
+        ['#', '#', '.', '.', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+]
+
+current_level = 0
+
+|def load_level():|
+    |global level|
+    level = copy.deepcopy(levels[current_level])
+
+|load_level()|
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+        beyond = ''
+        if (
+            0 <= player_y + dy + dy < len(level)
+            and 0 <= player_x + dx + dx < len(level[player_y + dy + dy])
+        ):
+            beyond = level[player_y + dy + dy][player_x + dx + dx]
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        next_current = {
+            player: empty,
+            player_on_storage: storage,
+        }
+        next_beyond = {
+            empty: box,
+            storage: box_on_storage,
+        }
+        next_adjacent_push = {
+            box: player,
+            box_on_storage: player_on_storage,
+        }
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif beyond in next_beyond and adjacent in next_adjacent_push:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent_push[adjacent]
+            level[player_y + dy + dy][player_x + dx + dx] = next_beyond[beyond]
+
+    |elif key == keys.R:|
+    |    load_level()|
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+# etc.
+
+current_level = 0
+
+|def load_level():|
+    |global level|
+    level = copy.deepcopy(levels[current_level])
+
+|load_level()|
+
+# etc.
+
+def on_key_down(key):
+    # etc.
+
+    elif key == keys.R:
+        load_level()
+`
+
+### Next and previous level
+
+When the *n* key is pressed, the next level is loaded, and when the *p* key is pressed, the previous level is loaded.
+
+``
+import copy
+
+levels = [
+    [
+        [' ', ' ', '#', '#', '#'],
+        [' ', ' ', '#', '.', '#'],
+        [' ', ' ', '#', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '$', ' ', '$', '.', '#'],
+        ['#', '.', ' ', '$', '@', '#', '#', '#'],
+        ['#', '#', '#', '#', '$', '#'],
+        [' ', ' ', ' ', '#', '.', '#'],
+        [' ', ' ', ' ', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#'],
+        ['#', '@', '$', '$', '#', ' ', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '#', ' ', '#', '.', '#'],
+        ['#', '#', '#', ' ', '#', '#', '#', '.', '#'],
+        [' ', '#', '#', ' ', ' ', ' ', ' ', '.', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        ['#', '#', '$', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '@', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', '.', '.', '#', ' ', '$', ' ', '#', '#'],
+        ['#', '#', '.', '.', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+]
+
+current_level = 0
+
+def load_level():
+    global level
+    level = copy.deepcopy(levels[current_level])
+
+load_level()
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    |global current_level|
+
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+        beyond = ''
+        if (
+            0 <= player_y + dy + dy < len(level)
+            and 0 <= player_x + dx + dx < len(level[player_y + dy + dy])
+        ):
+            beyond = level[player_y + dy + dy][player_x + dx + dx]
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        next_current = {
+            player: empty,
+            player_on_storage: storage,
+        }
+        next_beyond = {
+            empty: box,
+            storage: box_on_storage,
+        }
+        next_adjacent_push = {
+            box: player,
+            box_on_storage: player_on_storage,
+        }
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif beyond in next_beyond and adjacent in next_adjacent_push:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent_push[adjacent]
+            level[player_y + dy + dy][player_x + dx + dx] = next_beyond[beyond]
+
+    elif key == keys.R:
+        load_level()
+
+    |elif key == keys.N:|
+    |    current_level += 1|
+    |    load_level()|
+
+    |elif key == keys.P:|
+    |    current_level -= 1|
+    |    load_level()|
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    global current_level
+
+    # etc.
+
+    elif key == keys.N:
+        current_level += 1
+        load_level()
+
+    elif key == keys.P:
+        current_level -= 1
+        load_level()
+`
+
+!
+
+### Wrapping next and previous level
+
+If the next level is after the last level, then the first level is loaded.
+
+If the previous level is before the first level, then the last level is loaded.
+
+``
+import copy
+
+levels = [
+    [
+        [' ', ' ', '#', '#', '#'],
+        [' ', ' ', '#', '.', '#'],
+        [' ', ' ', '#', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '$', ' ', '$', '.', '#'],
+        ['#', '.', ' ', '$', '@', '#', '#', '#'],
+        ['#', '#', '#', '#', '$', '#'],
+        [' ', ' ', ' ', '#', '.', '#'],
+        [' ', ' ', ' ', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#'],
+        ['#', '@', '$', '$', '#', ' ', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '#', ' ', '#', '.', '#'],
+        ['#', '#', '#', ' ', '#', '#', '#', '.', '#'],
+        [' ', '#', '#', ' ', ' ', ' ', ' ', '.', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        ['#', '#', '$', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '@', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', '.', '.', '#', ' ', '$', ' ', '#', '#'],
+        ['#', '#', '.', '.', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+]
+
+current_level = 0
+
+def load_level():
+    global level
+    level = copy.deepcopy(levels[current_level])
+
+load_level()
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    global current_level
+
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+        beyond = ''
+        if (
+            0 <= player_y + dy + dy < len(level)
+            and 0 <= player_x + dx + dx < len(level[player_y + dy + dy])
+        ):
+            beyond = level[player_y + dy + dy][player_x + dx + dx]
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        next_current = {
+            player: empty,
+            player_on_storage: storage,
+        }
+        next_beyond = {
+            empty: box,
+            storage: box_on_storage,
+        }
+        next_adjacent_push = {
+            box: player,
+            box_on_storage: player_on_storage,
+        }
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif beyond in next_beyond and adjacent in next_adjacent_push:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent_push[adjacent]
+            level[player_y + dy + dy][player_x + dx + dx] = next_beyond[beyond]
+
+    elif key == keys.R:
+        load_level()
+
+    elif key == keys.N:
+        current_level += 1
+        |if current_level >= len(levels):|
+        |    current_level = 0|
+        load_level()
+
+    elif key == keys.P:
+        current_level -= 1
+        |if current_level < 0:|
+        |    current_level = len(levels) - 1|
+        load_level()
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    # etc.
+
+    elif key == keys.N:
+        current_level += 1
+        |if current_level >= len(levels):|
+        |    current_level = 0|
+        load_level()
+
+    elif key == keys.P:
+        current_level -= 1
+        |if current_level < 0:|
+        |    current_level = len(levels) - 1|
+        load_level()
+`
+
+### Go to next level when complete
+
+After the player has moved, all of the cells in the level are looped through, and if none of the cells are boxes (i.e. all the boxes are on storage), then the level is complete and the next level is loaded.
+
+``
+import copy
+
+levels = [
+    [
+        [' ', ' ', '#', '#', '#'],
+        [' ', ' ', '#', '.', '#'],
+        [' ', ' ', '#', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '$', ' ', '$', '.', '#'],
+        ['#', '.', ' ', '$', '@', '#', '#', '#'],
+        ['#', '#', '#', '#', '$', '#'],
+        [' ', ' ', ' ', '#', '.', '#'],
+        [' ', ' ', ' ', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#'],
+        ['#', '@', '$', '$', '#', ' ', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '#', ' ', '#', '.', '#'],
+        ['#', '#', '#', ' ', '#', '#', '#', '.', '#'],
+        [' ', '#', '#', ' ', ' ', ' ', ' ', '.', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        ['#', '#', '$', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '@', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', '.', '.', '#', ' ', '$', ' ', '#', '#'],
+        ['#', '#', '.', '.', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+]
+
+current_level = 0
+
+def load_level():
+    global level
+    level = copy.deepcopy(levels[current_level])
+
+load_level()
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    global current_level
+
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+        beyond = ''
+        if (
+            0 <= player_y + dy + dy < len(level)
+            and 0 <= player_x + dx + dx < len(level[player_y + dy + dy])
+        ):
+            beyond = level[player_y + dy + dy][player_x + dx + dx]
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        next_current = {
+            player: empty,
+            player_on_storage: storage,
+        }
+        next_beyond = {
+            empty: box,
+            storage: box_on_storage,
+        }
+        next_adjacent_push = {
+            box: player,
+            box_on_storage: player_on_storage,
+        }
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif beyond in next_beyond and adjacent in next_adjacent_push:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent_push[adjacent]
+            level[player_y + dy + dy][player_x + dx + dx] = next_beyond[beyond]
+
+        |complete = True|
+
+        |for y, row in enumerate(level):|
+        |    for x, cell in enumerate(row):|
+        |        if cell == box:|
+        |            complete = False|
+
+        |if complete:|
+        |    current_level += 1|
+        |    if current_level >= len(levels):|
+        |        current_level = 0|
+        |    load_level()|
+
+    elif key == keys.R:
+        load_level()
+
+    elif key == keys.N:
+        current_level += 1
+        if current_level >= len(levels):
+            current_level = 0
+        load_level()
+
+    elif key == keys.P:
+        current_level -= 1
+        if current_level < 0:
+            current_level = len(levels) - 1
+        load_level()
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    color=colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``
+`
+def on_key_down(key):
+    # etc.
+
+    if key in (keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT):
+
+        # etc.
+
+        complete = True
+
+        for y, row in enumerate(level):
+            for x, cell in enumerate(row):
+                if cell == box:
+                    complete = False
+
+        if complete:
+            current_level += 1
+            if current_level >= len(levels):
+                current_level = 0
+            load_level()
+
+    # etc.
+`
+
+### More levels
+
+``
+import copy
+
+levels = [
+    [
+        [' ', ' ', '#', '#', '#'],
+        [' ', ' ', '#', '.', '#'],
+        [' ', ' ', '#', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '$', ' ', '$', '.', '#'],
+        ['#', '.', ' ', '$', '@', '#', '#', '#'],
+        ['#', '#', '#', '#', '$', '#'],
+        [' ', ' ', ' ', '#', '.', '#'],
+        [' ', ' ', ' ', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#'],
+        ['#', '@', '$', '$', '#', ' ', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '#', ' ', '#', '.', '#'],
+        ['#', '#', '#', ' ', '#', '#', '#', '.', '#'],
+        [' ', '#', '#', ' ', ' ', ' ', ' ', '.', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        ['#', '#', '$', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '@', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', '.', '.', '#', ' ', '$', ' ', '#', '#'],
+        ['#', '#', '.', '.', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', ' ', ' ', '.', '#'],
+        ['#', ' ', ' ', ' ', '$', ' ', '*', '#'],
+        ['#', ' ', '$', '$', ' ', '$', '.', '#'],
+        ['#', '#', '@', '#', '#', '.', '.', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#'],
+        [' ', '#', '@', ' ', '#', '#', '#'],
+        [' ', '#', ' ', '$', ' ', ' ', '#'],
+        ['#', '#', '#', ' ', '#', ' ', '#', '#'],
+        ['#', '.', '#', ' ', '#', ' ', ' ', '#'],
+        ['#', '.', '$', ' ', ' ', '#', ' ', '#'],
+        ['#', '.', ' ', ' ', ' ', '$', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', '#', ' ', ' ', '#', ' ', '@', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'],
+        [' ', ' ', '#', '$', ' ', '$', ' ', '$', ' ', '#'],
+        [' ', ' ', '#', ' ', '$', '#', '#', ' ', ' ', '#'],
+        ['#', '#', '#', ' ', '$', ' ', '#', ' ', '#', '#'],
+        ['#', '.', '.', '.', '.', '.', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', '.', ' ', '$', '#', '#', ' ', '#', '#'],
+        ['#', '.', '.', '$', ' ', '$', ' ', ' ', '@', '#'],
+        ['#', '.', '.', ' ', '$', ' ', '$', ' ', '#', '#'],
+        ['#', '#', '#', '#', '#', '#', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '$', '$', '$', ' ', '#'],
+        ['#', '@', ' ', '$', '.', '.', ' ', '#'],
+        ['#', ' ', '$', '.', '.', '.', '#', '#'],
+        ['#', '#', '#', '#', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', '#', '#', '#', '#'],
+        [' ', ' ', '#', '.', '.', '#'],
+        [' ', '#', '#', ' ', '.', '#', '#'],
+        [' ', '#', ' ', ' ', '$', '.', '#'],
+        ['#', '#', ' ', '$', ' ', ' ', '#', '#'],
+        ['#', ' ', ' ', '#', '$', '$', ' ', '#'],
+        ['#', ' ', ' ', '@', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', ' ', ' ', '@', '#'],
+        ['#', ' ', ' ', '$', '.', ' ', '#', '#'],
+        ['#', ' ', ' ', '.', '$', '.', ' ', '#'],
+        ['#', '#', '#', ' ', '*', '$', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', '#', '#'],
+        [' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '$', '.', '.', '$', ' ', '#'],
+        ['#', '@', '$', '.', '*', ' ', '#', '#'],
+        ['#', ' ', '$', '.', '.', '$', ' ', '#'],
+        ['#', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        [' ', ' ', '#', ' ', '$', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', ' ', '$', ' ', '#', '#', ' ', '#'],
+        ['#', '.', '.', '.', ' ', '$', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', '.', '$', '#', '$', ' ', '#', '#'],
+        ['#', '#', '#', '#', ' ', '#', ' ', '$', ' ', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', '@', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '$', '$', '$', '#', '#'],
+        ['#', ' ', ' ', '#', '.', '.', '#', '#', '#'],
+        ['#', '#', ' ', ' ', '.', '.', '$', ' ', '#'],
+        [' ', '#', ' ', '@', ' ', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', '#', '.', ' ', '#'],
+        [' ', '#', '#', ' ', ' ', '$', '.', '.', '.', '#'],
+        [' ', '#', ' ', ' ', '$', ' ', '#', '*', '.', '#'],
+        ['#', '#', ' ', '#', '#', '$', '#', ' ', '#', '#'],
+        ['#', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '@', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '.', '.', '.', '.', ' ', '#'],
+        ['#', '#', '#', '.', '.', '.', '$', '#', '#', '#'],
+        ['#', ' ', ' ', '$', '#', '$', ' ', '$', ' ', '#'],
+        ['#', ' ', '$', '$', ' ', ' ', '#', '$', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', ' ', '@', ' ', '#', '#', '#'],
+        [' ', ' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '.', '.', ' ', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', '$', ' ', '$', '@', '#'],
+        ['#', '$', '#', '$', '$', '$', '#', '#'],
+        ['#', '.', '.', '$', ' ', '$', ' ', '#'],
+        ['#', '.', '.', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '#', '$', '$', ' ', ' ', '#'],
+        ['#', ' ', '.', '.', '.', '#', ' ', '#'],
+        ['#', '#', '.', '.', '.', '$', ' ', '#', '#'],
+        [' ', '#', ' ', '#', '#', ' ', '$', ' ', '#'],
+        [' ', '#', '$', ' ', ' ', '$', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '#', ' ', ' ', '@', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', ' ', ' ', ' ', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '$', ' ', '$', ' ', ' ', '#'],
+        ['#', ' ', '$', ' ', ' ', ' ', '$', ' ', '@', '#'],
+        ['#', '#', '#', '$', '$', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', '.', '.', '#'],
+        [' ', ' ', '#', '.', '.', '.', '.', '#'],
+        [' ', ' ', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '*', ' ', ' ', ' ', '#'],
+        ['#', ' ', '$', '.', '$', '.', ' ', '@', '#'],
+        ['#', ' ', '.', '$', '.', '$', '.', ' ', '#'],
+        ['#', ' ', '$', '.', '$', '.', '$', ' ', '#'],
+        ['#', ' ', ' ', ' ', '*', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', '$', '#', '$', ' ', '#'],
+        ['#', ' ', '$', '$', ' ', ' ', '.', '$', '.', '#'],
+        ['#', ' ', '@', '#', '#', '#', '.', '.', '.', '#'],
+        ['#', '#', '#', '#', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '.', ' ', '.', '.', '#'],
+        [' ', '#', '.', ' ', '$', '.', '#'],
+        ['#', '#', '#', ' ', ' ', '$', '#', '#'],
+        ['#', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', '#', '$', '#', '#', ' ', '#'],
+        ['#', ' ', ' ', ' ', '@', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', '#', '#', '#'],
+        ['#', '#', ' ', '#', '$', ' ', ' ', ' ', '#'],
+        ['#', ' ', '$', ' ', ' ', '$', '$', ' ', '#'],
+        ['#', ' ', '#', '$', '#', '.', '*', '.', '#'],
+        ['#', ' ', ' ', ' ', '@', '.', '.', '.', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', ' ', ' ', ' ', '#', '#'],
+        ['#', ' ', '$', ' ', '$', ' ', ' ', ' ', '#'],
+        ['#', '@', '#', '.', '*', '.', '#', ' ', '#'],
+        ['#', ' ', '#', '.', '*', '.', '#', ' ', '#'],
+        ['#', ' ', ' ', ' ', '$', ' ', '$', ' ', '#'],
+        ['#', '#', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', '.', ' ', ' ', '#', '#'],
+        ['#', ' ', '$', '.', '$', '.', ' ', ' ', '#'],
+        ['#', '@', '$', '#', ' ', '#', '$', ' ', '#'],
+        ['#', ' ', '$', '.', ' ', '.', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '$', '#', '$', ' ', '#'],
+        [' ', ' ', '#', '.', ' ', '.', ' ', ' ', '#'],
+        [' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', ' ', ' ', ' ', ' ', '.', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', '$', ' ', '$', '.', ' ', '#'],
+        ['#', ' ', ' ', '.', '#', '#', '#', '#', '.', '#', '#'],
+        ['#', ' ', '$', '.', '$', ' ', '$', ' ', '@', '#'],
+        ['#', ' ', ' ', '.', ' ', ' ', ' ', ' ', '#', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '.', '*', '.', ' ', '$', ' ', '#'],
+        ['#', '@', '$', '.', '*', ' ', '*', '.', '$', ' ', '#'],
+        ['#', ' ', '$', ' ', '.', '*', '.', ' ', '$', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '$', ' ', ' ', '#', '#', '#', '#'],
+        ['#', ' ', '$', '*', '.', '.', '*', ' ', '#'],
+        ['#', ' ', '*', '.', '.', '*', '$', ' ', '#'],
+        ['#', '#', '#', '#', ' ', ' ', '$', ' ', '#'],
+        [' ', ' ', ' ', '#', ' ', '@', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', '.', ' ', ' ', '@', '#'],
+        ['#', ' ', ' ', '$', '$', '$', ' ', ' ', '#'],
+        ['#', '.', '#', '#', '.', '#', '#', '.', '#'],
+        ['#', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', '.', '#', ' ', '#', '#'],
+        ['#', '#', '#', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '.', ' ', ' ', '$', '.', ' ', '@', '#'],
+        ['#', ' ', '.', '$', '.', '$', ' ', ' ', '#'],
+        ['#', '#', '$', '.', '$', ' ', '$', '#', '#'],
+        ['#', ' ', '.', '$', '.', '$', ' ', ' ', '#'],
+        ['#', '.', ' ', ' ', '$', '.', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', '@', ' ', ' ', '#'],
+        ['#', '#', '$', ' ', '$', ' ', '#'],
+        ['#', ' ', ' ', '$', '$', '#', '#'],
+        ['#', '.', '.', '.', '.', '#'],
+        ['#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', '#', '#', '#', '#', '#'],
+        ['#', '#', '$', ' ', '#', '#', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', '@', '$', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', '#', '$', ' ', '#'],
+        ['#', '#', '#', '.', '#', '#', ' ', '#', '#', '#'],
+        [' ', '#', '.', '.', '.', '$', ' ', '$', ' ', '#'],
+        [' ', '#', '#', '.', '.', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', '#', '.', '.', ' ', '#', '#'],
+        ['#', ' ', '$', '.', ' ', '$', '*', ' ', '#'],
+        ['#', ' ', ' ', '$', '@', '$', ' ', ' ', '#'],
+        ['#', ' ', '*', '$', ' ', '.', '$', ' ', '#'],
+        ['#', '#', ' ', '.', '.', '#', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', ' ', ' ', '*', ' ', ' ', '#', '#'],
+        ['#', ' ', '.', ' ', '.', ' ', '.', ' ', '#'],
+        ['#', ' ', '$', ' ', '*', ' ', ' ', ' ', '#'],
+        ['#', '*', '$', '$', '*', '$', '$', '*', '#'],
+        ['#', ' ', ' ', ' ', '*', ' ', '$', ' ', '#'],
+        ['#', ' ', '.', ' ', '.', '@', '.', ' ', '#'],
+        ['#', '#', ' ', ' ', '*', ' ', ' ', '#', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '.', '$', ' ', '@', '#'],
+        ['#', ' ', '$', ' ', '*', ' ', '$', ' ', '#'],
+        ['#', '*', '.', '.', '.', '*', '.', '*', '#'],
+        ['#', ' ', '$', '$', '*', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', '.', ' ', '$', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#', '.', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '#', '.', '.', '#', '#', ' ', '#'],
+        [' ', '#', ' ', ' ', '$', '.', '.', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '#', ' ', '.', '#', ' ', '#', '#'],
+        ['#', '#', '#', ' ', '#', '#', '$', '#', ' ', ' ', '#'],
+        ['#', ' ', '$', ' ', ' ', ' ', ' ', '$', '$', ' ', '#'],
+        ['#', ' ', '#', '$', '#', ' ', ' ', '#', ' ', ' ', '#'],
+        ['#', '@', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', '#', ' ', '.', '.', '.', '#'],
+        ['#', '#', '#', '#', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', '#', '#', '#', '$', ' ', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '$', ' ', ' ', '$', '$', ' ', '#'],
+        ['#', '@', ' ', '$', ' ', '$', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', '#', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#'],
+        [' ', '#', '$', ' ', '#', '#', '#', ' ', '$', '#'],
+        [' ', '#', ' ', '#', '.', '.', '.', '#', ' ', '#'],
+        ['#', '#', ' ', '#', '.', '.', '.', '#', ' ', '#', '#'],
+        ['#', ' ', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', '#', ' ', '@', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', ' ', ' ', ' ', '#', ' ', '#', ' ', '#'],
+        ['#', ' ', ' ', '#', '.', '$', '$', '$', ' ', '#'],
+        ['#', ' ', '#', '.', '*', '#', ' ', '#', '#', '#'],
+        ['#', ' ', ' ', '.', '.', '#', ' ', '#'],
+        ['#', '#', '#', '.', '.', '$', ' ', '#', '#'],
+        [' ', ' ', '#', '.', '#', ' ', '$', ' ', '#'],
+        [' ', '#', '#', ' ', '#', ' ', '#', '@', '#'],
+        [' ', '#', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', '@', ' ', '$', '$', '$', ' ', '$', ' ', ' ', '#'],
+        ['#', '#', ' ', '$', ' ', ' ', '$', ' ', '$', ' ', '#'],
+        [' ', '#', '#', ' ', '#', '#', '#', '#', ' ', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', '$', ' ', '#', '#'],
+        ['#', '#', '#', ' ', '#', '#', '$', ' ', '$', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', '#'],
+        ['#', '.', '.', '.', '.', '.', '#'],
+        ['#', '.', '.', '.', '.', '.', '#'],
+        ['#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '@', ' ', '$', '#', ' ', '#'],
+        ['#', '#', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '$', '#', '.', '#', ' ', '#'],
+        ['#', ' ', ' ', '.', '*', '.', '$', '#'],
+        ['#', '#', ' ', '#', '.', '#', ' ', '#'],
+        [' ', '#', ' ', '#', '.', ' ', ' ', '#', '#'],
+        ['#', '#', ' ', '$', '.', '#', ' ', ' ', '#'],
+        ['#', ' ', ' ', '#', ' ', '$', ' ', ' ', '#'],
+        ['#', ' ', '$', ' ', ' ', ' ', '#', '#', '#'],
+        ['#', ' ', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '@', ' ', '#'],
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', '#'],
+        ['#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', '.', '#', '#', '#', ' ', '#', '#'],
+        ['#', ' ', '#', ' ', '#', ' ', ' ', ' ', ' ', '#', '#'],
+        ['#', ' ', '#', ' ', '$', ' ', '$', '#', '.', ' ', '#'],
+        ['#', ' ', '#', ' ', ' ', '*', ' ', ' ', '#', ' ', '#'],
+        ['#', ' ', '.', '#', '$', ' ', '$', ' ', '#', ' ', '#'],
+        ['#', '#', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', '#'],
+        [' ', '#', ' ', '#', '#', '#', '.', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#', '#'],
+        ['#', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', '$', ' ', '@', '#'],
+        ['#', '#', '#', '.', ' ', '#'],
+        [' ', ' ', '#', '.', '#', '#'],
+        [' ', ' ', '#', '.', ' ', '#'],
+        ['#', '#', '#', '.', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', '$', ' ', ' ', '#'],
+        ['#', '#', ' ', ' ', '#', '#'],
+        [' ', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#'],
+        ['#', ' ', ' ', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '.', ' ', ' ', '#', ' ', '#'],
+        ['#', '#', '$', '#', ' ', ' ', '.', '#'],
+        [' ', '#', ' ', '#', '$', '#', ' ', '#'],
+        ['#', '#', '.', ' ', ' ', '.', ' ', '#'],
+        ['#', ' ', ' ', '#', '#', ' ', ' ', '#'],
+        ['#', ' ', ' ', '#', ' ', ' ', '*', '#'],
+        ['#', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', '$', '#', '*', ' ', '@', '#'],
+        ['#', ' ', ' ', '#', '.', '#', '#', '#'],
+        ['#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#'],
+        [' ', ' ', ' ', '#', '.', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '.', '$', ' ', '#', ' ', ' ', '#'],
+        [' ', '#', '.', '.', '.', ' ', ' ', '#', '$', ' ', '#'],
+        [' ', '#', '.', '#', '#', ' ', '$', ' ', ' ', ' ', '#'],
+        ['#', '#', '.', '$', ' ', '$', '#', '#', ' ', '#', '#'],
+        ['#', '.', '$', ' ', '#', ' ', '#', '#', ' ', '#'],
+        ['#', '.', '#', '$', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', '.', '$', ' ', ' ', '#', '$', ' ', '$', '#'],
+        ['#', '.', ' ', '$', '#', '#', ' ', '@', ' ', '#'],
+        ['#', '.', '$', ' ', ' ', ' ', ' ', '$', ' ', '#'],
+        ['#', '.', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', ' ', '#', '#', '#', ' ', ' ', '#', '#'],
+        [' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', ' ', '.', '.', '#'],
+        ['#', '#', ' ', '$', '#', '*', '#', '$', '.', '#'],
+        ['#', ' ', ' ', '$', ' ', '#', ' ', '$', '.', '#'],
+        ['#', ' ', ' ', '$', ' ', '@', ' ', '$', '.', '#'],
+        ['#', ' ', ' ', '$', ' ', '#', ' ', '$', '.', '#'],
+        ['#', '#', '$', '$', '#', '*', '#', '$', '.', '#'],
+        [' ', '#', '.', ' ', ' ', '#', ' ', '.', '.', '#'],
+        [' ', '#', '#', '.', ' ', ' ', ' ', ' ', '#', '#'],
+        [' ', ' ', '#', '#', '#', ' ', ' ', '#', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '#', ' ', '#', '#', '#', ' ', '#'],
+        ['#', ' ', '$', '$', ' ', ' ', '#', ' ', '#'],
+        ['#', '@', '$', ' ', ' ', ' ', '#', ' ', '#'],
+        ['#', '#', ' ', '#', '#', ' ', '#', ' ', '#'],
+        ['#', ' ', ' ', ' ', '$', ' ', '$', ' ', '#'],
+        ['#', ' ', '$', '#', '#', ' ', '#', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', '$', '#', ' ', '#'],
+        ['#', '.', '.', '.', '#', ' ', ' ', ' ', '#'],
+        ['#', '.', '#', '.', '#', '$', '#', '#', '#'],
+        ['#', '.', '.', '.', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', '.', '#'],
+        ['#', ' ', '#', '$', '#', '.', '.', '#', '#'],
+        ['#', ' ', ' ', ' ', '$', '.', '.', '.', '#'],
+        ['#', '#', ' ', '#', '#', '.', '$', '.', '#'],
+        [' ', '#', ' ', '#', '#', ' ', ' ', '#', '#'],
+        [' ', '#', '$', '#', '#', ' ', ' ', '#'],
+        ['#', '#', ' ', ' ', ' ', '#', '$', '#'],
+        ['#', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', '$', ' ', '#', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '$', ' ', ' ', ' ', '@', '#'],
+        ['#', ' ', ' ', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#'],
+        ['#', ' ', ' ', '#', '#', '#', '#'],
+        ['#', ' ', ' ', '$', ' ', ' ', '#'],
+        ['#', ' ', '#', '.', '#', ' ', '#'],
+        ['#', ' ', '#', ' ', '#', ' ', '#'],
+        ['#', '.', '$', '.', '$', '.', '#'],
+        ['#', ' ', '#', ' ', '#', ' ', '#'],
+        ['#', ' ', '#', '.', '#', ' ', '#'],
+        ['#', ' ', ' ', '$', '$', ' ', '#'],
+        ['#', '#', ' ', '@', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '#', '#', '#'],
+        [' ', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', ' ', '#'],
+        ['#', ' ', '$', '$', ' ', ' ', '#', '#', ' ', ' ', '#'],
+        ['#', ' ', ' ', '#', ' ', '$', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', ' ', '#', '#', ' ', '$', '#', ' ', ' ', '#'],
+        [' ', '#', ' ', '#', '.', '.', '.', ' ', ' ', '#', '#'],
+        [' ', '#', ' ', ' ', '.', '.', '.', '#', '$', '#', '#'],
+        [' ', '#', ' ', '#', '.', '.', '.', '#', ' ', ' ', '#'],
+        ['#', '#', ' ', '#', ' ', '#', '#', '#', '@', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', '#', '$', '#', '#', '#', '#', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '.', '.', '$', ' ', '$', ' ', '*', '.', '#'],
+        ['#', '.', '*', ' ', '$', ' ', '$', '.', '.', '#'],
+        ['#', '#', '.', '$', ' ', '$', ' ', '*', '#', '#'],
+        [' ', '#', '*', ' ', '$', ' ', '$', '.', '#'],
+        [' ', '#', '.', '$', ' ', '$', ' ', '.', '#'],
+        [' ', '#', '.', ' ', '$', ' ', '$', '.', '#'],
+        [' ', '#', '.', '$', '@', '$', ' ', '*', '#'],
+        ['#', '#', '*', ' ', '$', ' ', '$', '.', '#', '#'],
+        ['#', '.', '.', '$', ' ', '$', ' ', '*', '.', '#'],
+        ['#', '.', '*', ' ', '$', ' ', '$', '.', '.', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', '#', '$', ' ', ' ', '#'],
+        [' ', ' ', '#', '#', '#', ' ', ' ', '$', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', '#'],
+        ['#', '#', '#', ' ', '#', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#', ' ', '#', '#', ' ', '#', '#', '#', '#', '#', ' ', ' ', '.', '.', '#'],
+        ['#', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '.', '.', '#'],
+        ['#', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', '#', '@', '#', '#', ' ', ' ', '.', '.', '#'],
+        [' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '.', '.', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        ['#', '.', '.', ' ', ' ', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'],
+        ['#', '.', '.', ' ', ' ', '#', '$', '#', '#', '#', '#', ' ', ' ', '#'],
+        ['#', '.', '.', ' ', ' ', ' ', ' ', '@', ' ', '#', '#', ' ', ' ', '#'],
+        ['#', '.', '.', ' ', ' ', '#', ' ', '#', ' ', ' ', '$', ' ', '#', '#'],
+        ['#', '#', '#', '#', '#', '#', ' ', '#', '#', '$', ' ', '$', ' ', '#'],
+        [' ', ' ', '#', ' ', '$', ' ', ' ', '$', ' ', '$', ' ', '$', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '@', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', '#', '$', ' ', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', ' ', ' ', '$', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '$', ' ', '$', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '$', ' ', '#', ' ', '#', '#', '#'],
+        ['#', '.', '.', '.', '.', ' ', ' ', '#', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'],
+        ['#', '#', '.', '.', '.', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', '.', '.', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '.', '.', '.', '.', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', ' ', ' ', '.', '.', '.', '.', '#'],
+        ['#', ' ', '$', '$', '$', '#', '$', ' ', ' ', '$', ' ', '#', ' ', ' ', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', '$', ' ', '#', ' ', ' ', '.', '.', '.', '.', '#'],
+        ['#', ' ', '$', '$', ' ', '#', '$', ' ', '$', ' ', '$', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', '$', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#', '#'],
+        ['#', ' ', ' ', '$', '$', '#', '$', '$', ' ', ' ', '@', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '$', '#', '#', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '$', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', '.', '.', ' ', ' ', '#', '#', ' ', '$', ' ', ' ', '$', '#', '#', '#'],
+        ['#', '.', '.', '.', '.', ' ', ' ', ' ', ' ', '$', ' ', '$', '$', ' ', '#', '#'],
+        ['#', '.', '.', '.', '.', ' ', ' ', '#', '#', '$', ' ', ' ', '$', ' ', '@', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '$', ' ', ' ', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', ' ', '$', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', '#', '#', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#'],
+        ['#', '.', '.', ' ', ' ', '#', ' ', '#', '#', '@', '#', '#'],
+        ['#', '.', '.', ' ', ' ', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', ' ', ' ', ' ', ' ', ' ', '$', '$', ' ', '#'],
+        ['#', '.', '.', ' ', ' ', '#', ' ', '#', ' ', '$', ' ', '#'],
+        ['#', '.', '.', '#', '#', '#', ' ', '#', ' ', '$', ' ', '#'],
+        ['#', '#', '#', '#', ' ', '$', ' ', '#', '$', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', '$', '#', ' ', '$', ' ', '#'],
+        [' ', ' ', ' ', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#'],
+        ['#', '#', ' ', '#', ' ', '@', '#', '#', ' ', '$', '$', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', ' ', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', ' ', '#', '#', '#', '#', '#', '$', '#', '#', '#'],
+        ['#', ' ', '$', ' ', ' ', '#', '#', '#', ' ', '.', '.', '#'],
+        ['#', ' ', '$', ' ', '$', ' ', '$', ' ', '.', '.', '.', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', '#', '#', '.', '.', '.', '#'],
+        ['#', ' ', '$', '$', ' ', '#', ' ', '#', '.', '.', '.', '#'],
+        ['#', ' ', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', '$', ' ', '$', ' ', '#'],
+        [' ', ' ', '#', ' ', '$', '#', ' ', '$', ' ', '#', ' ', ' ', '$', ' ', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', ' ', '$', '#', ' ', '#', ' ', ' ', '#', '#', '#', '#', ' ', '#'],
+        ['#', '@', '#', '$', ' ', '$', ' ', '$', ' ', ' ', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', '$', ' ', '#', '$', '#', ' ', ' ', ' ', '#', ' ', '#'],
+        ['#', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', '$', ' ', '$', ' ', '#'],
+        ['#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', '#', '.', '.', '.', '.', '.', '.', '#'],
+        [' ', ' ', '#', '.', '.', '.', '.', '.', '.', '#'],
+        [' ', ' ', '#', '.', '.', '.', '.', '.', '.', '#'],
+        [' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '.', '.', '.', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', '.', '.', '.', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '.', ' ', '.', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', '.', '.', '.', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', '#', '#', ' ', ' ', '.', '.', '.', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', ' ', '$', '$', '$', ' ', '#', '#'],
+        [' ', '#', '#', '#', '#', '#', ' ', ' ', '$', ' ', '$', ' ', '#', '#', '#', '#', '#'],
+        ['#', '#', ' ', ' ', ' ', '#', '$', ' ', '$', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '@', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', ' ', '$', '$', ' ', '$', ' ', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', '@', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '$', '$', ' ', ' ', ' ', '$', '$', ' ', ' ', '$', ' ', '$', ' ', '.', '.', '.', '#'],
+        ['#', ' ', ' ', '$', '$', '$', '#', ' ', ' ', ' ', ' ', '$', ' ', ' ', '#', '.', '.', '.', '#'],
+        ['#', ' ', '$', ' ', ' ', ' ', '#', ' ', '$', '$', ' ', '$', '$', ' ', '#', '.', '.', '.', '#'],
+        ['#', '#', '#', ' ', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#', '.', '.', '.', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', ' ', '$', ' ', '$', ' ', '#', '.', '.', '.', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '.', '.', '.', '#'],
+        ['#', '#', ' ', '#', ' ', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', ' ', '#', '.', '.', '.', '#'],
+        ['#', ' ', ' ', '#', '#', ' ', '#', ' ', '$', '$', ' ', '$', ' ', '$', '#', '#', '.', '.', '#'],
+        ['#', ' ', '.', '.', '#', ' ', '#', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', '#', '.', '#'],
+        ['#', ' ', '.', '.', '#', ' ', '#', ' ', '$', '$', '$', ' ', '$', '$', '$', ' ', '#', '.', '#'],
+        ['#', '#', '#', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '.', '#'],
+        [' ', ' ', ' ', ' ', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '.', '#'],
+        [' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '.', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', ' ', '#', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', '#', '#', ' ', ' ', '#', '#', '#', '$', ' ', '#'],
+        [' ', ' ', '#', '#', ' ', ' ', ' ', '@', ' ', ' ', '$', ' ', ' ', '#'],
+        [' ', '#', '#', ' ', ' ', '$', ' ', '$', '$', '#', '#', ' ', '#', '#'],
+        [' ', '#', ' ', ' ', '#', '$', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', '#', ' ', '$', ' ', '$', '$', ' ', '#', ' ', '#', '#', '#'],
+        [' ', '#', ' ', ' ', ' ', '$', ' ', '#', ' ', ' ', '#', ' ', '$', ' ', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '$', '$', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', ' ', '#', '#', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', '.', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '.', '.', ' ', '.', '.', '#', ' ', '#', '#', '#', '#'],
+        ['#', '.', '.', '.', '#', '.', '#'],
+        ['#', '.', '.', '.', '.', '.', '#'],
+        ['#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '#', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', '$', ' ', '$', '#', ' ', ' ', '#'],
+        ['#', ' ', '#', ' ', ' ', ' ', '$', '@', '$', ' ', ' ', ' ', '#', '#', ' ', '#', '#'],
+        ['#', ' ', '#', ' ', '#', '$', ' ', '$', ' ', '$', '#', '#', '#', '.', '.', '.', '#'],
+        ['#', ' ', '#', ' ', ' ', ' ', '$', ' ', '$', ' ', ' ', '#', '#', '.', '.', '.', '#'],
+        ['#', ' ', '#', '#', '#', '$', '$', '$', ' ', '$', ' ', '#', '#', '.', '.', '.', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '#', ' ', '#', '#', '.', '.', '.', '#'],
+        ['#', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#', ' ', '#', '#', '.', '.', '.', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        ['#', ' ', ' ', '$', ' ', '#', '$', ' ', '#', ' ', ' ', '#', ' ', ' ', '.', '.', '.', ' ', '#'],
+        ['#', ' ', '#', ' ', '$', '#', '@', '$', '#', '#', ' ', '#', ' ', '#', '.', '#', '.', ' ', '#'],
+        ['#', ' ', ' ', '#', ' ', '#', '$', ' ', ' ', '#', ' ', ' ', ' ', ' ', '.', ' ', '.', ' ', '#'],
+        ['#', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', '#', ' ', '#', ' ', '#', '.', '#', '.', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', '#', ' ', ' ', '#', '#', '$', ' ', '$', ' ', '.', ' ', '.', ' ', '#'],
+        ['#', ' ', '$', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#', '$', '#', '.', '#', '.', ' ', '#'],
+        ['#', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', '$', ' ', ' ', '$', '.', '.', '.', ' ', '#'],
+        [' ', '#', '$', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', '@', '$', ' ', '#'],
+        [' ', '#', '$', '$', ' ', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', '#', '#', '#', '.', '.', '.', '.', '.', '.', '#', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', '$', '.', '.', '.', '.', '.', '.', '#', '#', ' ', '#', ' ', '#'],
+        [' ', '#', ' ', '#', '#', '#', '.', '.', '.', '.', '.', '.', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', ' ', ' ', ' ', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', '#', '$', '#', '#'],
+        ['#', ' ', ' ', '#', '$', ' ', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', '#', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', '$', '$', '$', ' ', ' ', '#', ' ', '$', '#', '#', ' ', '#'],
+        ['#', ' ', ' ', ' ', '$', ' ', '$', ' ', '#', '#', '#', '$', '$', ' ', '#', ' ', '#'],
+        ['#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#', ' ', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', '#', ' ', '#', '#', '#', ' ', ' ', ' ', '#', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', ' ', '#', '$', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', '$', ' ', ' ', '#', '#', '$', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '#', ' ', '@', ' ', '$', ' ', '#', ' ', '$', '#'],
+        [' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '$', ' ', '#', '#', '#', '#'],
+        [' ', '#', '#', ' ', '#', '#', '#', '#', '$', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', '$', '#', '.', '.', '.', '.', '.', '#', ' ', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '$', '.', '.', '*', '*', '.', ' ', '$', '#', ' ', '#', '#', '#'],
+        ['#', '#', ' ', ' ', '#', '.', '.', '.', '.', '.', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', '$', '$', ' ', ' ', '#', ' ', ' ', '#'],
+        ['#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#'],
+        ['#', ' ', '$', ' ', ' ', '#', '#', '#', '#', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', '$', ' ', '$', ' ', ' ', ' ', '$', '#'],
+        ['#', '#', '#', '@', ' ', '#', '$', ' ', ' ', ' ', ' ', '#', '#'],
+        [' ', '#', ' ', ' ', '#', '#', ' ', ' ', '$', ' ', '$', ' ', '#', '#'],
+        [' ', '#', ' ', '$', ' ', ' ', '#', '#', ' ', '#', '#', ' ', '.', '#'],
+        [' ', '#', ' ', ' ', '#', '$', '#', '#', '$', ' ', ' ', '#', '.', '#'],
+        [' ', '#', '#', '#', ' ', ' ', ' ', '$', '.', '.', '#', '#', '.', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '.', '*', '.', '.', '.', '#'],
+        [' ', ' ', '#', ' ', '$', '$', ' ', '#', '.', '.', '.', '.', '.', '#'],
+        [' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', '#'],
+        [' ', ' ', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', '#', '.', '.', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', '.', '.', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', '.', '.', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#'],
+        [' ', ' ', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '#', ' ', ' ', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', '#', ' ', ' ', '#'],
+        ['#', '#', '#', '#', ' ', '#', '#', ' ', ' ', '#', '#', '#', '#', ' ', '#', '#'],
+        ['#', ' ', ' ', '$', ' ', ' ', '#', '#', '#', '#', '#', ' ', '#', ' ', ' ', '#'],
+        ['#', ' ', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#', ' ', '$', ' ', ' ', '#'],
+        ['#', ' ', '@', '$', ' ', ' ', '$', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#'],
+        ['#', '#', '#', '#', ' ', '#', '#', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '.', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '.', ' ', ' ', ' ', ' ', '@', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', ' ', '#', '#', '.', '.', '#', ' ', '#', '#', '#', '#'],
+        ['#', '#', ' ', ' ', '#', ' ', '.', '.', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '#', '.', '.', '.', ' ', ' ', ' ', '$', ' ', '#', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', '.', '.', ' ', '#', '#', ' ', ' ', '#', '#', ' ', '#', '#', ' ', '#'],
+        ['#', '#', '#', '#', '$', '#', '#', '$', '#', ' ', '$', ' ', '#', ' ', ' ', ' ', '#', ' ', '#'],
+        [' ', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', '#', '$', ' ', '$', '$', ' ', '#', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', '$', ' ', '#', ' ', '#', ' ', ' ', '#', ' ', '$', '#', '#', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '#'],
+        [' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', '@', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', '#', ' ', '$', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '$', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#', ' ', '#'],
+        ['#', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#', ' ', '#'],
+        ['#', '#', ' ', '$', ' ', '$', ' ', '#', '#', '#', ' ', '#', ' ', '#'],
+        ['#', '#', ' ', '#', ' ', ' ', '$', ' ', ' ', '#', ' ', '#', ' ', '#'],
+        ['#', '#', ' ', '#', ' ', '#', '$', '#', ' ', ' ', ' ', '#', ' ', '#'],
+        ['#', '#', ' ', '#', '#', '#', ' ', ' ', ' ', '#', ' ', '#', ' ', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', '$', ' ', ' ', '#', '#', '#', '#', ' ', '#', ' ', '#', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', '.', '.', '#', '.', '#'],
+        ['#', '#', '#', '#', '$', ' ', ' ', '$', '#', ' ', '$', ' ', ' ', ' ', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', '.', '.', '.', '.', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '$', ' ', ' ', '#', '@', ' ', '#'],
+        ['#', ' ', '#', '#', '#', '#', '#', '#', '#', '$', '#', '#', '#', '#', ' ', ' ', '#', '#', '#'],
+        ['#', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', '#', ' ', ' ', '#', '$', ' ', '.', '.', '#'],
+        ['#', ' ', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', '.', '#'],
+        ['#', ' ', '#', ' ', '$', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '$', ' ', '.', '.', '#'],
+        ['#', ' ', '#', ' ', ' ', '#', '#', '#', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '.', '#'],
+        ['#', ' ', '#', '#', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', '$', ' ', '.', '.', '#'],
+        ['#', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', '$', '#', '#', '#', '#', ' ', ' ', '#', '.', '#'],
+        ['#', ' ', '#', '$', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '#', '*', ' ', '.', '.', '#'],
+        ['#', ' ', ' ', ' ', ' ', '$', ' ', '#', ' ', '$', ' ', '$', ' ', '#', ' ', ' ', '#', '.', '#'],
+        ['#', '#', '#', '#', ' ', '$', '#', '#', '#', ' ', ' ', ' ', ' ', '#', '*', ' ', '.', '.', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '$', '$', ' ', '#', '#', '#', '.', '.', '.', '.', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        ['#', '#', ' ', '#', '#', '#', '#', ' ', '#', ' ', ' ', '#'],
+        ['#', '#', ' ', '#', '@', '#', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '$', '$', '$', ' ', '$', ' ', ' ', '$', '$', '#'],
+        ['#', ' ', ' ', '#', ' ', '#', '#', ' ', '$', ' ', ' ', '#'],
+        ['#', ' ', ' ', '#', ' ', '#', '#', ' ', ' ', '$', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', ' ', ' ', '$', '$', '$', ' ', '$', '#', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', '.', '.', '.', '.', '#'],
+        [' ', '#', ' ', '#', ' ', ' ', ' ', '#', ' ', '#', '.', '.', ' ', '.', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', ' ', '#', ' ', '#', '#', '.', '.', '.', '#'],
+        [' ', '#', '#', '#', '#', '#', ' ', '$', ' ', ' ', '#', '.', '.', '.', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '$', '#', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', '#', ' ', '$', ' ', '$', ' ', ' ', '#'],
+        ['#', '#', '$', ' ', '$', ' ', ' ', ' ', '#', ' ', '@', '#', ' ', '$', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#'],
+        ['#', ' ', '#', ' ', ' ', ' ', '#', '.', '.', '.', '.', '.', '.', '.', '#', ' ', '$', '#'],
+        ['#', ' ', '#', '#', ' ', ' ', '#', ' ', '.', '.', '.', '.', '.', '.', '#', ' ', ' ', '#'],
+        ['#', ' ', '#', ' ', ' ', ' ', '$', '.', '.', '.', '.', '.', '.', '.', '.', '$', ' ', '#'],
+        ['#', ' ', '#', ' ', '$', ' ', '#', '.', '.', '.', '.', ' ', '.', '.', '#', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', '$', '#', '#', '#', '#', '$', '#', '#', '#', '#', ' ', '$', '#'],
+        ['#', ' ', '$', ' ', ' ', ' ', '#', '#', '#', ' ', '$', ' ', ' ', ' ', '$', ' ', ' ', '#', '#'],
+        ['#', ' ', '$', ' ', ' ', ' ', ' ', ' ', '$', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', ' ', '#', '#', '#', '#', '#', '#', ' ', '$', ' ', '#', '#', '#', '#', '#', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', '#', ' ', '$', '#', '$', ' ', '#', ' ', ' ', '#', '#'],
+        ['#', '.', '.', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', ' ', '#', ' ', '$', '#', '$', ' ', '#', ' ', ' ', '$', '#', '#', '#', '#'],
+        ['#', '.', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '$', ' ', ' ', '#', ' ', ' ', '#'],
+        ['#', '.', '.', ' ', ' ', ' ', '$', '#', ' ', ' ', '#', ' ', '$', ' ', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', '@', '#', ' ', ' ', '#', '$', ' ', '#', '$', ' ', ' ', '#', ' ', ' ', '#'],
+        ['#', '.', '.', ' ', '#', ' ', '$', '#', ' ', ' ', ' ', ' ', ' ', '$', '#', ' ', ' ', '#'],
+        ['#', '.', '.', ' ', '#', ' ', ' ', '#', '$', '$', '#', '$', ' ', ' ', '#', ' ', ' ', '#', '#'],
+        ['#', '.', '.', ' ', '#', ' ', '$', '#', ' ', ' ', '#', ' ', ' ', '$', '#', '$', ' ', ' ', '#'],
+        ['#', '.', '.', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '#', '.', ' ', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', ' ', ' ', '.', '#', '#', '#', '#'],
+        ['#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '$', '$', '.', '#', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '$', ' ', '#', ' ', ' ', ' ', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', '$', ' ', '#'],
+        ['#', '#', ' ', '#', '#', '#', '#', ' ', ' ', ' ', '#', ' ', ' ', '$', ' ', '#', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', '#', ' ', '#', '#'],
+        ['#', ' ', ' ', '$', '#', ' ', ' ', '#', ' ', '#', '#', ' ', ' ', '#', '#', '#', ' ', '#'],
+        ['#', ' ', '$', ' ', '#', '$', '#', '#', '#', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', '#'],
+        ['#', '#', '#', ' ', ' ', '$', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', '#', '#', ' ', '#'],
+        [' ', '#', '#', ' ', ' ', ' ', ' ', '$', ' ', '#', '#', ' ', '#', ' ', ' ', '#', ' ', '#', '#'],
+        [' ', '#', ' ', '$', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', '$', ' ', '$', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '$', ' ', ' ', '$', '#', '$', '$', '$', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', '@', '#', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#'],
+        ['#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', '#', ' ', ' ', ' ', '.', '.', '#', '.', '.', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', '#', ' ', '#', ' ', '#', '#', '#', '#', '#', ' ', '.', '.', '.', '#'],
+        ['#', '#', '$', '#', ' ', ' ', ' ', ' ', '.', '.', '.', '.', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', ' ', '#', '#', '$', '#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '@', ' ', '#'],
+        ['#', '#', '$', ' ', '#', ' ', '$', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', '#', '$', '$', '$', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '$', '#', '$', '#', '#', '#'],
+        ['#', ' ', '#', '#', '#', '#', ' ', '#', '$', '$', '$', '$', '$', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '#', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '#', ' ', ' ', ' ', '#', '#', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'],
+        ['#', ' ', '#', '#', '#', '#', '#', '#', '$', '#', '#', '#', '#', '#', '#', ' ', '$', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#'],
+        ['#', '#', ' ', ' ', '#', ' ', ' ', '#', '.', '.', '.', '#', '#', '#'],
+        ['#', ' ', ' ', '$', '#', ' ', ' ', '#', '.', '.', '.', ' ', ' ', '#'],
+        ['#', ' ', '$', ' ', '#', '$', '$', ' ', '.', '.', '.', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', '#', ' ', ' ', '#', '.', '.', '.', ' ', '.', '#'],
+        ['#', ' ', ' ', ' ', '#', ' ', '$', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', '$', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '$', ' ', '$', ' ', '#'],
+        ['#', '#', ' ', ' ', '#', ' ', ' ', '$', '$', ' ', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#', '$', '$', '@', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '.', '.', '.', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#'],
+        ['#', '#', '.', '.', '.', '.', '.', ' ', ' ', '$', '#', '#', ' ', '#', ' ', '#', '$', ' ', '#'],
+        ['#', '.', '.', '.', '.', '.', '.', '#', ' ', ' ', '$', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', '.', '.', '.', '.', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', '#', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '$', ' ', ' ', '$', ' ', '$', ' ', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#', '$', '#', '#', '$', ' ', '#', '#', '$', '#', '#'],
+        [' ', '#', '#', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#', ' ', '$', ' ', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '#', '#', ' ', '#', '#', '#', ' ', '#', ' ', ' ', '#', '#', '$', ' ', '#'],
+        [' ', '#', ' ', '$', ' ', '$', '$', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'],
+        [' ', '#', ' ', '$', ' ', ' ', ' ', ' ', '$', '#', '#', '$', ' ', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '@', ' ', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', '#', ' ', '$', ' ', ' ', '$', ' ', '$', ' ', '#', '#', '.', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '$', '$', ' ', ' ', '#', '#', '.', '.', '#'],
+        ['#', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '.', '.', ' ', '#'],
+        ['#', '#', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '.', '.', '.', ' ', '#'],
+        ['#', ' ', '$', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '.', '.', '.', ' ', '#'],
+        ['#', '@', ' ', '#', '$', ' ', '#', '#', ' ', '#', '#', '#', '#', '.', '.', '.', '#'],
+        ['#', '#', '#', '#', ' ', ' ', '$', ' ', '$', '$', ' ', ' ', '#', '#', '.', '.', '#'],
+        [' ', ' ', ' ', '#', '#', ' ', ' ', '$', ' ', '$', ' ', ' ', '$', '.', '.', '.', '#'],
+        [' ', ' ', ' ', ' ', '#', ' ', '$', '$', ' ', ' ', '$', ' ', '#', ' ', ' ', '.', '#'],
+        [' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '$', ' ', '$', ' ', ' ', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#', '#'],
+        ['#', ' ', '$', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', ' ', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', ' ', '#', ' ', ' ', ' ', '$', '#', '$', '#', '@', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '$', ' ', '#', ' ', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#'],
+        ['#', ' ', ' ', '#', '#', ' ', '.', '.', '*', '.', '.', '.', '.', '.', ' ', '#', ' ', '#', '#'],
+        ['#', '#', ' ', '#', '#', ' ', '*', '.', '*', '.', '.', '*', '.', '*', ' ', '#', ' ', '#', '#'],
+        ['#', ' ', '$', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '$', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', ' ', '#'],
+        ['#', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '$', ' ', '$', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', '$', '#', '#', ' ', '#', ' ', '#', '#'],
+        ['#', ' ', '$', ' ', '#', '#', ' ', ' ', ' ', '#', ' ', '#', '#', ' ', '$', ' ', ' ', '#'],
+        ['#', ' ', '$', ' ', ' ', '@', '$', '$', ' ', '#', ' ', '#', '#', '$', '$', '$', ' ', '#'],
+        ['#', '#', ' ', '#', '#', '#', ' ', ' ', ' ', '#', ' ', '#', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', ' ', '#', ' ', ' ', ' ', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '$', '#'],
+        ['#', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', '#', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', '#', '#', '#', ' ', '#', '#', ' ', '$', ' ', '#', '.', '.', '.', '.', '#', '#'],
+        ['#', ' ', '$', ' ', ' ', ' ', '$', ' ', '#', ' ', ' ', ' ', '#', '.', '.', '$', '.', ' ', '#'],
+        ['#', ' ', ' ', '#', '#', ' ', '$', ' ', '#', ' ', ' ', '#', '#', '.', '.', '.', '.', ' ', '#'],
+        ['#', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '.', '.', '.', '#', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '#', ' ', ' ', '#', '#', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '$', '#', ' ', '$', '@', '$', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', '#', '$', ' ', ' ', '$', ' ', ' ', '#', ' ', '$', ' ', '$', '#', ' ', ' ', '#', '#'],
+        ['#', '#', ' ', ' ', '$', '#', '#', ' ', '#', '$', ' ', '$', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', '#', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', '$', '$', '$', ' ', ' ', '#'],
+        ['#', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', '#', '#', ' ', '#', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '$', ' ', '#', '$', '#', ' ', ' ', '#', ' ', ' ', '#'],
+        ['#', '#', ' ', ' ', '#', '#', '#', ' ', ' ', '#', '#', '#', '$', ' ', '#'],
+        [' ', '#', ' ', ' ', '#', '.', '.', '.', '.', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '.', '.', '.', '.', '.', '.', '#', '#', '#', '#'],
+        [' ', ' ', ' ', '#', '.', '.', '.', '.', '#', '#', '#', '#'],
+        [' ', ' ', ' ', '#', '.', '.', '.', '#', '#'],
+        [' ', ' ', ' ', '#', '.', '.', '.', '#'],
+        [' ', ' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', '#'],
+        [' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '$', '#'],
+        ['#', '#', ' ', '$', ' ', ' ', '#', '#', ' ', '#', '#', '#'],
+        ['#', '@', '$', ' ', '$', ' ', '#', ' ', '$', ' ', ' ', '#'],
+        ['#', '#', '#', '#', ' ', '#', '#', ' ', ' ', ' ', '$', '#'],
+        [' ', '#', '.', '.', '.', '.', '#', '$', ' ', '$', ' ', '#'],
+        [' ', '#', '.', '.', '.', '.', '#', ' ', ' ', ' ', '$', '#'],
+        [' ', '#', '.', '.', '.', '.', ' ', ' ', '$', '$', ' ', '#', '#'],
+        [' ', '#', '.', '.', '.', ' ', '#', ' ', '$', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '$', ' ', '$', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', '$', ' ', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', '#'],
+        ['#', '#', ' ', ' ', ' ', '$', ' ', ' ', ' ', '$', ' ', '#'],
+        ['#', '#', '#', '#', ' ', '#', '#', ' ', '$', '$', ' ', '#'],
+        ['#', ' ', ' ', ' ', '$', ' ', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '$', '$', '$', ' ', '#', ' ', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#', ' ', '#', ' ', '$', ' ', '#', '#'],
+        ['#', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', '$', '#', ' ', '$', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', '.', '.', '#', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', '.', '.', ' ', '$', ' ', '#', '@', '#'],
+        ['#', '.', '.', '.', '.', '.', '#', ' ', '$', '#', ' ', '#'],
+        ['#', '#', '.', '.', '.', '.', '#', ' ', ' ', '$', ' ', '#'],
+        ['#', '#', '#', '.', '.', '#', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '.', '.', '.', '.', ' ', ' ', ' ', '#', '#'],
+        [' ', '#', '.', '#', '.', '#', ' ', ' ', '$', ' ', '#', '#'],
+        ['#', '#', '.', '.', '.', '.', '#', ' ', '#', ' ', '@', '#', '#'],
+        ['#', ' ', '.', '.', '.', '.', '#', ' ', ' ', '#', ' ', ' ', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', '#', '$', ' ', '#', '#', '$', ' ', '#'],
+        ['#', '#', ' ', '#', '#', '#', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#'],
+        [' ', '#', '$', ' ', ' ', '$', ' ', '$', ' ', '$', '#', ' ', ' ', '#'],
+        [' ', '#', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', '#', '#', ' ', '#'],
+        [' ', '#', ' ', ' ', '#', '#', '#', ' ', ' ', '#', '#', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', '#', '#', ' ', '#', '#'],
+        [' ', '#', ' ', ' ', '$', ' ', '#', ' ', ' ', '$', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '$', ' ', '$', ' ', ' ', ' ', '#', '#', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', '#', '#', '#', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', ' ', '$', '$', '#', ' ', ' ', ' ', '@', ' ', ' ', '.', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', ' ', '#', ' ', '#', '#', '#', ' ', ' ', ' ', '#', ' ', '.', '.', '.', '.', '#'],
+        ['#', '#', ' ', '#', '#', ' ', '#', '#', '#', ' ', ' ', '#', ' ', ' ', '.', '.', '.', '.', '#'],
+        [' ', '#', ' ', '$', ' ', '$', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', '$', ' ', '$', '#', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', ' ', '#', ' ', ' ', '#', '#', '#', '#', ' ', '#', ' ', '#', '#', ' ', '#'],
+        ['#', ' ', ' ', '#', ' ', '#', '$', ' ', ' ', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '$', ' ', ' ', '$', ' ', ' ', '#', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', '#', '#'],
+        ['#', ' ', '#', ' ', '$', ' ', '$', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', '#', '#', ' ', '#', '#', ' ', '#', ' ', '#', '#', '#', '#', '#'],
+        ['#', ' ', '$', '$', ' ', ' ', ' ', ' ', ' ', '$', '$', ' ', ' ', '#'],
+        ['#', '#', ' ', '#', '#', ' ', '#', '#', '#', ' ', '$', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', '#', '#', '#', ' ', ' ', '$', ' ', '$', ' ', '$', ' ', '#'],
+        ['#', ' ', '$', ' ', ' ', ' ', '#', '#', ' ', '#', '#', ' ', '#', '#', ' ', ' ', '#', '#'],
+        ['#', ' ', ' ', ' ', '$', ' ', '$', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', '#', '#', ' ', '$', ' ', ' ', '#', '#', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#'],
+        [' ', ' ', '#', ' ', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '$', '$', ' ', '#'],
+        [' ', '#', '#', '$', '#', '#', '#', '#', '#', ' ', '@', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', '$', ' ', ' ', '#', '#', '#', '$', '#', '#', '#', ' ', '$', ' ', ' ', '#', '#'],
+        [' ', '#', ' ', '$', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', '#', ' ', ' ', '#', '#', '#'],
+        [' ', '#', ' ', '$', '$', ' ', '$', ' ', '#', ' ', ' ', ' ', '$', '$', ' ', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '.', '.', ' ', '.', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', '#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'],
+        [' ', ' ', ' ', ' ', '#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '.', '.', '.', '.', '.', '.', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '.', '.', '.', '.', '.', '.', ' ', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', '#', '#', '#', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', '.', ' ', '$', ' ', '$', ' ', '#', ' ', ' ', '#', '#', '#', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', '.', '#', '$', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#'],
+        ['#', '#', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '$', ' ', ' ', '#', '$', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', '$', '$', ' ', '$', ' ', '$', ' ', ' ', '$', '#', '#', ' ', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', '$', ' ', ' ', ' ', '#', '$', '#', '$', ' ', '#', '#', '$', ' ', '#'],
+        [' ', ' ', '#', '#', '#', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', '#', '#', ' ', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', '#', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '@', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', ' ', '@', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', '$', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', '$', '#', '#', ' ', '$', '#'],
+        ['#', '#', '$', '#', '.', '.', '.', '#', ' ', '#'],
+        [' ', '#', ' ', '$', '.', '.', '.', ' ', ' ', '#'],
+        [' ', '#', ' ', '#', '.', ' ', '.', '#', ' ', '#', '#'],
+        [' ', '#', ' ', ' ', ' ', '#', ' ', '#', '$', ' ', '#'],
+        [' ', '#', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '.', '.', '.', '.', '#'],
+        ['#', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#', '#', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', '$', '$', '#', '#', ' ', ' ', '$', ' ', '@', '#', '#', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', '$', '$', ' ', '$', '#', ' ', ' ', '.', '.', '.', '.', '#'],
+        ['#', ' ', ' ', '$', ' ', '#', '#', ' ', '$', '$', ' ', '#', ' ', '#', ' ', '.', '.', '.', '#'],
+        ['#', ' ', ' ', '$', ' ', '#', '#', ' ', '$', ' ', ' ', '#', ' ', ' ', '.', '.', '.', '.', '#'],
+        ['#', '#', ' ', '#', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', '#', '#', '.', '#', '#', '#'],
+        ['#', '#', ' ', ' ', ' ', '$', ' ', ' ', '$', ' ', '#', '#', ' ', ' ', ' ', '.', ' ', ' ', '#'],
+        ['#', ' ', '$', '#', '#', '#', ' ', ' ', '#', ' ', '#', '#', '#', '#', '#', ' ', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', '#', '$', ' ', '$', ' ', '$', '#', '#', '#', ' ', ' ', '#'],
+        ['#', ' ', '$', '$', '$', '#', ' ', '$', ' ', ' ', ' ', '#', ' ', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '$', '$', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#'],
+        [' ', ' ', ' ', ' ', '#', ' ', ' ', '#', ' ', '#', '$', '$', ' ', '$', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', '#', '$', ' ', '#', '$', '#', ' ', ' ', '#', '#', ' ', '@', '#'],
+        [' ', ' ', ' ', '#', '#', ' ', '#', '#', ' ', '#', ' ', '$', ' ', '#', ' ', '#', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', ' ', '$', ' ', '#', '$', ' ', ' ', '#', ' ', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', '$', ' ', ' ', ' ', '#', ' ', '#'],
+        [' ', ' ', ' ', '#', '#', ' ', '$', ' ', '$', ' ', ' ', ' ', '#', '#', ' ', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', '$', ' ', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', '$', '$', '#', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '$', '$', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', '.', '.', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', '.', '#', '.', '.', '.', ' ', '#', '#'],
+        ['#', '.', '.', '.', '.', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', '.', '.', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', '$', '$', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', '$', '$', ' ', ' ', '$', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', '#'],
+        ['#', '#', '#', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '$', '$', ' ', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', '.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '$', '$', '$', '@', '#'],
+        ['#', '.', '#', ' ', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', ' ', ' ', ' ', '#', '#'],
+        ['#', '.', '#', ' ', '#', '#', '#', '#', '#', '#', '#', '.', ' ', '#', '$', ' ', '$', '#', '#'],
+        ['#', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', ' ', '#', ' ', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '$', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', '$', ' ', '$', ' ', ' ', ' ', '@', '#'],
+        [' ', ' ', '#', ' ', '#', '#', ' ', '#', '#', '$', '#', '$', ' ', '$', ' ', '$', '#', '#'],
+        ['#', '#', '#', ' ', '.', '.', '.', '.', '.', '.', '#', ' ', ' ', '$', '$', ' ', '#', '#'],
+        ['#', ' ', ' ', ' ', '.', '.', '.', '.', '.', '.', '#', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '#', ' ', '.', '.', '.', '.', '.', '.', '#', '$', ' ', ' ', '$', ' ', ' ', '#'],
+        ['#', ' ', '#', ' ', '.', '.', '.', '.', '.', '.', ' ', '$', '$', '#', ' ', '$', ' ', '#'],
+        ['#', ' ', '$', ' ', '#', '#', '#', ' ', '#', '#', '#', '$', ' ', ' ', '$', ' ', '#', '#'],
+        ['#', '#', '#', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        [' ', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', '#', ' ', ' ', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', ' ', '#', '$', '$', ' ', '#', '#', ' ', '#', '#', ' ', ' ', '#'],
+        ['#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', '#', '#', ' ', '#', '#', '#'],
+        ['#', ' ', ' ', '#', '#', '#', ' ', '$', '#', '$', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'],
+        ['#', '.', '.', '.', ' ', ' ', ' ', ' ', '#', ' ', '#', '#', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '.', '.', '.', '#', ' ', ' ', ' ', ' ', '@', ' ', '#', ' ', '#', '#', '#', ' ', '#', '#'],
+        ['#', '.', '.', '.', '#', ' ', ' ', '#', '#', '#', ' ', ' ', '$', ' ', ' ', '$', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', '#', ' ', '#', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', '#', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '$', '@', '#', '#', '#', '#', '#', '#'],
+        [' ', '#', ' ', '$', ' ', '#', '#', '$', ' ', '#', '#', '#', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', '#', '#', '#', '#', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', '#'],
+        [' ', '#', ' ', '#', '#', '#', '#', '#', ' ', '#', ' ', ' ', '#', '$', ' ', '#', '#', '#', '#'],
+        ['#', '#', ' ', ' ', '#', '#', '#', '#', ' ', '#', '#', '$', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', '#', ' ', ' ', '$', ' ', ' ', '#', ' ', '#', '#', ' ', '#', '#', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '.', '.', '.', '#', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#', ' ', ' ', '.', '.', '.', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', ' ', '#', ' ', '#', '.', '.', '.', '#', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', '#', '#', ' ', '#', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', ' ', '#', '#', '#', '#'],
+        ['#', '.', '.', '.', '#', ' ', '#', ' ', ' ', '#', '#', '#', '#'],
+        ['#', '.', '.', '.', '#', '#', '#', ' ', ' ', '$', ' ', ' ', '#'],
+        ['#', '.', '.', '.', '.', '#', '#', ' ', '$', ' ', ' ', '$', '#', '#', '#'],
+        ['#', '#', '.', '.', '.', '.', '#', '#', ' ', ' ', ' ', '$', ' ', ' ', '#'],
+        ['#', '#', '#', '.', '.', '.', ' ', '#', '#', ' ', '$', ' ', '$', ' ', '#'],
+        ['#', ' ', '#', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '$', ' ', ' ', '#'],
+        ['#', ' ', ' ', '#', '#', ' ', '#', ' ', '#', '#', '#', ' ', '#', '#', '#', '#'],
+        ['#', ' ', '$', ' ', '#', ' ', '#', '$', ' ', ' ', '$', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', '@', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', ' ', '$', ' ', '$', '$', ' ', '$', ' ', '#', '#', '#'],
+        ['#', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#', '#'],
+        ['#', ' ', '#', '#', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        ['#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        ['#', ' ', '#', '#', '#', '#', '#', '#', ' ', '#', ' ', ' ', '#', '#'],
+        ['#', ' ', '#', ' ', '$', ' ', '$', ' ', '$', ' ', ' ', '$', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '$', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '$', ' ', ' ', '$', '$', '#', ' ', ' ', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', '#', '#', ' ', '#', ' ', '$', '#', '#'],
+        [' ', ' ', '#', '#', '$', '#', ' ', ' ', ' ', '$', ' ', '@', '#'],
+        [' ', ' ', ' ', '#', ' ', ' ', '$', ' ', '$', ' ', '#', '#', '#'],
+        [' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', '$', ' ', ' ', '#'],
+        [' ', ' ', ' ', '#', ' ', '#', '#', ' ', ' ', ' ', '#', ' ', '#'],
+        [' ', ' ', '#', '#', ' ', ' ', '#', '#', '#', '#', '#', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', '#', '.', '.', '.', '.', '.', '.', '.', '#', '#', '#'],
+        [' ', ' ', '#', '.', '.', '.', '.', '.', '.', '.', '#'],
+        [' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', ' ', ' ', '#', '#'],
+        ['#', '#', ' ', ' ', '$', ' ', ' ', ' ', ' ', ' ', ' ', '$', ' ', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', '#', '#', ' ', '#', '#', ' ', ' ', ' ', '#', '#', '.', '.', '.', '#'],
+        ['#', ' ', '#', '$', '$', ' ', '$', ' ', '$', '$', '#', '$', '#', '#', '.', '.', '.', '#'],
+        ['#', ' ', '#', ' ', ' ', ' ', ' ', '@', ' ', ' ', '#', ' ', ' ', ' ', '.', '.', '.', '#'],
+        ['#', ' ', ' ', '$', '#', ' ', '#', '#', '#', '$', '$', ' ', ' ', ' ', '.', '.', '.', '#'],
+        ['#', ' ', '$', ' ', ' ', '$', '$', ' ', ' ', '$', ' ', '#', '#', '.', '.', '.', '.', '#'],
+        ['#', '#', '#', '$', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', ' ', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', '*', '.', '*', '#', '*', '.', '*', '#'],
+        [' ', ' ', '#', '.', '*', '.', '*', '.', '*', '.', '#'],
+        [' ', ' ', '#', '*', '.', '*', '.', '*', '.', '*', '#'],
+        [' ', ' ', '#', '.', '*', '.', '*', '.', '*', '.', '#'],
+        [' ', ' ', '#', '*', '.', '*', '.', '*', '.', '*', '#'],
+        [' ', ' ', '#', '#', '#', ' ', ' ', ' ', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '#', '#', ' ', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '$', ' ', '$', ' ', '$', ' ', '$', ' ', '$', ' ', '#'],
+        ['#', '#', ' ', '$', ' ', '$', ' ', '$', ' ', '$', ' ', '#', '#'],
+        [' ', '#', '$', ' ', '$', ' ', '$', ' ', '$', ' ', '$', '#'],
+        [' ', '#', ' ', ' ', ' ', '$', '@', '$', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', ' ', '#', '#', '#', '#', '#', ' ', ' ', '#'],
+        [' ', '#', '#', '#', '#', ' ', ' ', ' ', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '$', '$', ' ', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', '$', ' ', ' ', '$', ' ', '#', '#'],
+        [' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', ' ', ' ', '#', ' ', '#', '#', '#', '#', '#', ' ', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', ' ', '#', '.', '.', '.', '.', '$', ' ', '#'],
+        ['#', ' ', '#', ' ', ' ', ' ', '$', ' ', '.', '.', '.', '.', '#', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', '#', ' ', '#', '.', '*', '.', '.', '#', ' ', '#'],
+        ['#', '#', '#', ' ', ' ', '#', '#', '#', '#', ' ', '#', '#', '#', ' ', '#'],
+        [' ', ' ', '#', '#', '#', '#', ' ', '@', '$', ' ', ' ', '#', '#', '$', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', '$', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        [' ', ' ', ' ', ' ', ' ', '#', '#', '.', '.', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', '.', '.', '*', ' ', '$', ' ', ' ', ' ', ' ', '$', ' ', '#'],
+        [' ', ' ', ' ', '#', '#', '.', '.', '*', '.', '#', ' ', '#', ' ', '#', '$', ' ', '#', '#'],
+        [' ', ' ', ' ', '#', '.', '.', '*', '.', '#', ' ', '#', ' ', '#', ' ', '$', ' ', ' ', '#'],
+        ['#', '#', '#', '#', '.', '.', '.', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', '#'],
+        ['#', ' ', ' ', '#', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        ['#', ' ', '@', '$', ' ', '$', ' ', '#', '#', '#', ' ', ' ', '#', ' ', '#', ' ', '#', '#'],
+        ['#', ' ', '$', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', '#', '#', '$', '$', ' ', ' ', ' ', '#', ' ', '#', ' ', '#', ' ', '#', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', ' ', '$', ' ', ' ', ' ', '#', ' ', '#', ' ', '#', '#', '#', '#', '#'],
+        [' ', ' ', '#', ' ', '$', '#', ' ', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', '#', '$', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', '#', '#', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', '#'],
+        [' ', ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#'],
+    ],
+    [
+        ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+        ['#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#'],
+        ['#', ' ', '#', '#', '$', ' ', '$', ' ', ' ', '#', ' ', '$', '$', ' ', '#', ' ', '$', ' ', '#'],
+        ['#', '.', '#', ' ', '.', ' ', '.', '$', ' ', '#', ' ', '#', '.', '.', '#', ' ', '#', '.', '#'],
+        ['#', '.', '#', '#', '#', '#', '.', '#', ' ', '#', ' ', '#', ' ', '#', '#', ' ', '#', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', '#', ' ', '#'],
+        ['#', ' ', ' ', '$', ' ', '#', ' ', '#', ' ', '#', '#', '#', ' ', '#', ' ', '#', '#', ' ', '#'],
+        ['#', ' ', ' ', '#', ' ', '#', ' ', '#', ' ', '#', '.', '$', ' ', '#', ' ', '#', ' ', ' ', '#'],
+        ['#', ' ', '$', '$', '.', '#', ' ', '#', ' ', '#', '#', ' ', ' ', '#', ' ', '#', '#', ' ', '#'],
+        ['#', '$', ' ', '#', ' ', '#', ' ', '#', ' ', ' ', '#', ' ', '#', '#', ' ', ' ', '#', ' ', '#'],
+        ['#', ' ', '.', '#', ' ', '#', ' ', '#', '#', ' ', '#', ' ', '#', ' ', ' ', '#', '#', ' ', '#'],
+        ['#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#', ' ', '#', ' ', '#', ' ', '#', '#', ' ', ' ', '#'],
+        ['#', '#', ' ', ' ', ' ', '#', '#', ' ', '#', ' ', '#', ' ', '#', ' ', '#', ' ', '$', '.', '#'],
+        ['#', '#', '#', ' ', '#', '#', '#', ' ', '$', '.', '#', ' ', '$', '.', '#', ' ', '$', '.', '#'],
+        ['#', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', '#', ' ', ' ', '@', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
+    ],
+]
+
+current_level = 0
+
+def load_level():
+    global level
+    level = copy.deepcopy(levels[current_level])
+
+load_level()
+
+player = '@'
+player_on_storage = '+'
+box = '$'
+box_on_storage = '*'
+storage = '.'
+wall = '#'
+empty = ' '
+
+def on_key_down(key):
+    global current_level
+
+    if key in [keys.UP, keys.DOWN, keys.LEFT, keys.RIGHT]:
+        for test_y, row in enumerate(level):
+            for test_x, cell in enumerate(row):
+                if cell == player or cell == player_on_storage:
+                    player_x = test_x
+                    player_y = test_y
+
+        dx = 0
+        dy = 0
+        if key == keys.LEFT:
+            dx = -1
+        elif key == keys.RIGHT:
+            dx = 1
+        elif key == keys.UP:
+            dy = -1
+        elif key == keys.DOWN:
+            dy = 1
+
+        current = level[player_y][player_x]
+        adjacent = level[player_y + dy][player_x + dx]
+        beyond = ''
+        if (
+            0 <= player_y + dy + dy < len(level)
+            and 0 <= player_x + dx + dx < len(level[player_y + dy + dy])
+        ):
+            beyond = level[player_y + dy + dy][player_x + dx + dx]
+
+        next_adjacent = {
+            empty: player,
+            storage: player_on_storage,
+        }
+        next_current = {
+            player: empty,
+            player_on_storage: storage,
+        }
+        next_beyond = {
+            empty: box,
+            storage: box_on_storage,
+        }
+        next_adjacent_push = {
+            box: player,
+            box_on_storage: player_on_storage,
+        }
+
+        if adjacent in next_adjacent:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent[adjacent]
+
+        elif beyond in next_beyond and adjacent in next_adjacent_push:
+            level[player_y][player_x] = next_current[current]
+            level[player_y + dy][player_x + dx] = next_adjacent_push[adjacent]
+            level[player_y + dy + dy][player_x + dx + dx] = next_beyond[beyond]
+
+        complete = True
+
+        for y, row in enumerate(level):
+            for x, cell in enumerate(row):
+                if cell == box:
+                    complete = False
+
+        if complete:
+            current_level += 1
+
+            if current_level >= len(levels):
+                current_level = 0
+
+            load_level()
+
+    elif key == keys.R:
+        load_level()
+
+    elif key == keys.N:
+        current_level += 1
+        if current_level >= len(levels):
+            current_level = 0
+        load_level()
+
+    elif key == keys.P:
+        current_level -= 1
+        if current_level < 0:
+            current_level = len(levels) - 1
+        load_level()
+
+def draw():
+    screen.fill((255, 255, 190))
+
+    for y, row in enumerate(level):
+        for x, cell in enumerate(row):
+            if cell != empty:
+                cell_size = 23
+
+                colors = {
+                    player: (167, 135, 255),
+                    player_on_storage: (158, 119, 255),
+                    box: (255, 201, 126),
+                    box_on_storage: (150, 255, 127),
+                    storage: (156, 229, 255),
+                    wall: (255, 147, 209),
+                }
+
+                screen.draw.filled_rect(
+                    Rect(
+                        (x * cell_size, y * cell_size),
+                        (cell_size, cell_size)
+                    ),
+                    colors[cell]
+                )
+
+                screen.draw.text(
+                    cell,
+                    (x * cell_size, y * cell_size),
+                    color=(255, 255, 255)
+                )
+``

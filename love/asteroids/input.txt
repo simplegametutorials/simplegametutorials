@@ -1,0 +1,2902 @@
+!
+
+## Rules
+
+Move the ship to avoid asteroids, and destroy them with bullets.
+
+Bigger asteroids break into two smaller and faster asteroids when hit with a bullet, and the smallest asteroids are destroyed completely.
+
+### Controls
+
+& *s* & Shoot bullet
+& *Up arrow* & Accelerate
+& *Left/right arrow* & Turn
+
+## Overview
+
+The ship has an X and Y position, an X and Y speed, and an angle it is facing.
+
+Each asteroid and bullet is represented by a table containing an X and Y position and an angle it is moving in. An X and Y speed isn't stored for the asteroids and bullets because, unlike the ship, they always move in the direction of their angle.
+
+Each bullet additionally has a number representing how long until the bullet is automatically removed if it doesn't hit an asteroid.
+
+Each asteroid additionally has a number representing its "stage" which is used to determine its speed and radius.
+
+There is a table which contains all the asteroids and another table which contains all the bullets.
+
+Each bullet is checked to see if it collides with any of the asteroids. If it does, both the bullet and asteroid are removed from their tables. If the asteroid isn't in its lowest stage, two new asteroids with the next lowest stage are added to the asteroid table. A random angle is given to one of these asteroids, and the opposite angle is given to the other asteroid.
+
+Each asteroid is checked to see if it collides with the ship. If it does, the game is reset.
+
+If there are no asteroids left, the game is also reset.
+
+So that objects partially off the edge of the screen can be seen on the other side, everything is drawn 9 times, in all directions around the screen.
+
+!
+
+To see if an asteroid collides with a bullet or the ship, the difference of the two circle's X axes is squared and added to the difference of the two circle's Y axes squared, and if this is less than or equal to the radiuses added together and squared, then the circles are touching or overlapping: `(aX - bX)^2 + (aY - bY)^2 <= (aRadius + bRadius)^2`
+
+The Pythagorean theorem states that the square of a right triangle's hypotenuse is equal to the sum of the squares of the other two sides, i.e. *a&sup2; + b&sup2; = c&sup2;*
+
+!
+
+The two other sides in this instance are the differences between the positions of the two circles on the X and Y axes.
+
+!
+
+If the two circles are touching, the hypotenuse length is equal to the radiuses of both of the circles added together.
+
+!
+
+So, if the squared difference between the X axes (*a&sup2;*) plus the squared difference between the Y axes (*b&sup2;*) is equal to the two radiuses added and squared, then the two circles are touching. If *a&sup2; + b&sup2;* is less than the two radiuses added and squared, then the two circles are overlapping, or if it's greater, then the two circles are not touching.
+
+!
+
+!
+
+!
+
+!
+
+## Coding
+
+### Drawing the ship
+
+The ship is drawn as a blue circle in the middle of the screen.
+
+``
+|function love.draw()|
+|    love.graphics.setColor(0, 0, 1)|
+|    love.graphics.circle('fill', 800 / 2, 600 / 2, 30)|
+|end|
+``
+`
+function love.draw()
+    love.graphics.setColor(0, 0, 1)
+    love.graphics.circle('fill', 800 / 2, 600 / 2, 30)
+end
+`
+
+!
+
+### Turning the ship clockwise
+
+When the right arrow is held down, the ship's angle increases at a rate of 10 radians per second.
+
+To show the angle of the ship, a light blue circle is drawn 20 pixels from the center of the ship in the direction of its angle.
+
+This uses the ship's X and Y positions, so they are made into variables.
+
+``
+|function love.load()|
+|    shipX = 800 / 2|
+|    shipY = 600 / 2|
+|    shipAngle = 0|
+|end|
+
+|function love.update(dt)|
+|    if love.keyboard.isDown('right') then|
+|         shipAngle = shipAngle + 10 * dt|
+|    end|
+|end|
+
+function love.draw()
+    love.graphics.setColor(0, 0, 1)
+    love.graphics.circle('fill', |shipX|, |shipY|, 30)
+
+    |local shipCircleDistance = 20|
+    |love.graphics.setColor(0, 1, 1)|
+    |love.graphics.circle(|
+    |    'fill',|
+    |    shipX + math.cos(shipAngle) * shipCircleDistance,|
+    |    shipY + math.sin(shipAngle) * shipCircleDistance,|
+    |    5|
+    |)|
+
+    |-- Temporary|
+    |love.graphics.setColor(1, 1, 1)|
+    |love.graphics.print('shipAngle: '..shipAngle)|
+end
+``
+`
+function love.load()
+    shipX = 800 / 2
+    shipY = 600 / 2
+    shipAngle = 0
+end
+
+function love.update(dt)
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + 10 * dt
+    end
+end
+
+function love.draw()
+    love.graphics.setColor(0, 0, 1)
+    love.graphics.circle('fill', |shipX|, |shipY|, 30)
+
+    local shipCircleDistance = 20
+    love.graphics.setColor(0, 1, 1)
+    love.graphics.circle(
+        'fill',
+        shipX + math.cos(shipAngle) * shipCircleDistance,
+        shipY + math.sin(shipAngle) * shipCircleDistance,
+        5
+    )
+
+    -- Temporary
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print('shipAngle: '..shipAngle)
+end
+`
+
+!
+
+### Turning the ship counterclockwise
+
+When the left arrow is held down, the ship's angle decreases.
+
+The turning speed is reused, so it is made into a variable.
+``
+function love.load()
+    shipX = 800 / 2
+    shipY = 600 / 2
+    shipAngle = 0
+end
+
+function love.update(dt)
+    |local turnSpeed = 10|
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + |turnSpeed| * dt
+    end
+
+    |if love.keyboard.isDown('left') then|
+    |    shipAngle = shipAngle - turnSpeed * dt|
+    |end|
+end
+
+function love.draw()
+    love.graphics.setColor(0, 0, 1)
+    love.graphics.circle('fill', shipX, shipY, 30)
+
+    local shipCircleDistance = 20
+    love.graphics.setColor(0, 1, 1)
+    love.graphics.circle(
+        'fill',
+        shipX + math.cos(shipAngle) * shipCircleDistance,
+        shipY + math.sin(shipAngle) * shipCircleDistance,
+        5
+    )
+
+    -- Temporary
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print('shipAngle: '..shipAngle)
+end
+``
+`
+function love.update(dt)
+    |local turnSpeed = 10|
+
+    if love.keyboard.isDown('right') then
+        shipAngle = shipAngle + |turnSpeed| * dt
+    end
+
+    |if love.keyboard.isDown('left') then|
+    |    shipAngle = shipAngle - turnSpeed * dt|
+    |end|
+end
+`
+
+### Wrapping the ship's angle
+
+So that the angle doesn't continue going up beyond 2 pi or down into negative numbers, the modulo operator is used to keep the angle greater than or equal to 0 and less than 2 pi. Now holding down the right or left arrow will turn the ship just as before, but the angle number won't continue to increase or decrease infinitely.
+
+``
+function love.load()
+    shipX = 800 / 2
+    shipY = 600 / 2
+    shipAngle = 0
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    |shipAngle = shipAngle % (2 * math.pi)|
+end
+
+function love.draw()
+    love.graphics.setColor(0, 0, 1)
+    love.graphics.circle('fill', shipX, shipY, 30)
+
+    local shipCircleDistance = 20
+    love.graphics.setColor(0, 1, 1)
+    love.graphics.circle(
+        'fill',
+        shipX + math.cos(shipAngle) * shipCircleDistance,
+        shipY + math.sin(shipAngle) * shipCircleDistance,
+        5
+    )
+
+    -- Temporary
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print('shipAngle: '..shipAngle)
+end
+``
+`
+function love.update(dt)
+    -- etc.
+
+    shipAngle = shipAngle % (2 * math.pi)
+end
+`
+
+### Ship acceleration
+
+The ship is given X and Y speeds.
+
+When the up arrow is pressed, the ship's X and Y speeds are changed based on the ship's angle.
+
+The ship's X and Y position are then changed based on the ship's X and Y speed.
+
+``
+function love.load()
+    shipX = 800 / 2
+    shipY = 600 / 2
+    shipAngle = 0
+    |shipSpeedX = 0|
+    |shipSpeedY = 0|
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    |if love.keyboard.isDown('up') then|
+    |    local shipSpeed = 100|
+    |    shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt|
+    |    shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt|
+    |end|
+
+    |shipX = shipX + shipSpeedX * dt|
+    |shipY = shipY + shipSpeedY * dt|
+end
+
+function love.draw()
+    love.graphics.setColor(0, 0, 1)
+    love.graphics.circle('fill', shipX, shipY, 30)
+
+    local shipCircleDistance = 20
+    love.graphics.setColor(0, 1, 1)
+    love.graphics.circle(
+        'fill',
+        shipX + math.cos(shipAngle) * shipCircleDistance,
+        shipY + math.sin(shipAngle) * shipCircleDistance,
+        5
+    )
+
+    -- Temporary
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print(|table.concat({|
+        'shipAngle: '..shipAngle|,|
+        |'shipX: '..shipX,|
+        |'shipY: '..shipY,|
+        |'shipSpeedX: '..shipSpeedX,|
+        |'shipSpeedY: '..shipSpeedY,|
+    |}, '\n')|)
+end
+``
+`
+function love.load()
+    -- etc.
+
+    shipSpeedX = 0
+    shipSpeedY = 0
+end
+
+function love.update(dt)
+    -- etc.
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = shipX + shipSpeedX * dt
+    shipY = shipY + shipSpeedY * dt
+end
+
+function love.draw()
+    -- etc.
+
+    -- Temporary
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print(|table.concat({|
+        'shipAngle: '..shipAngle|,|
+    |    'shipX: '..shipX,|
+    |    'shipY: '..shipY,|
+    |    'shipSpeedX: '..shipSpeedX,|
+    |    'shipSpeedY: '..shipSpeedY,|
+    |}, '\n')|)
+end
+`
+
+!
+
+### Wrapping the ship's position
+
+So that the ship wraps around to the other side of the screen when it goes off the edge, the modulo operator is used to keep the ship's X/Y positions greater than or equal to 0 and less than the width/height of the arena.
+
+The arena width and height are reused, so they are made into variables.
+
+``
+function love.load()
+    |arenaWidth = 800|
+    |arenaHeight = 600|
+
+    shipX = |arenaWidth| / 2
+    shipY = |arenaHeight| / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = |(|shipX + shipSpeedX * dt|) % arenaWidth|
+    shipY = |(|shipY + shipSpeedY * dt|) % arenaHeight|
+end
+
+function love.draw()
+    love.graphics.setColor(0, 0, 1)
+    love.graphics.circle('fill', shipX, shipY, 30)
+
+    local shipCircleDistance = 20
+    love.graphics.setColor(0, 1, 1)
+    love.graphics.circle(
+        'fill',
+        shipX + math.cos(shipAngle) * shipCircleDistance,
+        shipY + math.sin(shipAngle) * shipCircleDistance,
+        5
+    )
+
+    -- Temporary
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print(table.concat({
+        'shipAngle: '..shipAngle,
+        'shipX: '..shipX,
+        'shipY: '..shipY,
+        'shipSpeedX: '..shipSpeedX,
+        'shipSpeedY: '..shipSpeedY,
+    }, '\n'))
+end
+``
+`
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = |arenaWidth| / 2
+    shipY = |arenaHeight| / 2
+
+    -- etc.
+end
+
+function love.update(dt)
+    -- etc.
+
+    shipX = |(|shipX + shipSpeedX * dt|) % arenaWidth|
+    shipY = |(|shipY + shipSpeedY * dt|) % arenaHeight|
+end
+`
+
+### Drawing partially off-screen objects
+
+So that objects that are partially off the edge of the screen can be seen on the other side, the coordinate system is translated to different positions and everything is drawn at each position around the screen and in the center.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+end
+
+function love.draw()
+    |for y = -1, 1 do|
+        |for x = -1, 1 do|
+            |love.graphics.origin()|
+            |love.graphics.translate(x * arenaWidth, y * arenaHeight)|
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, 30)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+        |end|
+    |end|
+
+    -- Temporary
+    |love.graphics.origin()|
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print(table.concat({
+        'shipAngle: '..shipAngle,
+        'shipX: '..shipX,
+        'shipY: '..shipY,
+        'shipSpeedX: '..shipSpeedX,
+        'shipSpeedY: '..shipSpeedY,
+    }, '\n'))
+end
+``
+`
+function love.draw()
+    |for y = -1, 1 do|
+        |for x = -1, 1 do|
+            |love.graphics.origin()|
+            |love.graphics.translate(x * arenaWidth, y * arenaHeight)|
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, 30)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                -- etc.
+            )
+        |end|
+    |end|
+
+    -- Temporary
+    |love.graphics.origin()|
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print(table.concat({
+        -- etc.
+    }, '\n'))
+end
+`
+
+!
+
+### Bullets
+
+For now, a bullet is represented by a table with an X and Y position, and when the *s* key is pressed it is created at the position of the ship and added to the bullets table.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+
+    |bullets = {}|
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+end
+
+|function love.keypressed(key)|
+|    if key == 's' then|
+|        table.insert(bullets, {|
+|            x = shipX,|
+|            y = shipY,|
+|        })|
+|    end|
+|end|
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, 30)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            |for bulletIndex, bullet in ipairs(bullets) do|
+            |    love.graphics.setColor(0, 1, 0)|
+            |    love.graphics.circle('fill', bullet.x, bullet.y, 5)|
+            |end|
+        end
+    end
+end
+``
+`
+function love.load()
+    -- etc.
+
+    bullets = {}
+end
+
+function love.keypressed(key)
+    if key == 's' then
+        table.insert(bullets, {
+            x = shipX,
+            y = shipY,
+        })
+    end
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            -- etc.
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, 5)
+            end
+        end
+    end
+end
+`
+
+!
+
+### Creating bullets at edge of ship
+
+The bullets are now created at the ship's radius away from the ship's position in the direction of the ship's angle.
+
+The ship's radius is reused, so it is made into a variable.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+    |shipRadius = 30|
+
+    bullets = {}
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+end
+
+function love.keypressed(key)
+    if key == 's' then
+        table.insert(bullets, {
+            x = shipX |+ math.cos(shipAngle) * shipRadius|,
+            y = shipY |+ math.sin(shipAngle) * shipRadius|,
+        })
+    end
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, |shipRadius|)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, 5)
+            end
+        end
+    end
+end
+``
+`
+function love.load()
+    -- etc.
+
+    shipRadius = 30
+
+    -- etc.
+end
+
+function love.keypressed(key)
+    if key == 's' then
+        table.insert(bullets, {
+            x = shipX |+ math.cos(shipAngle) * shipRadius|,
+            y = shipY |+ math.sin(shipAngle) * shipRadius|,
+        })
+    end
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            -- etc.
+
+            love.graphics.circle('fill', shipX, shipY, |shipRadius|)
+
+            -- etc.
+        end
+    end
+end
+`
+
+!
+
+### Moving bullets
+
+Newly created bullets are given an angle to move in, which is the ship's angle at time of shooting.
+
+The bullet table is looped through and each bullet's X and Y position is updated based on its angle.
+
+So that the bullets wrap around the screen, the modulo operator is used to keep the bullet's X/Y positions greater than or equal to 0 and less than the width/height of the arena.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+    shipRadius = 30
+
+    bullets = {}
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+
+    |for bulletIndex, bullet in ipairs(bullets) do|
+    |    local bulletSpeed = 500|
+    |    bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)|
+    |        % arenaWidth|
+    |    bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)|
+    |        % arenaHeight|
+    |end|
+end
+
+function love.keypressed(key)
+    if key == 's' then
+        table.insert(bullets, {
+            x = shipX + math.cos(shipAngle) * shipRadius,
+            y = shipY + math.sin(shipAngle) * shipRadius,
+            |angle = shipAngle,|
+        })
+    end
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, shipRadius)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, 5)
+            end
+        end
+    end
+end
+``
+`
+function love.update(dt)
+    -- etc.
+
+    for bulletIndex, bullet in ipairs(bullets) do
+        local bulletSpeed = 500
+        bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+            % arenaWidth
+        bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+            % arenaHeight
+    end
+end
+
+function love.keypressed(key)
+    if key == 's' then
+        table.insert(bullets, {
+            x = shipX + math.cos(shipAngle) * shipRadius,
+            y = shipY + math.sin(shipAngle) * shipRadius,
+            |angle = shipAngle,|
+        })
+    end
+end
+`
+
+### Automatically removing bullets
+
+Each bullet has a timer which starts at 4 seconds and is decreased every frame. When the timer reaches 0, the bullet is removed from the bullets table.
+
+Because bullets are removed from the table while it is being looped through, the loop is changed to loop through the table in reverse order.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+    shipRadius = 30
+
+    bullets = {}
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+
+    for |bulletIndex = #bullets, 1, -1| do
+        |local bullet = bullets[bulletIndex]|
+
+        |bullet.timeLeft = bullet.timeLeft - dt|
+
+        |if bullet.timeLeft <= 0 then|
+        |    table.remove(bullets, bulletIndex)|
+        |else|
+            local bulletSpeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+                % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+                % arenaHeight
+        |end|
+    end
+end
+
+function love.keypressed(key)
+    if key == 's' then
+        table.insert(bullets, {
+            x = shipX + math.cos(shipAngle) * shipRadius,
+            y = shipY + math.sin(shipAngle) * shipRadius,
+            angle = shipAngle,
+            |timeLeft = 4,|
+        })
+    end
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, shipRadius)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, 5)
+            end
+        end
+    end
+end
+``
+`
+function love.update(dt)
+    -- etc.
+
+    for |bulletIndex = #bullets, 1, -1| do
+        |local bullet = bullets[bulletIndex]|
+
+        |bullet.timeLeft = bullet.timeLeft - dt|
+
+        |if bullet.timeLeft <= 0 then|
+        |    table.remove(bullets, bulletIndex)|
+        |else|
+            local bulletSpeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+                % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+                % arenaHeight
+        |end|
+    end
+end
+
+function love.keypressed(key)
+    if key == 's' then
+        table.insert(bullets, {
+            x = shipX + math.cos(shipAngle) * shipRadius,
+            y = shipY + math.sin(shipAngle) * shipRadius,
+            angle = shipAngle,
+            |timeLeft = 4,|
+        })
+    end
+end
+`
+
+### Holding down the shoot key
+
+Instead of creating a bullet each time the *s* key is pressed, bullets are created if the *s* key is down and a timer is ready.
+
+The timer is set to its limit initially so that the ship can shoot immediately.
+
+The code from `love.keypressed` is moved to `love.update`.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+    shipRadius = 30
+
+    bullets = {}
+    |bulletTimerLimit = 0.5|
+    |bulletTimer = bulletTimerLimit|
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+
+    for bulletIndex = #bullets, 1, -1 do
+        local bullet = bullets[bulletIndex]
+
+        bullet.timeLeft = bullet.timeLeft - dt
+
+        if bullet.timeLeft <= 0 then
+            table.remove(bullets, bulletIndex)
+        else
+            local bulletSpeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+                % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+                % arenaHeight
+        end
+    end
+
+    bulletTimer = bulletTimer + dt
+
+    |if love.keyboard.isDown('s') then|
+        |if bulletTimer >= bulletTimerLimit then|
+            |bulletTimer = 0|
+
+            |-- Moved|
+            table.insert(bullets, {
+                x = shipX + math.cos(shipAngle) * shipRadius,
+                y = shipY + math.sin(shipAngle) * shipRadius,
+                angle = shipAngle,
+                timeLeft = 4,
+            })
+        |end|
+    |end|
+end
+
+|-- Removed: function love.keypressed(key)|
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, shipRadius)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, 5)
+            end
+        end
+    end
+end
+``
+`
+function love.load()
+    -- etc.
+
+    bulletTimerLimit = 0.5
+    bulletTimer = bulletTimerLimit
+end
+
+function love.update(dt)
+    -- etc.
+
+    bulletTimer = bulletTimer + dt
+
+    |if love.keyboard.isDown('s') then|
+        |if bulletTimer >= bulletTimerLimit then|
+            |bulletTimer = 0|
+
+            |-- Moved|
+            table.insert(bullets, {
+                x = shipX + math.cos(shipAngle) * shipRadius,
+                y = shipY + math.sin(shipAngle) * shipRadius,
+                angle = shipAngle,
+                timeLeft = 4,
+            })
+        |end|
+    |end|
+end
+
+-- Removed: function love.keypressed(key)
+`
+
+### Drawing asteroids
+
+Asteroids have an X and Y position and are drawn as yellow circles.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+    shipRadius = 30
+
+    bullets = {}
+    bulletTimerLimit = 0.5
+    bulletTimer = bulletTimerLimit
+
+    |asteroids = {|
+    |    {|
+    |        x = 100,|
+    |        y = 100,|
+    |    },|
+    |    {|
+    |        x = arenaWidth - 100,|
+    |        y = 100,|
+    |    },|
+    |    {|
+    |        x = arenaWidth / 2,|
+    |        y = arenaHeight - 100,|
+    |    },|
+    |}|
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+
+    for bulletIndex = #bullets, 1, -1 do
+        local bullet = bullets[bulletIndex]
+
+        bullet.timeLeft = bullet.timeLeft - dt
+
+        if bullet.timeLeft <= 0 then
+            table.remove(bullets, bulletIndex)
+        else
+            local bulletSpeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+                % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+                % arenaHeight
+        end
+    end
+
+    bulletTimer = bulletTimer + dt
+
+    if love.keyboard.isDown('s') then
+        if bulletTimer >= bulletTimerLimit then
+            bulletTimer = 0
+
+            table.insert(bullets, {
+                x = shipX + math.cos(shipAngle) * shipRadius,
+                y = shipY + math.sin(shipAngle) * shipRadius,
+                angle = shipAngle,
+                timeLeft = 4,
+            })
+        end
+    end
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, shipRadius)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, 5)
+            end
+
+            |for asteroidIndex, asteroid in ipairs(asteroids) do|
+            |    love.graphics.setColor(1, 1, 0)|
+            |    love.graphics.circle('fill', asteroid.x, asteroid.y, 80)|
+            |end|
+        end
+    end
+end
+``
+`
+function love.load()
+    -- etc.
+
+    asteroids = {
+        {
+            x = 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth - 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth / 2,
+            y = arenaHeight - 100,
+        },
+    }
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            -- etc.
+
+            for asteroidIndex, asteroid in ipairs(asteroids) do
+                love.graphics.setColor(1, 1, 0)
+                love.graphics.circle('fill', asteroid.x, asteroid.y, 80)
+            end
+        end
+    end
+end
+`
+
+!
+
+### Moving asteroids
+
+Each asteroid is given a random angle which it moves at.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+    shipRadius = 30
+
+    bullets = {}
+    bulletTimerLimit = 0.5
+    bulletTimer = bulletTimerLimit
+
+    asteroids = {
+        {
+            x = 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth - 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth / 2,
+            y = arenaHeight - 100,
+        }
+    }
+
+    |for asteroidIndex, asteroid in ipairs(asteroids) do|
+    |    asteroid.angle = love.math.random() * (2 * math.pi)|
+    |end|
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+
+    for bulletIndex = #bullets, 1, -1 do
+        local bullet = bullets[bulletIndex]
+
+        bullet.timeLeft = bullet.timeLeft - dt
+
+        if bullet.timeLeft <= 0 then
+            table.remove(bullets, bulletIndex)
+        else
+            local bulletSpeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+                % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+                % arenaHeight
+        end
+    end
+
+    bulletTimer = bulletTimer + dt
+
+    if love.keyboard.isDown('s') then
+        if bulletTimer >= bulletTimerLimit then
+            bulletTimer = 0
+
+            table.insert(bullets, {
+                x = shipX + math.cos(shipAngle) * shipRadius,
+                y = shipY + math.sin(shipAngle) * shipRadius,
+                angle = shipAngle,
+                timeLeft = 4,
+            })
+        end
+    end
+
+    |for asteroidIndex, asteroid in ipairs(asteroids) do|
+    |    local asteroidSpeed = 20|
+    |    asteroid.x = (asteroid.x + math.cos(asteroid.angle)|
+    |        * asteroidSpeed * dt) % arenaWidth|
+    |    asteroid.y = (asteroid.y + math.sin(asteroid.angle)|
+    |        * asteroidSpeed * dt) % arenaHeight|
+    |end|
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, shipRadius)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, 5)
+            end
+
+            for asteroidIndex, asteroid in ipairs(asteroids) do
+                love.graphics.setColor(1, 1, 0)
+                love.graphics.circle('fill', asteroid.x, asteroid.y, 80)
+            end
+        end
+    end
+end
+``
+`
+function love.load()
+    -- etc.
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        asteroid.angle = love.math.random() * (2 * math.pi)
+    end
+end
+
+function love.update(dt)
+    -- etc.
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        local asteroidSpeed = 20
+        asteroid.x = (asteroid.x + math.cos(asteroid.angle)
+            * asteroidSpeed * dt) % arenaWidth
+        asteroid.y = (asteroid.y + math.sin(asteroid.angle)
+            * asteroidSpeed * dt) % arenaHeight
+    end
+end
+`
+
+### Asteroids colliding with the ship
+
+The asteroid table is looped through, and if any asteroids collide with the ship, then the game is reset by (for now) calling `love.load`.
+
+The asteroid radius is reused, so it is made into a variable.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+    shipRadius = 30
+
+    bullets = {}
+    bulletTimerLimit = 0.5
+    bulletTimer = bulletTimerLimit
+
+    asteroids = {
+        {
+            x = 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth - 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth / 2,
+            y = arenaHeight - 100,
+        }
+    }
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        asteroid.angle = love.math.random() * (2 * math.pi)
+    end
+
+    |asteroidRadius = 80|
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+
+    for bulletIndex = #bullets, 1, -1 do
+        local bullet = bullets[bulletIndex]
+
+        bullet.timeLeft = bullet.timeLeft - dt
+
+        if bullet.timeLeft <= 0 then
+            table.remove(bullets, bulletIndex)
+        else
+            local bulletSpeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+                % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+                % arenaHeight
+        end
+    end
+
+    bulletTimer = bulletTimer + dt
+
+    if love.keyboard.isDown('s') then
+        if bulletTimer >= bulletTimerLimit then
+            bulletTimer = 0
+
+            table.insert(bullets, {
+                x = shipX + math.cos(shipAngle) * shipRadius,
+                y = shipY + math.sin(shipAngle) * shipRadius,
+                angle = shipAngle,
+                timeLeft = 4,
+            })
+        end
+    end
+
+    |local function areCirclesIntersecting(aX, aY, aRadius, bX, bY, bRadius)|
+    |    return (aX - bX)^2 + (aY - bY)^2 <= (aRadius + bRadius)^2|
+    |end|
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        local asteroidSpeed = 20
+        asteroid.x = (asteroid.x + math.cos(asteroid.angle)
+            * asteroidSpeed * dt) % arenaWidth
+        asteroid.y = (asteroid.y + math.sin(asteroid.angle)
+            * asteroidSpeed * dt) % arenaHeight
+
+        |if areCirclesIntersecting(|
+        |    shipX, shipY, shipRadius,|
+        |    asteroid.x, asteroid.y, asteroidRadius|
+        |) then|
+        |    love.load()|
+        |    break|
+        |end|
+    end
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, shipRadius)
+
+                local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, 5)
+            end
+
+            for asteroidIndex, asteroid in ipairs(asteroids) do
+                love.graphics.setColor(1, 1, 0)
+                love.graphics.circle('fill', asteroid.x, asteroid.y,
+                    |asteroidRadius|)
+            end
+        end
+    end
+end
+``
+`
+function love.load()
+    -- etc.
+
+    asteroidRadius = 80
+end
+
+function love.update(dt)
+    -- etc.
+
+    |local function areCirclesIntersecting(aX, aY, aRadius, bX, bY, bRadius)|
+    |    return (aX - bX)^2 + (aY - bY)^2 <= (aRadius + bRadius)^2|
+    |end|
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        local asteroidSpeed = 20
+        asteroid.x = (asteroid.x + math.cos(asteroid.angle)
+            * asteroidSpeed * dt) % arenaWidth
+        asteroid.y = (asteroid.y + math.sin(asteroid.angle)
+            * asteroidSpeed * dt) % arenaHeight
+
+        |if areCirclesIntersecting(|
+        |    shipX, shipY, shipRadius,|
+        |    asteroid.x, asteroid.y, asteroidRadius|
+        |) then|
+        |    love.load()|
+        |    break|
+        |end|
+    end
+end
+
+function love.draw()
+    -- etc.
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        love.graphics.setColor(1, 1, 0)
+        love.graphics.circle('fill', asteroid.x, asteroid.y,
+            |asteroidRadius|)
+    end
+end
+`
+
+### Bullets colliding with asteroids
+
+For each bullet, each asteroid is looped through, and if the bullet and asteroid collide, then both are removed from their tables.
+
+The `areCirclesIntersecting` function is moved above the bullet loop code.
+
+The bullet radius is reused, so it is made into a variable.
+
+Because asteroids are removed from the table while it is being looped through, the table is looped through in reverse order.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+    shipRadius = 30
+
+    bullets = {}
+    bulletTimerLimit = 0.5
+    bulletTimer = bulletTimerLimit
+    |bulletRadius = 5|
+
+    asteroids = {
+        {
+            x = 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth - 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth / 2,
+            y = arenaHeight - 100,
+        }
+    }
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        asteroid.angle = love.math.random() * (2 * math.pi)
+    end
+
+    asteroidRadius = 80
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+
+    |-- Moved|
+    local function areCirclesIntersecting(aX, aY, aRadius, bX, bY, bRadius)
+        return (aX - bX)^2 + (aY - bY)^2 <= (aRadius + bRadius)^2
+    end
+
+    for bulletIndex = #bullets, 1, -1 do
+        local bullet = bullets[bulletIndex]
+
+        bullet.timeLeft = bullet.timeLeft - dt
+        if bullet.timeLeft <= 0 then
+            table.remove(bullets, bulletIndex)
+        else
+            local bulletSpeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+                % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+                % arenaHeight
+
+            |for asteroidIndex = #asteroids, 1, -1 do|
+            |    local asteroid = asteroids[asteroidIndex]|
+            |    |
+            |    if areCirclesIntersecting(|
+            |        bullet.x, bullet.y, bulletRadius,|
+            |        asteroid.x, asteroid.y, asteroidRadius|
+            |    ) then|
+            |        table.remove(bullets, bulletIndex)|
+            |        table.remove(asteroids, asteroidIndex)|
+            |        break|
+            |    end|
+            |end|
+        end
+    end
+
+    bulletTimer = bulletTimer + dt
+
+    if love.keyboard.isDown('s') then
+        if bulletTimer >= bulletTimerLimit then
+            bulletTimer = 0
+
+            table.insert(bullets, {
+                x = shipX + math.cos(shipAngle) * shipRadius,
+                y = shipY + math.sin(shipAngle) * shipRadius,
+                angle = shipAngle,
+                timeLeft = 4,
+            })
+        end
+    end
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        local asteroidSpeed = 20
+        asteroid.x = (asteroid.x + math.cos(asteroid.angle)
+            * asteroidSpeed * dt) % arenaWidth
+        asteroid.y = (asteroid.y + math.sin(asteroid.angle)
+            * asteroidSpeed * dt) % arenaHeight
+
+        if areCirclesIntersecting(
+            shipX, shipY, shipRadius,
+            asteroid.x, asteroid.y, asteroidRadius
+        ) then
+            love.load()
+            break
+        end
+    end
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, shipRadius)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, |bulletRadius|)
+            end
+
+            for asteroidIndex, asteroid in ipairs(asteroids) do
+                love.graphics.setColor(1, 1, 0)
+                love.graphics.circle('fill', asteroid.x, asteroid.y,
+                    asteroidRadius)
+            end
+        end
+    end
+end
+``
+`
+function love.load()
+    -- etc.
+
+    bulletRadius = 5
+
+    -- etc.
+end
+
+function love.update(dt)
+    -- etc.
+
+    |-- Moved|
+    local function areCirclesIntersecting(aX, aY, aRadius, bX, bY, bRadius)
+        return (aX - bX)^2 + (aY - bY)^2 <= (aRadius + bRadius)^2
+    end
+
+    for bulletIndex = #bullets, 1, -1 do
+        local bullet = bullets[bulletIndex]
+
+        bullet.timeLeft = bullet.timeLeft - dt
+
+        if bullet.timeLeft <= 0 then
+            table.remove(bullets, bulletIndex)
+        else
+            local bulletSpeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+                % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+                % arenaHeight
+        end
+
+        |for asteroidIndex = #asteroids, 1, -1 do|
+        |    local asteroid = asteroids[asteroidIndex]|
+
+        |    if areCirclesIntersecting(|
+        |    bullet.x, bullet.y, bulletRadius,|
+        |    asteroid.x, asteroid.y, asteroidRadius|
+        |) then|
+        |        table.remove(bullets, bulletIndex)|
+        |        table.remove(asteroids, asteroidIndex)|
+        |        break|
+        |    end|
+        |end|
+    end
+
+    -- etc.
+end
+
+function love.draw()
+    -- etc.
+
+    for bulletIndex, bullet in ipairs(bullets) do
+        love.graphics.setColor(0, 1, 0)
+        love.graphics.circle('fill', bullet.x, bullet.y, |bulletRadius|)
+    end
+
+    -- etc.
+end
+`
+
+### Breaking asteroids
+
+When a bullet and an asteroid collide, two new asteroids are created.
+
+The first asteroid is given a random angle, and the second asteroid is given the opposite angle by subtracting pi and using the modulo operator to keep the angle greater than or equal to 0 and less than 2 pi.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+    shipRadius = 30
+
+    bullets = {}
+    bulletTimerLimit = 0.5
+    bulletTimer = bulletTimerLimit
+    bulletRadius = 5
+
+    asteroids = {
+        {
+            x = 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth - 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth / 2,
+            y = arenaHeight - 100,
+        }
+    }
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        asteroid.angle = love.math.random() * (2 * math.pi)
+    end
+
+    asteroidRadius = 80
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+
+    -- Moved
+    local function areCirclesIntersecting(aX, aY, aRadius, bX, bY, bRadius)
+        return (aX - bX)^2 + (aY - bY)^2 <= (aRadius + bRadius)^2
+    end
+
+    for bulletIndex = #bullets, 1, -1 do
+        local bullet = bullets[bulletIndex]
+
+        bullet.timeLeft = bullet.timeLeft - dt
+        if bullet.timeLeft <= 0 then
+            table.remove(bullets, bulletIndex)
+        else
+            local bulletSpeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+                % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+                % arenaHeight
+
+            for asteroidIndex = #asteroids, 1, -1 do
+                local asteroid = asteroids[asteroidIndex]
+
+                if areCirclesIntersecting(
+                    bullet.x, bullet.y, bulletRadius,
+                    asteroid.x, asteroid.y, asteroidRadius
+                ) then
+                    table.remove(bullets, bulletIndex)
+
+                    |local angle1 = love.math.random() * (2 * math.pi)|
+                    |local angle2 = (angle1 - math.pi) % (2 * math.pi)|
+
+                    |table.insert(asteroids, {|
+                    |    x = asteroid.x,|
+                    |    y = asteroid.y,|
+                    |    angle = angle1,|
+                    |})|
+                    |table.insert(asteroids, {|
+                    |    x = asteroid.x,|
+                    |    y = asteroid.y,|
+                    |    angle = angle2,|
+                    |})|
+
+                    table.remove(asteroids, asteroidIndex)
+                    break
+                end
+            end
+        end
+    end
+
+    bulletTimer = bulletTimer + dt
+
+    if love.keyboard.isDown('s') then
+        if bulletTimer >= bulletTimerLimit then
+            bulletTimer = 0
+
+            table.insert(bullets, {
+                x = shipX + math.cos(shipAngle) * shipRadius,
+                y = shipY + math.sin(shipAngle) * shipRadius,
+                angle = shipAngle,
+                timeLeft = 4,
+            })
+        end
+    end
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        local asteroidSpeed = 20
+        asteroid.x = (asteroid.x + math.cos(asteroid.angle)
+            * asteroidSpeed * dt) % arenaWidth
+        asteroid.y = (asteroid.y + math.sin(asteroid.angle)
+            * asteroidSpeed * dt) % arenaHeight
+
+        if areCirclesIntersecting(
+            shipX, shipY, shipRadius,
+            asteroid.x, asteroid.y, asteroidRadius
+        ) then
+            love.load()
+            break
+        end
+    end
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, shipRadius)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, bulletRadius)
+            end
+
+            for asteroidIndex, asteroid in ipairs(asteroids) do
+                love.graphics.setColor(1, 1, 0)
+                love.graphics.circle('fill', asteroid.x, asteroid.y,
+                    asteroidRadius)
+            end
+        end
+    end
+end
+``
+`
+function love.update(dt)
+    -- etc.
+
+    for bulletIndex = #bullets, 1, -1 do
+        -- etc.
+
+        for asteroidIndex = #asteroids, 1, -1 do
+            local asteroid = asteroids[asteroidIndex]
+
+            if areCirclesIntersecting(
+                bullet.x, bullet.y, bulletRadius,
+                asteroid.x, asteroid.y, asteroidRadius
+            ) then
+                table.remove(bullets, bulletIndex)
+
+                |local angle1 = love.math.random() * (2 * math.pi)|
+                |local angle2 = (angle1 - math.pi) % (2 * math.pi)|
+
+                |table.insert(asteroids, {|
+                |    x = asteroid.x,|
+                |    y = asteroid.y,|
+                |    angle = angle1,|
+                |})|
+                |table.insert(asteroids, {|
+                |    x = asteroid.x,|
+                |    y = asteroid.y,|
+                |    angle = angle2,|
+                |})|
+
+                table.remove(asteroids, asteroidIndex)
+                break
+            end
+        end
+    end
+
+    -- etc.
+end
+`
+
+### Asteroid stages
+
+The different stages an asteroid can be in are stored in a table, indexed by a number given to each asteroid. This number starts at the last stage.
+
+The two new asteroids created when an asteroid is hit by a bullet are now only created if the asteroid hit is above the first stage. The new asteroids are created with a stage one less than the asteroid that was hit.
+
+References to an asteroid's speed and radius are changed to refer to the speed and radius at the stage that the asteroid is currently at.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+    shipRadius = 30
+
+    bullets = {}
+    bulletTimerLimit = 0.5
+    bulletTimer = bulletTimerLimit
+    bulletRadius = 5
+
+    asteroids = {
+        {
+            x = 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth - 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth / 2,
+            y = arenaHeight - 100,
+        }
+    }
+
+    |asteroidStages = {|
+    |    {|
+    |        speed = 120,|
+    |        radius = 15,|
+    |    },|
+    |    {|
+    |        speed = 70,|
+    |        radius = 30,|
+    |    },|
+    |    {|
+    |        speed = 50,|
+    |        radius = 50,|
+    |    },|
+    |    {|
+    |        speed = 20,|
+    |        radius = 80,|
+    |    },|
+    |}|
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        asteroid.angle = love.math.random() * (2 * math.pi)
+        |asteroid.stage = #asteroidStages|
+    end
+
+    |-- Removed: asteroidRadius = 80|
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+
+    local function areCirclesIntersecting(aX, aY, aRadius, bX, bY, bRadius)
+        return (aX - bX)^2 + (aY - bY)^2 <= (aRadius + bRadius)^2
+    end
+
+    for bulletIndex = #bullets, 1, -1 do
+        local bullet = bullets[bulletIndex]
+
+        bullet.timeLeft = bullet.timeLeft - dt
+        if bullet.timeLeft <= 0 then
+            table.remove(bullets, bulletIndex)
+        else
+            local bulletSpeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+                % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+                % arenaHeight
+
+            for asteroidIndex = #asteroids, 1, -1 do
+                local asteroid = asteroids[asteroidIndex]
+
+                if areCirclesIntersecting(
+                    bullet.x, bullet.y, bulletRadius,
+                    asteroid.x, asteroid.y,
+                    |asteroidStages[asteroid.stage].radius|
+                ) then
+                    table.remove(bullets, bulletIndex)
+
+                    |if asteroid.stage > 1 then|
+                        local angle1 = love.math.random() * (2 * math.pi)
+                        local angle2 = (angle1 - math.pi) % (2 * math.pi)
+
+                        table.insert(asteroids, {
+                            x = asteroid.x,
+                            y = asteroid.y,
+                            angle = angle1,
+                            |stage = asteroid.stage - 1,|
+                        })
+                        table.insert(asteroids, {
+                            x = asteroid.x,
+                            y = asteroid.y,
+                            angle = angle2,
+                            |stage = asteroid.stage - 1,|
+                        })
+                    |end|
+
+                    table.remove(asteroids, asteroidIndex)
+                    break
+                end
+            end
+        end
+    end
+
+    bulletTimer = bulletTimer + dt
+
+    if love.keyboard.isDown('s') then
+        if bulletTimer >= bulletTimerLimit then
+            bulletTimer = 0
+
+            table.insert(bullets, {
+                x = shipX + math.cos(shipAngle) * shipRadius,
+                y = shipY + math.sin(shipAngle) * shipRadius,
+                angle = shipAngle,
+                timeLeft = 4,
+            })
+        end
+    end
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        |-- Removed: local asteroidSpeed = 20|
+        asteroid.x = (asteroid.x + math.cos(asteroid.angle)
+            * |asteroidStages[asteroid.stage].speed| * dt) % arenaWidth
+        asteroid.y = (asteroid.y + math.sin(asteroid.angle)
+            * |asteroidStages[asteroid.stage].speed| * dt) % arenaHeight
+
+        if areCirclesIntersecting(
+            shipX, shipY, shipRadius,
+            asteroid.x, asteroid.y, |asteroidStages[asteroid.stage].radius|
+        ) then
+            love.load()
+            break
+        end
+    end
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, shipRadius)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, bulletRadius)
+            end
+
+            for asteroidIndex, asteroid in ipairs(asteroids) do
+                love.graphics.setColor(1, 1, 0)
+                love.graphics.circle('fill', asteroid.x, asteroid.y,
+                    |asteroidStages[asteroid.stage].radius|)
+            end
+        end
+    end
+end
+``
+`
+function love.load()
+    -- etc.
+
+    asteroidStages = {
+        {
+            speed = 120,
+            radius = 15,
+        },
+        {
+            speed = 70,
+            radius = 30,
+        },
+        {
+            speed = 50,
+            radius = 50,
+        },
+        {
+            speed = 20,
+            radius = 80,
+        }
+    }
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        asteroid.angle = love.math.random() * (2 * math.pi)
+        |asteroid.stage = #asteroidStages|
+    end
+
+    |-- Removed: asteroidRadius = 80|
+end
+
+function love.update(dt)
+    -- etc.
+
+                if areCirclesIntersecting(
+                    bullet.x, bullet.y, bulletRadius,
+                    asteroid.x, asteroid.y,
+                    |asteroidStages[asteroid.stage].radius|
+                ) then
+                    table.remove(bullets, bulletIndex)
+
+                    |if asteroid.stage > 1 then|
+                        local angle1 = love.math.random() * (2 * math.pi)
+                        local angle2 = (angle1 - math.pi) % (2 * math.pi)
+
+                        table.insert(asteroids, {
+                            x = asteroid.x,
+                            y = asteroid.y,
+                            angle = angle1,
+                            |stage = asteroid.stage - 1,|
+                        })
+                        table.insert(asteroids, {
+                            x = asteroid.x,
+                            y = asteroid.y,
+                            angle = angle2,
+                            |stage = asteroid.stage - 1,|
+                        })
+                    |end|
+
+    -- etc.
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        |-- Removed: local asteroidSpeed = 20|
+        asteroid.x = (asteroid.x + math.cos(asteroid.angle)
+            * |asteroidStages[asteroid.stage].speed| * dt) % arenaWidth
+        asteroid.y = (asteroid.y + math.sin(asteroid.angle)
+            * |asteroidStages[asteroid.stage].speed| * dt) % arenaHeight
+
+        if areCirclesIntersecting(
+            shipX, shipY, shipRadius,
+            asteroid.x, asteroid.y, |asteroidStages[asteroid.stage].radius|
+        ) then
+            love.load()
+            break
+        end
+    end
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            -- etc.
+
+            for asteroidIndex, asteroid in ipairs(asteroids) do
+                love.graphics.setColor(1, 1, 0)
+                love.graphics.circle('fill', asteroid.x, asteroid.y,
+                    |asteroidStages[asteroid.stage].radius|)
+            end
+        end
+    end
+end
+`
+
+### Game over
+
+If there are no more asteroids in the asteroids table the game is reset.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipX = arenaWidth / 2
+    shipY = arenaHeight / 2
+    shipAngle = 0
+    shipSpeedX = 0
+    shipSpeedY = 0
+    shipRadius = 30
+
+    bullets = {}
+    bulletTimerLimit = 0.5
+    bulletTimer = bulletTimerLimit
+    bulletRadius = 5
+
+    asteroids = {
+        {
+            x = 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth - 100,
+            y = 100,
+        },
+        {
+            x = arenaWidth / 2,
+            y = arenaHeight - 100,
+        }
+    }
+
+    asteroidStages = {
+        {
+            speed = 120,
+            radius = 15,
+        },
+        {
+            speed = 70,
+            radius = 30,
+        },
+        {
+            speed = 50,
+            radius = 50,
+        },
+        {
+            speed = 20,
+            radius = 80,
+        },
+    }
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        asteroid.angle = love.math.random() * (2 * math.pi)
+        asteroid.stage = #asteroidStages
+    end
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+
+    local function areCirclesIntersecting(aX, aY, aRadius, bX, bY, bRadius)
+        return (aX - bX)^2 + (aY - bY)^2 <= (aRadius + bRadius)^2
+    end
+
+    for bulletIndex = #bullets, 1, -1 do
+        local bullet = bullets[bulletIndex]
+
+        bullet.timeLeft = bullet.timeLeft - dt
+        if bullet.timeLeft <= 0 then
+            table.remove(bullets, bulletIndex)
+        else
+            local bulletSpeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+                % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+                % arenaHeight
+
+            for asteroidIndex = #asteroids, 1, -1 do
+                local asteroid = asteroids[asteroidIndex]
+
+                if areCirclesIntersecting(
+                    bullet.x, bullet.y, bulletRadius,
+                    asteroid.x, asteroid.y,
+                    asteroidStages[asteroid.stage].radius
+                ) then
+                    table.remove(bullets, bulletIndex)
+
+                    if asteroid.stage > 1 then
+                        local angle1 = love.math.random() * (2 * math.pi)
+                        local angle2 = (angle1 - math.pi) % (2 * math.pi)
+
+                        table.insert(asteroids, {
+                            x = asteroid.x,
+                            y = asteroid.y,
+                            angle = angle1,
+                            stage = asteroid.stage - 1,
+                        })
+                        table.insert(asteroids, {
+                            x = asteroid.x,
+                            y = asteroid.y,
+                            angle = angle2,
+                            stage = asteroid.stage - 1,
+                        })
+                    end
+
+                    table.remove(asteroids, asteroidIndex)
+                    break
+                end
+            end
+        end
+    end
+
+    bulletTimer = bulletTimer + dt
+
+    if love.keyboard.isDown('s') then
+        if bulletTimer >= bulletTimerLimit then
+            bulletTimer = 0
+
+            table.insert(bullets, {
+                x = shipX + math.cos(shipAngle) * shipRadius,
+                y = shipY + math.sin(shipAngle) * shipRadius,
+                angle = shipAngle,
+                timeLeft = 4,
+            })
+        end
+    end
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        asteroid.x = (asteroid.x + math.cos(asteroid.angle)
+            * asteroidStages[asteroid.stage].speed * dt) % arenaWidth
+        asteroid.y = (asteroid.y + math.sin(asteroid.angle)
+            * asteroidStages[asteroid.stage].speed * dt) % arenaHeight
+
+        if areCirclesIntersecting(
+            shipX, shipY, shipRadius,
+            asteroid.x, asteroid.y, asteroidStages[asteroid.stage].radius
+        ) then
+            love.load()
+            break
+        end
+    end
+
+    |if #asteroids == 0 then|
+    |    love.load()|
+    |end|
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, shipRadius)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, bulletRadius)
+            end
+
+            for asteroidIndex, asteroid in ipairs(asteroids) do
+                love.graphics.setColor(1, 1, 0)
+                love.graphics.circle('fill', asteroid.x, asteroid.y,
+                    asteroidStages[asteroid.stage].radius)
+            end
+        end
+    end
+end
+``
+`
+function love.update(dt)
+    -- etc.
+
+    if #asteroids == 0 then
+        love.load()
+    end
+end
+`
+
+### Resetting the game
+
+When the game is over, only some variables need to be reset, so a function is made.
+
+``
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipRadius = 30
+
+    bulletTimerLimit = 0.5
+    bulletRadius = 5
+
+    asteroidStages = {
+        {
+            speed = 120,
+            radius = 15,
+        },
+        {
+            speed = 70,
+            radius = 30,
+        },
+        {
+            speed = 50,
+            radius = 50,
+        },
+        {
+            speed = 20,
+            radius = 80,
+        },
+    }
+
+    |function reset()|
+        shipX = arenaWidth / 2
+        shipY = arenaHeight / 2
+        shipAngle = 0
+        shipSpeedX = 0
+        shipSpeedY = 0
+
+        bullets = {}
+        bulletTimer = bulletTimerLimit
+
+        asteroids = {
+            {
+                x = 100,
+                y = 100,
+            },
+            {
+                x = arenaWidth - 100,
+                y = 100,
+            },
+            {
+                x = arenaWidth / 2,
+                y = arenaHeight - 100,
+            }
+        }
+
+        for asteroidIndex, asteroid in ipairs(asteroids) do
+            asteroid.angle = love.math.random() * (2 * math.pi)
+            asteroid.stage = #asteroidStages
+        end
+    |end|
+
+    |reset()|
+end
+
+function love.update(dt)
+    local turnSpeed = 10
+
+    if love.keyboard.isDown('right') then
+         shipAngle = shipAngle + turnSpeed * dt
+    end
+
+    if love.keyboard.isDown('left') then
+        shipAngle = shipAngle - turnSpeed * dt
+    end
+
+    shipAngle = shipAngle % (2 * math.pi)
+
+    if love.keyboard.isDown('up') then
+        local shipSpeed = 100
+        shipSpeedX = shipSpeedX + math.cos(shipAngle) * shipSpeed * dt
+        shipSpeedY = shipSpeedY + math.sin(shipAngle) * shipSpeed * dt
+    end
+
+    shipX = (shipX + shipSpeedX * dt) % arenaWidth
+    shipY = (shipY + shipSpeedY * dt) % arenaHeight
+
+    local function areCirclesIntersecting(aX, aY, aRadius, bX, bY, bRadius)
+        return (aX - bX)^2 + (aY - bY)^2 <= (aRadius + bRadius)^2
+    end
+
+    for bulletIndex = #bullets, 1, -1 do
+        local bullet = bullets[bulletIndex]
+
+        bullet.timeLeft = bullet.timeLeft - dt
+        if bullet.timeLeft <= 0 then
+            table.remove(bullets, bulletIndex)
+        else
+            local bulletSpeed = 500
+            bullet.x = (bullet.x + math.cos(bullet.angle) * bulletSpeed * dt)
+                % arenaWidth
+            bullet.y = (bullet.y + math.sin(bullet.angle) * bulletSpeed * dt)
+                % arenaHeight
+
+            for asteroidIndex = #asteroids, 1, -1 do
+                local asteroid = asteroids[asteroidIndex]
+
+                if areCirclesIntersecting(
+                    bullet.x, bullet.y, bulletRadius,
+                    asteroid.x, asteroid.y,
+                    asteroidStages[asteroid.stage].radius
+                ) then
+                    table.remove(bullets, bulletIndex)
+
+                    if asteroid.stage > 1 then
+                        local angle1 = love.math.random() * (2 * math.pi)
+                        local angle2 = (angle1 - math.pi) % (2 * math.pi)
+
+                        table.insert(asteroids, {
+                            x = asteroid.x,
+                            y = asteroid.y,
+                            angle = angle1,
+                            stage = asteroid.stage - 1,
+                        })
+                        table.insert(asteroids, {
+                            x = asteroid.x,
+                            y = asteroid.y,
+                            angle = angle2,
+                            stage = asteroid.stage - 1,
+                        })
+                    end
+
+                    table.remove(asteroids, asteroidIndex)
+                    break
+                end
+            end
+        end
+    end
+
+    bulletTimer = bulletTimer + dt
+
+    if love.keyboard.isDown('s') then
+        if bulletTimer >= bulletTimerLimit then
+            bulletTimer = 0
+
+            table.insert(bullets, {
+                x = shipX + math.cos(shipAngle) * shipRadius,
+                y = shipY + math.sin(shipAngle) * shipRadius,
+                angle = shipAngle,
+                timeLeft = 4,
+            })
+        end
+    end
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        asteroid.x = (asteroid.x + math.cos(asteroid.angle)
+            * asteroidStages[asteroid.stage].speed * dt) % arenaWidth
+        asteroid.y = (asteroid.y + math.sin(asteroid.angle)
+            * asteroidStages[asteroid.stage].speed * dt) % arenaHeight
+
+        if areCirclesIntersecting(
+            shipX, shipY, shipRadius,
+            asteroid.x, asteroid.y, asteroidStages[asteroid.stage].radius
+        ) then
+            |reset()|
+            break
+        end
+    end
+
+    if #asteroids == 0 then
+        |reset()|
+    end
+end
+
+function love.draw()
+    for y = -1, 1 do
+        for x = -1, 1 do
+            love.graphics.origin()
+            love.graphics.translate(x * arenaWidth, y * arenaHeight)
+
+            love.graphics.setColor(0, 0, 1)
+            love.graphics.circle('fill', shipX, shipY, shipRadius)
+
+            local shipCircleDistance = 20
+            love.graphics.setColor(0, 1, 1)
+            love.graphics.circle(
+                'fill',
+                shipX + math.cos(shipAngle) * shipCircleDistance,
+                shipY + math.sin(shipAngle) * shipCircleDistance,
+                5
+            )
+
+            for bulletIndex, bullet in ipairs(bullets) do
+                love.graphics.setColor(0, 1, 0)
+                love.graphics.circle('fill', bullet.x, bullet.y, bulletRadius)
+            end
+
+            for asteroidIndex, asteroid in ipairs(asteroids) do
+                love.graphics.setColor(1, 1, 0)
+                love.graphics.circle('fill', asteroid.x, asteroid.y,
+                    asteroidStages[asteroid.stage].radius)
+            end
+        end
+    end
+end
+``
+`
+function love.load()
+    arenaWidth = 800
+    arenaHeight = 600
+
+    shipRadius = 30
+
+    bulletRadius = 5
+
+    asteroidStages = {
+        {
+            speed = 120,
+            radius = 15,
+        },
+        {
+            speed = 70,
+            radius = 30,
+        },
+        {
+            speed = 50,
+            radius = 50,
+        },
+        {
+            speed = 20,
+            radius = 80,
+        }
+    }
+
+    |function reset()|
+        shipX = arenaWidth / 2
+        shipY = arenaHeight / 2
+        shipAngle = 0
+        shipSpeedX = 0
+        shipSpeedY = 0
+
+        bullets = {}
+        bulletTimer = 0
+
+        asteroids = {
+            {
+                x = 100,
+                y = 100,
+            },
+            {
+                x = arenaWidth - 100,
+                y = 100,
+            },
+            {
+                x = arenaWidth / 2,
+                y = arenaHeight - 100,
+            }
+        }
+
+        for asteroidIndex, asteroid in ipairs(asteroids) do
+            asteroid.angle = love.math.random() * (2 * math.pi)
+            asteroid.stage = #asteroidStages
+        end
+    |end|
+
+    |reset()|
+end
+
+function love.update(dt)
+    -- etc.
+
+    for asteroidIndex, asteroid in ipairs(asteroids) do
+        -- etc.
+
+        if areCirclesIntersecting(
+            shipX, shipY, shipRadius,
+            asteroid.x, asteroid.y, asteroidStages[asteroid.stage].radius
+        ) then
+            |reset()|
+            break
+        end
+    end
+
+    if #asteroids == 0 then
+        |reset()|
+    end
+end
+`

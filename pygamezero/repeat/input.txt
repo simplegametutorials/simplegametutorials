@@ -1,0 +1,1454 @@
+<a href="repeat.py" class="download">Download repeat.py</a>
+
+!
+
+## Rules
+
+Watch as a sequence of numbers flash.
+
+Repeat the sequence using the number keys.
+
+If you successfully repeat the sequence, a new number is added and the sequence flashes again
+
+## Coding
+
+### Sequence
+
+The sequence list is created. For now it contains a test sequence of numbers between 1 and 4.
+
+``
+|sequence = [4, 3, 1, 2, 2, 3] # Temporary|
+
+|def draw():|
+|    screen.fill((0, 0, 0))|
+|    |
+|    screen.draw.text(', '.join(map(str, sequence)), (0, 0))|
+``
+`
+sequence = [4, 3, 1, 2, 2, 3] # Temporary
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.text(', '.join(map(str, sequence)), (0, 0))
+`
+
+!
+
+### Current position in sequence
+
+The current sequence position starts at 1.
+
+If the number in the sequence at the current position is pressed, then 1 is added to the current position.
+
+This will error once the current position is beyond the length of the sequence list.
+
+``
+sequence = [4, 3, 1, 2, 2, 3] # Temporary
+|current = 0|
+
+|def on_key_down(key):|
+|    global current|
+|    |
+|    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):|
+|        if key == keys.K_1:|
+|            number = 1|
+|        elif key == keys.K_2:|
+|            number = 2|
+|        elif key == keys.K_3:|
+|            number = 3|
+|        elif key == keys.K_4:|
+|            number = 4|
+|        |
+|        if number == sequence[current]:|
+|            current += 1|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.text(', '.join(map(str, sequence)), (0, 0))
+    |screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (0, 20))|
+    |screen.draw.text('sequence[current]: ' + str(sequence[current]), (0, 40))|
+``
+`
+sequence = [4, 3, 1, 2, 2, 3] # Temporary
+|current = 0|
+
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+        if key == keys.K_1:
+            number = 1
+        elif key == keys.K_2:
+            number = 2
+        elif key == keys.K_3:
+            number = 3
+        elif key == keys.K_4:
+            number = 4
+
+        if number == sequence[current]:
+            current += 1
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.text(', '.join(map(str, sequence)), (0, 0))
+    |screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (0, 20))|
+    |screen.draw.text('sequence[current]: ' + str(sequence[current]), (0, 40))|
+`
+
+!
+
+### Resetting current position
+
+When the current position goes beyond the sequence length, it is reset to 0.
+
+``
+sequence = [4, 3, 1, 2, 2, 3] # Temporary
+current = 0
+
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+        if key == keys.K_1:
+            number = 1
+        elif key == keys.K_2:
+            number = 2
+        elif key == keys.K_3:
+            number = 3
+        elif key == keys.K_4:
+            number = 4
+
+        if number == sequence[current]:
+            current += 1
+            |if current == len(sequence):|
+            |    current = 0|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.text(', '.join(map(str, sequence)), (0, 0))
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (0, 20))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (0, 40))
+``
+`
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+        # etc.
+
+        if number == sequence[current]:
+            current += 1
+            |if current == len(sequence):|
+            |    current = 0|
+`
+
+### Adding to sequence
+
+When the current position is reset, a random number between 1 and 4 is added to the sequence.
+
+The *random* module is imported so that `random.randint` can be used.
+
+``
+|import random|
+
+sequence = [4, 3, 1, 2, 2, 3] # Temporary
+current = 0
+
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+        if key == keys.K_1:
+            number = 1
+        elif key == keys.K_2:
+            number = 2
+        elif key == keys.K_3:
+            number = 3
+        elif key == keys.K_4:
+            number = 4
+
+        if number == sequence[current]:
+            current += 1
+            if current == len(sequence):
+                current = 0
+                |sequence.append(random.randint(1, 4))|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.text(', '.join(map(str, sequence)), (0, 0))
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (0, 20))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (0, 40))
+``
+`
+def on_key_down(key):
+    # etc.
+
+            if current == len(sequence):
+                current = 0
+                |sequence.append(random.randint(1, 4))|
+`
+
+### Starting sequence with a single number
+
+The sequence is now created with a single random number.
+
+Because the code for adding a random number to the sequence is reused, it is made into a function.
+
+``
+import random
+
+sequence = |[]|
+
+|def add_to_sequence():|
+|    sequence.append(random.randint(1, 4))|
+
+|add_to_sequence()|
+
+current = 0
+
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+        if key == keys.K_1:
+            number = 1
+        elif key == keys.K_2:
+            number = 2
+        elif key == keys.K_3:
+            number = 3
+        elif key == keys.K_4:
+            number = 4
+
+        if number == sequence[current]:
+            current += 1
+            if current == len(sequence):
+                current = 0
+                |add_to_sequence()|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.text(', '.join(map(str, sequence)), (0, 0))
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (0, 20))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (0, 40))
+``
+`
+sequence = |[]|
+
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+add_to_sequence()
+
+# etc.
+
+def on_key_down(key):
+    # etc.
+
+            if current == len(sequence):
+                current = 0
+                |add_to_sequence()|
+`
+
+### Resetting the game
+
+A function is made which sets the initial state of the game.
+
+This function is called before the game begins and when an incorrect number key is pressed.
+
+``
+import random
+
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+|def reset():|
+    |global sequence|
+    |global current|
+
+    sequence = []
+    add_to_sequence()
+    current = 0
+
+|reset()|
+
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+        if key == keys.K_1:
+            number = 1
+        elif key == keys.K_2:
+            number = 2
+        elif key == keys.K_3:
+            number = 3
+        elif key == keys.K_4:
+            number = 4
+
+        if number == sequence[current]:
+            current += 1
+            if current == len(sequence):
+                current = 0
+                add_to_sequence()
+        |else:|
+        |    reset()|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    screen.draw.text(', '.join(map(str, sequence)), (0, 0))
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (0, 20))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (0, 40))
+``
+`
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+|def reset():|
+    |global sequence|
+    |global current|
+
+    sequence = []
+    add_to_sequence()
+    current = 0
+
+|reset()|
+
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+
+        # etc.
+
+        if number == sequence[current]:
+            current += 1
+            if current == len(sequence):
+                current = 0
+                add_to_sequence()
+        |else:|
+        |    reset()|
+`
+
+### Drawing first square
+
+The first square is drawn with a dark red square and a white number.
+
+``
+import random
+
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+def reset():
+    global sequence
+    global current
+
+    sequence = []
+    add_to_sequence()
+    current = 0
+
+reset()
+
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+        if key == keys.K_1:
+            number = 1
+        elif key == keys.K_2:
+            number = 2
+        elif key == keys.K_3:
+            number = 3
+        elif key == keys.K_4:
+            number = 4
+
+        if number == sequence[current]:
+            current += 1
+            if current == len(sequence):
+                current = 0
+                add_to_sequence()
+        else:
+            reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    |square_size = 50|
+
+    |screen.draw.filled_rect(|
+    |    Rect(0, 0, square_size, square_size),|
+    |    color=(50, 0, 0)|
+    |)|
+    |screen.draw.text('1', (19, 18))|
+
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (|20|, |60|))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (|20|, |100|))
+    screen.draw.text(', '.join(map(str, sequence)), (|20|, |140|))
+``
+`
+def draw():
+    screen.fill((0, 0, 0))
+
+    |square_size = 50|
+
+    |screen.draw.filled_rect(|
+    |    Rect(0, 0, square_size, square_size),|
+    |    color=(50, 0, 0)|
+    |)|
+    |screen.draw.text('1', (19, 18))|
+
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (|20|, |60|))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (|20|, |100|))
+    screen.draw.text(', '.join(map(str, sequence)), (|20|, |140|))
+`
+
+!
+
+### Drawing all squares
+
+The rest of the squares are drawn similarly.
+
+``
+import random
+
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+def reset():
+    global sequence
+    global current
+
+    sequence = []
+    add_to_sequence()
+    current = 0
+
+reset()
+
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+        if key == keys.K_1:
+            number = 1
+        elif key == keys.K_2:
+            number = 2
+        elif key == keys.K_3:
+            number = 3
+        elif key == keys.K_4:
+            number = 4
+
+        if number == sequence[current]:
+            current += 1
+            if current == len(sequence):
+                current = 0
+                add_to_sequence()
+        else:
+            reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    square_size = 50
+
+    screen.draw.filled_rect(
+        Rect(0, 0, square_size, square_size),
+        color=(50, 0, 0)
+    )
+    screen.draw.text('1', (19, 18))
+
+    |screen.draw.filled_rect(|
+    |    Rect(square_size, 0, square_size, square_size),|
+    |    color=(0, 50, 0)|
+    |)|
+    |screen.draw.text('2', (square_size + 21, 18))|
+
+    |screen.draw.filled_rect(|
+    |    Rect(square_size * 2, 0, square_size, square_size),|
+    |    color=(0, 0, 50)|
+    |)|
+    |screen.draw.text('3', (square_size * 2 + 21, 18))|
+
+    |screen.draw.filled_rect(|
+    |    Rect(square_size * 3, 0, square_size, square_size),|
+    |    color=(50, 50, 0)|
+    |)|
+    |screen.draw.text('4', (square_size * 3 + 21, 18))|
+
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (20, 60))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (20, 100))
+    screen.draw.text(', '.join(map(str, sequence)), (20, 140))
+``
+`
+def draw():
+    screen.fill((0, 0, 0))
+
+    square_size = 50
+
+    screen.draw.filled_rect(
+        Rect(0, 0, square_size, square_size),
+        color=(50, 0, 0)
+    )
+    screen.draw.text('1', (19, 18))
+
+    |screen.draw.filled_rect(|
+    |    Rect(square_size, 0, square_size, square_size),|
+    |    color=(0, 50, 0)|
+    |)|
+    |screen.draw.text('2', (square_size + 21, 18))|
+
+    |screen.draw.filled_rect(|
+    |    Rect(square_size * 2, 0, square_size, square_size),|
+    |    color=(0, 0, 50)|
+    |)|
+    |screen.draw.text('3', (square_size * 2 + 21, 18))|
+
+    |screen.draw.filled_rect(|
+    |    Rect(square_size * 3, 0, square_size, square_size),|
+    |    color=(50, 50, 0)|
+    |)|
+    |screen.draw.text('4', (square_size * 3 + 21, 18))|
+
+    # etc.
+`
+
+!
+
+### Simplifying code
+
+The code for drawing each square is similar, so it is made into a function.
+
+``
+import random
+
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+def reset():
+    global sequence
+    global current
+
+    sequence = []
+    add_to_sequence()
+    current = 0
+
+reset()
+
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+        if key == keys.K_1:
+            number = 1
+        elif key == keys.K_2:
+            number = 2
+        elif key == keys.K_3:
+            number = 3
+        elif key == keys.K_4:
+            number = 4
+
+        if number == sequence[current]:
+            current += 1
+            if current == len(sequence):
+                current = 0
+                add_to_sequence()
+        else:
+            reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    |def draw_square(number, color):|
+        square_size = 50
+        screen.draw.filled_rect(
+            Rect(square_size * |(number - 1)|, 0, square_size, square_size),
+            color=|color|
+        )
+        screen.draw.text(|str(number)|, (square_size * |(number - 1)| + 21, 18))
+
+    |draw_square(1, (50, 0, 0))|
+    |draw_square(2, (0, 50, 0))|
+    |draw_square(3, (0, 0, 50))|
+    |draw_square(4, (50, 50, 0))|
+
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (20, 60))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (20, 100))
+    screen.draw.text(', '.join(map(str, sequence)), (20, 140))
+``
+`
+def draw():
+    screen.fill((0, 0, 0))
+
+    |def draw_square(number, color):|
+        square_size = 50
+        screen.draw.filled_rect(
+            Rect(square_size * |(number - 1)|, 0, square_size, square_size),
+            color=|color|
+        )
+        screen.draw.text(|str(number)|, (square_size * |(number - 1)| + 21, 18))
+
+    |draw_square(1, (50, 0, 0))|
+    |draw_square(2, (0, 50, 0))|
+    |draw_square(3, (0, 0, 50))|
+    |draw_square(4, (50, 50, 0))|
+
+    # etc.
+`
+
+### Timer
+
+Numbers will flash every second.
+
+A timer variable starts at 0 and increases by `dt` each frame.
+
+When the timer is at or above 1 it is reset to 0.
+
+For now, 'tick' is printed every time the numbers will flash.
+
+``
+import random
+
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+def reset():
+    global sequence
+    global current
+    |global timer|
+
+    sequence = []
+    add_to_sequence()
+    current = 0
+    |timer = 0|
+
+reset()
+
+|def update(dt):|
+|    global timer|
+|    |
+|    timer += dt|
+|    if timer >= 1:|
+|        timer = 0|
+|        # Temporary|
+|        print('tick')|
+
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+        if key == keys.K_1:
+            number = 1
+        elif key == keys.K_2:
+            number = 2
+        elif key == keys.K_3:
+            number = 3
+        elif key == keys.K_4:
+            number = 4
+
+        if number == sequence[current]:
+            current += 1
+            if current == len(sequence):
+                current = 0
+                add_to_sequence()
+        else:
+            reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def draw_square(number, color):
+        square_size = 50
+        screen.draw.filled_rect(
+            Rect(square_size * (number - 1), 0, square_size, square_size),
+            color=color
+        )
+        screen.draw.text(str(number), (square_size * (number - 1) + 21, 18))
+
+    draw_square(1, (50, 0, 0))
+    draw_square(2, (0, 50, 0))
+    draw_square(3, (0, 0, 50))
+    draw_square(4, (50, 50, 0))
+
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (20, 60))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (20, 100))
+    screen.draw.text(', '.join(map(str, sequence)), (20, 140))
+``
+`
+def reset():
+    # etc.
+    global timer
+
+    # etc.
+    timer = 0
+
+def update(dt):
+    global timer
+
+    timer += dt
+    if timer >= 1:
+        timer = 0
+        # Temporary
+        print('tick')
+`
+
+### Flashing squares
+
+The current sequence position is reused to flash each square in the sequence.
+
+The timer is used to advance the current sequence position.
+
+For now, the square corresponding to the number at the current sequence position is drawn using its color, while the other squares are drawn in black.
+
+The test sequence from before is used again.
+
+This will error once `current` goes beyond the length of `sequence`.
+
+``
+import random
+
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+def reset():
+    global sequence
+    global current
+    global timer
+
+    sequence = |[4, 3, 1, 2, 2, 3] # Temporary|
+    add_to_sequence()
+    current = 0
+    timer = 0
+
+reset()
+
+def update(dt):
+    global timer
+    |global current|
+
+    timer += dt
+    if timer >= 1:
+        timer = 0
+        |current += 1|
+
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+        if key == keys.K_1:
+            number = 1
+        elif key == keys.K_2:
+            number = 2
+        elif key == keys.K_3:
+            number = 3
+        elif key == keys.K_4:
+            number = 4
+
+        if number == sequence[current]:
+            current += 1
+            if current == len(sequence):
+                current = 0
+                add_to_sequence()
+        else:
+            reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def draw_square(number, color):
+        |if number == sequence[current]:|
+        |    square_color = color|
+        |else:|
+        |    square_color = (0, 0, 0)|
+
+        square_size = 50
+        screen.draw.filled_rect(
+            Rect(square_size * (number - 1), 0, square_size, square_size),
+            color=|square_color|
+        )
+        screen.draw.text(str(number), (square_size * (number - 1) + 21, 18))
+
+    draw_square(1, (50, 0, 0))
+    draw_square(2, (0, 50, 0))
+    draw_square(3, (0, 0, 50))
+    draw_square(4, (50, 50, 0))
+
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (20, 60))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (20, 100))
+    screen.draw.text(', '.join(map(str, sequence)), (20, 140))
+``
+`
+def reset():
+    # etc.
+
+    sequence = |[4, 3, 1, 2, 2, 3] # Temporary|
+
+def update(dt):
+    global timer
+    |global current|
+
+    timer += dt
+    if timer >= 1:
+        timer = 0
+        |current += 1|
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def draw_square(number, color):
+        |if number == sequence[current]:|
+        |    square_color = color|
+        |else:|
+        |    square_color = (0, 0, 0)|
+
+        square_size = 50
+        screen.draw.filled_rect(
+            Rect(square_size * (number - 1), 0, square_size, square_size),
+            color=|square_color|
+        )
+        screen.draw.text(str(number), (square_size * (number - 1) + 21, 18))
+
+    # etc.
+`
+
+!
+
+### Flashing color
+
+The squares are given a highlighted color for flashing.
+
+``
+import random
+
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+def reset():
+    global sequence
+    global current
+    global timer
+
+    sequence = [4, 3, 1, 2, 2, 3] # Temporary
+    add_to_sequence()
+    current = 0
+    timer = 0
+
+reset()
+
+def update(dt):
+    global timer
+    global current
+
+    timer += dt
+    if timer >= 1:
+        timer = 0
+        current += 1
+
+def on_key_down(key):
+    global current
+
+    if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+        if key == keys.K_1:
+            number = 1
+        elif key == keys.K_2:
+            number = 2
+        elif key == keys.K_3:
+            number = 3
+        elif key == keys.K_4:
+            number = 4
+
+        if number == sequence[current]:
+            current += 1
+            if current == len(sequence):
+                current = 0
+                add_to_sequence()
+        else:
+            reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def draw_square(number, color|, color_flashing|):
+
+        if number == sequence[current]:
+            square_color = |color_flashing|
+        else:
+            square_color = |color|
+
+        square_size = 50
+        screen.draw.filled_rect(
+            Rect(square_size * (number - 1), 0, square_size, square_size),
+            color=square_color
+        )
+        screen.draw.text(str(number), (square_size * (number - 1) + 21, 18))
+
+    draw_square(1, (50, 0, 0)|, (255, 0, 0)|)
+    draw_square(2, (0, 50, 0)|, (0, 255, 0)|)
+    draw_square(3, (0, 0, 50)|, (0, 0, 255)|)
+    draw_square(4, (50, 50, 0)|, (255, 255, 0)|)
+
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (20, 60))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (20, 100))
+    screen.draw.text(', '.join(map(str, sequence)), (20, 140))
+``
+`
+def draw():
+    screen.fill((0, 0, 0))
+
+    def draw_square(number, color|, color_flashing|):
+
+        if number == sequence[current]:
+            square_color = |color_flashing|
+        else:
+            square_color = |color|
+
+        square_size = 50
+        screen.draw.filled_rect(
+            Rect(square_size * (number - 1), 0, square_size, square_size),
+            color=square_color
+        )
+        screen.draw.text(str(number), (square_size * (number - 1) + 21, 18))
+
+    draw_square(1, (50, 0, 0)|, (255, 0, 0)|)
+    draw_square(2, (0, 50, 0)|, (0, 255, 0)|)
+    draw_square(3, (0, 0, 50)|, (0, 0, 255)|)
+    draw_square(4, (50, 50, 0)|, (255, 255, 0)|)
+
+    # etc.
+`
+
+!
+
+### Watch and repeat
+
+A variable is created which indicates whether the squares are flashing (`'watch'`) or whether the player is inputing numbers (`'repeat'`).
+
+The state starts as `'watch'` and changes to `'repeat'` after the flashing sequence has ended.
+
+The keyboard input code is only run if the state is `'repeat'`.
+
+Once the sequence has been successfully entered, the state changes back to `'watch'`.
+
+``
+import random
+
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+def reset():
+    global sequence
+    global current
+    global timer
+    |global state|
+
+    sequence = [4, 3, 1, 2, 2, 3] # Temporary
+    add_to_sequence()
+    current = 0
+    timer = 0
+    |state = 'watch' # 'watch', 'repeat'|
+
+reset()
+
+def update(dt):
+    global timer
+    global current
+    |global state|
+
+    |if state == 'watch':|
+        timer += dt
+        if timer >= 1:
+            timer = 0
+            current += 1
+            |if current == len(sequence):|
+            |    state = 'repeat'|
+            |    current = 0|
+
+def on_key_down(key):
+    global current
+    |global state|
+
+    |if state == 'repeat':|
+        if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+            if key == keys.K_1:
+                number = 1
+            elif key == keys.K_2:
+                number = 2
+            elif key == keys.K_3:
+                number = 3
+            elif key == keys.K_4:
+                number = 4
+
+            if number == sequence[current]:
+                current += 1
+                if current == len(sequence):
+                    current = 0
+                    add_to_sequence()
+                    |state = 'watch'|
+            else:
+                reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def draw_square(number, color, color_flashing):
+
+        if |state == 'watch' and| number == sequence[current]:
+            square_color = color_flashing
+        else:
+            square_color = color
+
+        square_size = 50
+        screen.draw.filled_rect(
+            Rect(square_size * (number - 1), 0, square_size, square_size),
+            color=square_color
+        )
+        screen.draw.text(str(number), (square_size * (number - 1) + 21, 18))
+
+    draw_square(1, (50, 0, 0), (255, 0, 0))
+    draw_square(2, (0, 50, 0), (0, 255, 0))
+    draw_square(3, (0, 0, 50), (0, 0, 255))
+    draw_square(4, (50, 50, 0), (255, 255, 0))
+
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (20, 60))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (20, 100))
+    screen.draw.text(', '.join(map(str, sequence)), (20, 140))
+    |screen.draw.text('state: ' + state, (20, 180))|
+``
+`
+def reset():
+    global state
+
+    # etc.
+
+    state = 'watch' # 'watch', 'repeat'
+
+def update(dt):
+    global timer
+    global current
+    |global state|
+
+    |if state == 'watch':|
+        timer += dt
+        if timer >= 1:
+            timer = 0
+            current += 1
+            |if current == len(sequence):|
+            |    state = 'repeat'|
+            |    current = 0|
+
+def on_key_down(key):
+    global current
+    |global state|
+
+    |if state == 'repeat':|
+        if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+
+            if key == keys.K_1:
+                number = 1
+            elif key == keys.K_2:
+                number = 2
+            elif key == keys.K_3:
+                number = 3
+            elif key == keys.K_4:
+                number = 4
+
+            if number == sequence[current]:
+                current += 1
+                if current == len(sequence):
+                    current = 0
+                    add_to_sequence()
+                    |state = 'watch'|
+            else:
+                reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def draw_square(number, color, color_flashing):
+
+        if |state == 'watch' and| number == sequence[current]:
+            square_color = color_flashing
+        else:
+            square_color = color
+
+    # etc.
+
+    |screen.draw.text('state: ' + state, (20, 180))|
+`
+
+!
+
+### Momentary flashing
+
+A boolean variable is used to indicate whether to set the highlighted color or not.
+
+It starts off as `False`, gets toggled to `True` when the timer ticks, and gets toggled back to `False` when the timer ticks again.
+
+The timer limit is changed to tick twice as fast.
+
+``
+import random
+
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+def reset():
+    global sequence
+    global current
+    global timer
+    global state
+    |global flashing|
+
+    sequence = [4, 3, 1, 2, 2, 3] # Temporary
+    add_to_sequence()
+    current = 0
+    timer = 0
+    state = 'watch' # 'watch', 'repeat'
+    |flashing = False|
+
+reset()
+
+def update(dt):
+    global timer
+    global current
+    global state
+    |global flashing|
+
+    if state == 'watch':
+        timer += dt
+        if timer >= |0.5|:
+            timer = 0
+            |flashing = not flashing|
+            |if not flashing:|
+                current += 1
+                if current == len(sequence):
+                    state = 'repeat'
+                    current = 0
+
+def on_key_down(key):
+    global current
+    global state
+
+    if state == 'repeat':
+        if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+            if key == keys.K_1:
+                number = 1
+            elif key == keys.K_2:
+                number = 2
+            elif key == keys.K_3:
+                number = 3
+            elif key == keys.K_4:
+                number = 4
+
+            if number == sequence[current]:
+                current += 1
+                if current == len(sequence):
+                    current = 0
+                    add_to_sequence()
+                    state = 'watch'
+            else:
+                reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def draw_square(number, color, color_flashing):
+
+        if state == 'watch' |and flashing| and number == sequence[current]:
+            square_color = color_flashing
+        else:
+            square_color = color
+
+        square_size = 50
+        screen.draw.filled_rect(
+            Rect(square_size * (number - 1), 0, square_size, square_size),
+            color=square_color
+        )
+        screen.draw.text(str(number), (square_size * (number - 1) + 21, 18))
+
+    draw_square(1, (50, 0, 0), (255, 0, 0))
+    draw_square(2, (0, 50, 0), (0, 255, 0))
+    draw_square(3, (0, 0, 50), (0, 0, 255))
+    draw_square(4, (50, 50, 0), (255, 255, 0))
+
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (20, 60))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (20, 100))
+    screen.draw.text(', '.join(map(str, sequence)), (20, 140))
+    screen.draw.text('state: ' + state, (20, 180))
+    |screen.draw.text('flashing: ' + str(flashing), (20, 220))|
+``
+`
+def reset():
+    # etc.
+    global flashing
+
+    # etc.
+    |flashing = False|
+
+def update(dt):
+    global timer
+    global current
+    global state
+    |global flashing|
+
+    if state == 'watch':
+        timer += dt
+        if timer >= |0.5|:
+            timer = 0
+            |flashing = not flashing|
+            |if not flashing:|
+                current += 1
+                if current == len(sequence):
+                    state = 'repeat'
+                    current = 0
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def draw_square(number, color, color_flashing):
+
+        if state == 'watch' |and flashing| and number == sequence[current]:
+            square_color = color_flashing
+        else:
+            square_color = color
+
+    # etc.
+
+    |screen.draw.text('flashing: ' + str(flashing), (20, 220))|
+`
+
+### Game over state
+
+If the wrong key is pressed, instead of resetting the game immediately, the state is set to `'gameover'`. When a key is pressed in the `'gameover'` state, the game is then reset.
+
+``
+import random
+
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+def reset():
+    global sequence
+    global current
+    global timer
+    global state
+    global flashing
+
+    sequence = |[]|
+    add_to_sequence()
+    current = 0
+    timer = 0
+    state = 'watch' # 'watch', 'repeat'|, 'gameover'|
+    flashing = False
+
+reset()
+
+def update(dt):
+    global timer
+    global current
+    global state
+    global flashing
+
+    if state == 'watch':
+        timer += dt
+        if timer >= 0.5:
+            timer = 0
+            flashing = not flashing
+            if not flashing:
+                current += 1
+                if current == len(sequence):
+                    state = 'repeat'
+                    current = 0
+
+def on_key_down(key):
+    global current
+    global state
+
+    if state == 'repeat':
+        if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+            if key == keys.K_1:
+                number = 1
+            elif key == keys.K_2:
+                number = 2
+            elif key == keys.K_3:
+                number = 3
+            elif key == keys.K_4:
+                number = 4
+
+            if number == sequence[current]:
+                current += 1
+                if current == len(sequence):
+                    current = 0
+                    add_to_sequence()
+                    state = 'watch'
+            else:
+                |state = 'gameover'|
+    |elif state == 'gameover':|
+        reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def draw_square(number, color, color_flashing):
+
+        if state == 'watch' and flashing and number == sequence[current]:
+            square_color = color_flashing
+        else:
+            square_color = color
+
+        square_size = 50
+        screen.draw.filled_rect(
+            Rect(square_size * (number - 1), 0, square_size, square_size),
+            color=square_color
+        )
+        screen.draw.text(str(number), (square_size * (number - 1) + 21, 18))
+
+    draw_square(1, (50, 0, 0), (255, 0, 0))
+    draw_square(2, (0, 50, 0), (0, 255, 0))
+    draw_square(3, (0, 0, 50), (0, 0, 255))
+    draw_square(4, (50, 50, 0), (255, 255, 0))
+
+    screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (20, 60))
+    screen.draw.text('sequence[current]: ' + str(sequence[current]), (20, 100))
+    screen.draw.text(', '.join(map(str, sequence)), (20, 140))
+    screen.draw.text('state: ' + state, (20, 180))
+    screen.draw.text('flashing: ' + str(flashing), (20, 220))
+``
+`
+def on_key_down(key):
+    global current
+    global state
+
+    if state == 'repeat':
+        if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+            # etc.
+
+            if number == sequence[current]:
+                # etc.
+            else:
+                |state = 'gameover'|
+    |elif state == 'gameover':|
+        reset()
+`
+
+### Displaying text based on state
+
+The current sequence position and the length of the sequence is only displayed if the game is in the `'repeat'` state, and a game over message is shown if the game is in the `'gameover'` state.
+
+``
+import random
+
+def add_to_sequence():
+    sequence.append(random.randint(1, 4))
+
+def reset():
+    global sequence
+    global current
+    global timer
+    global state
+    global flashing
+
+    sequence = []
+    add_to_sequence()
+    current = 0
+    timer = 0
+    state = 'watch' # 'watch', 'repeat', 'gameover'
+    flashing = False
+
+reset()
+
+def update(dt):
+    global timer
+    global current
+    global state
+    global flashing
+
+    if state == 'watch':
+        timer += dt
+        if timer >= 0.5:
+            timer = 0
+            flashing = not flashing
+            if not flashing:
+                current += 1
+                if current == len(sequence):
+                    state = 'repeat'
+                    current = 0
+
+def on_key_down(key):
+    global current
+    global state
+
+    if state == 'repeat':
+        if key in (keys.K_1, keys.K_2, keys.K_3, keys.K_4):
+            if key == keys.K_1:
+                number = 1
+            elif key == keys.K_2:
+                number = 2
+            elif key == keys.K_3:
+                number = 3
+            elif key == keys.K_4:
+                number = 4
+
+            if number == sequence[current]:
+                current += 1
+                if current == len(sequence):
+                    current = 0
+                    add_to_sequence()
+                    state = 'watch'
+            else:
+                state = 'gameover'
+    elif state == 'gameover':
+        reset()
+
+def draw():
+    screen.fill((0, 0, 0))
+
+    def draw_square(number, color, color_flashing):
+
+        if state == 'watch' and flashing and number == sequence[current]:
+            square_color = color_flashing
+        else:
+            square_color = color
+
+        square_size = 50
+        screen.draw.filled_rect(
+            Rect(square_size * (number - 1), 0, square_size, square_size),
+            color=square_color
+        )
+        screen.draw.text(str(number), (square_size * (number - 1) + 21, 18))
+
+    draw_square(1, (50, 0, 0), (255, 0, 0))
+    draw_square(2, (0, 50, 0), (0, 255, 0))
+    draw_square(3, (0, 0, 50), (0, 0, 255))
+    draw_square(4, (50, 50, 0), (255, 255, 0))
+
+    |if state == 'repeat':|
+        screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (20, 60))
+    |elif state == 'gameover':|
+    |    screen.draw.text('Game over!', (20, 60))|
+
+    |# Removed: screen.draw.text('sequence[current]: ' + str(sequence[current]), (20, 100))|
+    |# Removed: screen.draw.text(', '.join(map(str, sequence)), (20, 140))|
+    |# Removed: screen.draw.text('state: ' + state, (20, 180))|
+    |# Removed: screen.draw.text('flashing: ' + str(flashing), (20, 220))|
+``
+`
+def draw():
+    # etc.
+
+    |if state == 'repeat':|
+        screen.draw.text(str(current + 1) + '/' + str(len(sequence)), (20, 60))
+    |elif state == 'gameover':|
+    |    screen.draw.text('Game over!', (20, 60))|
+
+    |# Removed: screen.draw.text('sequence[current]: ' + str(sequence[current]), (20, 100))|
+    |# Removed: screen.draw.text(', '.join(map(str, sequence)), (20, 140))|
+    |# Removed: screen.draw.text('state: ' + state, (20, 180))|
+    |# Removed: screen.draw.text('flashing: ' + str(flashing), (20, 220))|
+`
+
+!

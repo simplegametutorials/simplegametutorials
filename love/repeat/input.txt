@@ -1,0 +1,1262 @@
+!
+
+## Rules
+
+Watch as a sequence of numbers flash.
+
+Repeat the sequence using the number keys.
+
+If you successfully repeat the sequence, a new number is added and the sequence flashes again
+
+## Coding
+
+### Sequence
+
+The sequence table is created. For now it contains a test sequence of numbers between 1 and 4.
+
+``
+|function love.load()|
+|    sequence = {4, 3, 1, 2, 2, 3} -- Temporary|
+|end|
+
+|function love.draw()|
+|    love.graphics.print(table.concat(sequence, ', '))|
+|end|
+``
+`
+function love.load()
+    sequence = {4, 3, 1, 2, 2, 3} -- Temporary
+end
+
+function love.draw()
+    love.graphics.print(table.concat(sequence, ', '))
+end
+`
+
+!
+
+### Current position in sequence
+
+The current sequence position starts at 1.
+
+If the number in the sequence at the current position is pressed, then 1 is added to the current position.
+
+This will error once the current position is beyond the length of the sequence table.
+
+``
+function love.load()
+    sequence = {4, 3, 1, 2, 2, 3} -- Temporary
+    |current = 1|
+end
+
+|function love.keypressed(key)|
+|    if tonumber(key) == sequence[current] then|
+|        current = current + 1|
+|    end|
+|end|
+
+function love.draw()
+    love.graphics.print(table.concat(sequence, ', '))
+    |love.graphics.print(current..'/'..#sequence, 0, 20)|
+    |love.graphics.print('sequence[current]: '..sequence[current], 0, 40)|
+end
+``
+`
+function love.load()
+    sequence = {4, 3, 1, 2, 2, 3} -- Temporary
+    |current = 1|
+end
+
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+    end
+end
+
+function love.draw()
+    love.graphics.print(table.concat(sequence, ', '))
+    |love.graphics.print(current..'/'..#sequence, 0, 20)|
+    |love.graphics.print('sequence[current]: '..sequence[current], 0, 40)|
+end
+`
+
+!
+
+### Resetting current position
+
+When the current position goes beyond the sequence length, it is reset to 1.
+
+``
+function love.load()
+    sequence = {4, 3, 1, 2, 2, 3} -- Temporary
+    current = 1
+end
+
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        |if current > #sequence then|
+        |    current = 1|
+        |end|
+    end
+end
+
+function love.draw()
+    love.graphics.print(table.concat(sequence, ', '))
+    love.graphics.print(current..'/'..#sequence, 0, 20)
+    love.graphics.print('sequence[current]: '..sequence[current], 0, 40)
+end
+``
+`
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        |if current > #sequence then|
+        |    current = 1|
+        |end|
+    end
+end
+`
+
+### Adding to sequence
+
+When the current position is reset, a random number between 1 and 4 is added to the sequence.
+
+``
+function love.load()
+    sequence = {4, 3, 1, 2, 2, 3} -- Temporary
+    current = 1
+end
+
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        if current > #sequence then
+            current = 1
+            |table.insert(sequence, love.math.random(4))|
+        end
+    end
+end
+
+function love.draw()
+    love.graphics.print(table.concat(sequence, ', '))
+    love.graphics.print(current..'/'..#sequence, 0, 20)
+    love.graphics.print('sequence[current]: '..sequence[current], 0, 40)
+end
+``
+`
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        if current > #sequence then
+            current = 1
+            |table.insert(sequence, love.math.random(4))|
+        end
+    end
+end
+`
+
+### Starting sequence with a single number
+
+The sequence is now created with a single random number.
+
+Because the code for adding a random number to the sequence is reused, it is made into a function.
+
+``
+function love.load()
+    sequence = |{}|
+
+    |function addToSequence()|
+    |    table.insert(sequence, love.math.random(4))|
+    |end|
+
+    |addToSequence()|
+
+    current = 1
+end
+
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        if current > #sequence then
+            current = 1
+            |addToSequence()|
+        end
+    end
+end
+
+function love.draw()
+    love.graphics.print(table.concat(sequence, ', '))
+    love.graphics.print(current..'/'..#sequence, 0, 20)
+    love.graphics.print('sequence[current]: '..sequence[current], 0, 40)
+end
+``
+`
+function love.load()
+    sequence = |{}|
+
+    |function addToSequence()|
+    |    table.insert(sequence, love.math.random(4))|
+    |end|
+
+    |addToSequence()|
+
+    current = 1
+end
+
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        if current > #sequence then
+            current = 1
+            |addToSequence()|
+        end
+    end
+end
+`
+
+### Resetting if an incorrect key is pressed
+
+If the wrong key is pressed, then `love.load` is called to reset the game.
+
+``
+function love.load()
+    sequence = {}
+
+    function addToSequence()
+        table.insert(sequence, love.math.random(4))
+    end
+
+    addToSequence()
+
+    current = 1
+end
+
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        if current > #sequence then
+            current = 1
+            addToSequence()
+        end
+    |else|
+    |    love.load()|
+    end
+end
+
+function love.draw()
+    love.graphics.print(table.concat(sequence, ', '))
+    love.graphics.print(current..'/'..#sequence, 0, 20)
+    love.graphics.print('sequence[current]: '..sequence[current], 0, 40)
+end
+``
+`
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        if current > #sequence then
+            current = 1
+            addToSequence()
+        end
+    |else|
+    |    love.load()|
+    end
+end
+`
+
+### Drawing first square
+
+The first square is drawn with a dark red square and a white number.
+
+A larger font is used and the drawn text is repositioned.
+
+``
+function love.load()
+    sequence = {}
+
+    function addToSequence()
+        table.insert(sequence, love.math.random(4))
+    end
+
+    addToSequence()
+
+    current = 1
+
+    |love.graphics.setNewFont(20)|
+end
+
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        if current > #sequence then
+            current = 1
+            addToSequence()
+        end
+    else
+        love.load()
+    end
+end
+
+function love.draw()
+    |local squareSize = 50|
+
+    |love.graphics.setColor(.2, 0, 0)|
+    |love.graphics.rectangle('fill', 0, 0, squareSize, squareSize)|
+    |love.graphics.setColor(1, 1, 1)|
+    |love.graphics.print(1, 19, 14)|
+
+    love.graphics.print(current..'/'..#sequence, |20|, |60|)
+    love.graphics.print('sequence[current]: '..sequence[current], |20|, |100|)
+    love.graphics.print(table.concat(sequence, ', ')|, 20, 140|)
+end
+``
+`
+function love.load()
+    -- etc.
+
+    love.graphics.setNewFont(20)
+end
+
+function love.draw()
+    |local squareSize = 50|
+
+    |love.graphics.setColor(.2, 0, 0)|
+    |love.graphics.rectangle('fill', 0, 0, squareSize, squareSize)|
+    |love.graphics.setColor(1, 1, 1)|
+    |love.graphics.print(1, 19, 14)|
+
+    love.graphics.print(current..'/'..#sequence, |20|, |60|)
+    love.graphics.print('sequence[current]: '..sequence[current], |20|, |100|)
+    love.graphics.print(table.concat(sequence, ', ')|, 20, 140|)
+end
+`
+
+!
+
+### Drawing all squares
+
+The rest of the squares are drawn similarly.
+
+``
+function love.load()
+    sequence = {}
+
+    function addToSequence()
+        table.insert(sequence, love.math.random(4))
+    end
+
+    addToSequence()
+
+    current = 1
+
+    love.graphics.setNewFont(20)
+end
+
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        if current > #sequence then
+            current = 1
+            addToSequence()
+        end
+    else
+        love.load()
+    end
+end
+
+function love.draw()
+    local squareSize = 50
+
+    love.graphics.setColor(.2, 0, 0)
+    love.graphics.rectangle('fill', 0, 0, squareSize, squareSize)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print(1, 19, 14)
+
+    |love.graphics.setColor(0, .2, 0)|
+    |love.graphics.rectangle('fill', squareSize, 0, squareSize, squareSize)|
+    |love.graphics.setColor(1, 1, 1)|
+    |love.graphics.print(2, squareSize + 19, 14)|
+
+    |love.graphics.setColor(0, 0, .2)|
+    |love.graphics.rectangle('fill', squareSize * 2, 0, squareSize, squareSize)|
+    |love.graphics.setColor(1, 1, 1)|
+    |love.graphics.print(3, squareSize * 2 + 19, 14)|
+
+    |love.graphics.setColor(.2, .2, 0)|
+    |love.graphics.rectangle('fill', squareSize * 3, 0, squareSize, squareSize)|
+    |love.graphics.setColor(1, 1, 1)|
+    |love.graphics.print(4, squareSize * 3 + 19, 14)|
+
+    love.graphics.print(current..'/'..#sequence, 20, 60)
+    love.graphics.print('sequence[current]: '..sequence[current], 20, 100)
+    love.graphics.print(table.concat(sequence, ', '), 20, 140)
+end
+``
+`
+function love.draw()
+    local squareSize = 50
+
+    love.graphics.setColor(.2, 0, 0)
+    love.graphics.rectangle('fill', 0, 0, squareSize, squareSize)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print(1, 19, 14)
+
+    |love.graphics.setColor(0, .2, 0)|
+    |love.graphics.rectangle('fill', squareSize, 0, squareSize, squareSize)|
+    |love.graphics.setColor(1, 1, 1)|
+    |love.graphics.print(2, squareSize + 19, 14)|
+
+    |love.graphics.setColor(0, 0, .2)|
+    |love.graphics.rectangle('fill', squareSize * 2, 0, squareSize, squareSize)|
+    |love.graphics.setColor(1, 1, 1)|
+    |love.graphics.print(3, squareSize * 2 + 19, 14)|
+
+    |love.graphics.setColor(.2, .2, 0)|
+    |love.graphics.rectangle('fill', squareSize * 3, 0, squareSize, squareSize)|
+    |love.graphics.setColor(1, 1, 1)|
+    |love.graphics.print(4, squareSize * 3 + 19, 14)|
+
+    -- etc.
+end
+`
+
+!
+
+### Simplifying code
+
+The code for drawing each square is similar, so it is made into a function.
+
+``
+function love.load()
+    sequence = {}
+
+    function addToSequence()
+        table.insert(sequence, love.math.random(4))
+    end
+
+    addToSequence()
+
+    current = 1
+
+    love.graphics.setNewFont(20)
+end
+
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        if current > #sequence then
+            current = 1
+            addToSequence()
+        end
+    else
+        love.load()
+    end
+end
+
+function love.draw()
+    |local function drawSquare(number, color)|
+        local squareSize = 50
+        love.graphics.setColor(|color|)
+        love.graphics.rectangle('fill', squareSize * |(number - 1)|, 0, squareSize, squareSize)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(|number|, squareSize * |(number - 1)| + 19, 14)
+    |end|
+
+    |drawSquare(1, {.2, 0, 0})|
+    |drawSquare(2, {0, .2, 0})|
+    |drawSquare(3, {0, 0, .2})|
+    |drawSquare(4, {.2, .2, 0})|
+
+    love.graphics.print(current..'/'..#sequence, 20, 60)
+    love.graphics.print('sequence[current]: '..sequence[current], 20, 100)
+    love.graphics.print(table.concat(sequence, ', '), 20, 140)
+end
+``
+`
+function love.draw()
+    |local function drawSquare(number, color)|
+        local squareSize = 50
+        love.graphics.setColor(|color|)
+        love.graphics.rectangle('fill', squareSize * |(number - 1)|, 0, squareSize, squareSize)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(|number|, squareSize * |(number - 1)| + 19, 14)
+    |end|
+
+    |drawSquare(1, {.2, 0, 0})|
+    |drawSquare(2, {0, .2, 0})|
+    |drawSquare(3, {0, 0, .2})|
+    |drawSquare(4, {.2, .2, 0})|
+
+    -- etc.
+end
+`
+
+### Timer
+
+Numbers will flash every second.
+
+A timer variable starts at 0 and increases by `dt` each frame.
+
+When the timer is at or above 1 it is reset to 0.
+
+For now, 'tick' is printed every time the numbers will flash.
+
+``
+function love.load()
+    sequence = {}
+
+    function addToSequence()
+        table.insert(sequence, love.math.random(4))
+    end
+
+    addToSequence()
+
+    current = 1
+
+    |timer = 0|
+
+    love.graphics.setNewFont(20)
+end
+
+|function love.update(dt)|
+|    timer = timer + dt|
+|    if timer >= 1 then|
+|        timer = 0|
+|        -- Temporary|
+|        print('tick')|
+|    end|
+|end|
+
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        if current > #sequence then
+            current = 1
+            addToSequence()
+        end
+    else
+        love.load()
+    end
+end
+
+function love.draw()
+    local function drawSquare(number, color)
+        local squareSize = 50
+        love.graphics.setColor(color)
+        love.graphics.rectangle('fill',
+            squareSize * (number - 1), 0, squareSize, squareSize)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(number, squareSize * (number - 1) + 19, 14)
+    end
+
+    drawSquare(1, {.2, 0, 0})
+    drawSquare(2, {0, .2, 0})
+    drawSquare(3, {0, 0, .2})
+    drawSquare(4, {.2, .2, 0})
+
+    love.graphics.print(current..'/'..#sequence, 20, 60)
+    love.graphics.print('sequence[current]: '..sequence[current], 20, 100)
+    love.graphics.print(table.concat(sequence, ', '), 20, 140)
+end
+``
+`
+function love.load()
+    -- etc.
+
+    timer = 0
+end
+
+function love.update(dt)
+    timer = timer + dt
+    if timer >= 1 then
+        timer = 0
+        -- Temporary
+        print('tick')
+    end
+end
+`
+
+### Flashing squares
+
+The current sequence position is reused to flash each square in the sequence.
+
+The timer is used to advance the current sequence position.
+
+For now, the square corresponding to the number at the current sequence position is drawn using its color, while the other squares are drawn in black.
+
+The test sequence from before is used again.
+
+This will error once `current` goes beyond the length of `sequence`.
+
+``
+function love.load()
+    sequence = |{4, 3, 1, 2, 2, 3} -- Temporary|
+
+    function addToSequence()
+        table.insert(sequence, love.math.random(4))
+    end
+
+    addToSequence()
+
+    current = 1
+
+    timer = 0
+
+    love.graphics.setNewFont(20)
+end
+
+function love.update(dt)
+    timer = timer + dt
+    if timer >= 1 then
+        timer = 0
+        |current = current + 1|
+    end
+end
+
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        if current > #sequence then
+            current = 1
+            addToSequence()
+        end
+    else
+        love.load()
+    end
+end
+
+function love.draw()
+    local function drawSquare(number, color)
+        local squareSize = 50
+
+        |if number == sequence[current] then|
+            love.graphics.setColor(color)
+        |else|
+        |    love.graphics.setColor(0, 0, 0)|
+        |end|
+
+        love.graphics.rectangle('fill',
+            squareSize * (number - 1), 0, squareSize, squareSize)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(number, squareSize * (number - 1) + 19, 14)
+    end
+
+    drawSquare(1, {.2, 0, 0})
+    drawSquare(2, {0, .2, 0})
+    drawSquare(3, {0, 0, .2})
+    drawSquare(4, {.2, .2, 0})
+
+    love.graphics.print(current..'/'..#sequence, 20, 60)
+    love.graphics.print('sequence[current]: '..sequence[current], 20, 100)
+    love.graphics.print(table.concat(sequence, ', '), 20, 140)
+end
+``
+`
+function love.load()
+    sequence = |{4, 3, 1, 2, 2, 3} -- Temporary|
+
+    -- etc.
+end
+
+function love.update(dt)
+    timer = timer + dt
+    if timer >= 1 then
+        timer = 0
+        |current = current + 1|
+    end
+end
+
+function love.draw()
+    local function drawSquare(number, color)
+        local squareSize = 50
+
+        |if number == sequence[current] then|
+            love.graphics.setColor(color)
+        |else|
+        |    love.graphics.setColor(0, 0, 0)|
+        |end|
+
+        -- etc.
+    end
+
+    -- etc.
+end
+`
+
+!
+
+### Flashing color
+
+The squares are given a highlighted color for flashing.
+
+``
+function love.load()
+    sequence = {4, 3, 1, 2, 2, 3} -- Temporary
+
+    function addToSequence()
+        table.insert(sequence, love.math.random(4))
+    end
+
+    addToSequence()
+
+    current = 1
+    timer = 0
+
+    love.graphics.setNewFont(20)
+end
+
+function love.update(dt)
+    timer = timer + dt
+    if timer >= 1 then
+        timer = 0
+        current = current + 1
+    end
+end
+
+function love.keypressed(key)
+    if tonumber(key) == sequence[current] then
+        current = current + 1
+        if current > #sequence then
+            current = 1
+            addToSequence()
+        end
+    else
+        love.load()
+    end
+end
+
+function love.draw()
+    local function drawSquare(number, color|, colorFlashing|)
+        local squareSize = 50
+
+        if number == sequence[current] then
+            love.graphics.setColor(|colorFlashing|)
+        else
+            love.graphics.setColor(|color|)
+        end
+
+        love.graphics.rectangle('fill',
+            squareSize * (number - 1), 0, squareSize, squareSize)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(number, squareSize * (number - 1) + 19, 14)
+    end
+
+    drawSquare(1, {.2, 0, 0}|, {1, 0, 0}|)
+    drawSquare(2, {0, .2, 0}|, {0, 1, 0}|)
+    drawSquare(3, {0, 0, .2}|, {0, 0, 1}|)
+    drawSquare(4, {.2, .2, 0}|, {1, 1, 0}|)
+
+    love.graphics.print(current..'/'..#sequence, 20, 60)
+    love.graphics.print('sequence[current]: '..sequence[current], 20, 100)
+    love.graphics.print(table.concat(sequence, ', '), 20, 140)
+end
+``
+`
+function love.draw()
+    local function drawSquare(number, color|, colorFlashing|)
+        local squareSize = 50
+
+        if number == sequence[current] then
+            love.graphics.setColor(|colorFlashing|)
+        else
+            love.graphics.setColor(|color|)
+        end
+
+        -- etc.
+    end
+
+    drawSquare(1, {.2, 0, 0}|, {1, 0, 0}|)
+    drawSquare(2, {0, .2, 0}|, {0, 1, 0}|)
+    drawSquare(3, {0, 0, .2}|, {0, 0, 1}|)
+    drawSquare(4, {.2, .2, 0}|, {1, 1, 0}|)
+
+    -- etc.
+end
+`
+
+!
+
+### Watch and repeat
+
+A variable is created which indicates whether the squares are flashing (`'watch'`) or whether the player is inputing numbers (`'repeat'`).
+
+The state starts as `'watch'` and changes to `'repeat'` after the flashing sequence has ended.
+
+The keyboard input code is only run if the state is `'repeat'`.
+
+Once the sequence has been successfully entered, the state changes back to `'watch'`.
+
+``
+function love.load()
+    sequence = {4, 3, 1, 2, 2, 3} -- Temporary
+
+    function addToSequence()
+        table.insert(sequence, love.math.random(4))
+    end
+
+    addToSequence()
+
+    current = 1
+    timer = 0
+    |state = 'watch' -- 'watch', 'repeat'|
+
+    love.graphics.setNewFont(20)
+end
+
+function love.update(dt)
+    |if state == 'watch' then|
+        timer = timer + dt
+        if timer >= 1 then
+            timer = 0
+            current = current + 1
+            |if current > #sequence then|
+            |    state = 'repeat'|
+            |    current = 1|
+            |end|
+        end
+    |end|
+end
+
+function love.keypressed(key)
+    |if state == 'repeat' then|
+        if tonumber(key) == sequence[current] then
+            current = current + 1
+            if current > #sequence then
+                current = 1
+                addToSequence()
+                |state = 'watch'|
+            end
+        else
+            love.load()
+        end
+    |end|
+end
+
+function love.draw()
+    local function drawSquare(number, color, colorFlashing)
+        local squareSize = 50
+
+        if |state == 'watch' and| number == sequence[current] then
+            love.graphics.setColor(colorFlashing)
+        else
+            love.graphics.setColor(color)
+        end
+
+        love.graphics.rectangle('fill',
+            squareSize * (number - 1), 0, squareSize, squareSize)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(number, squareSize * (number - 1) + 19, 14)
+    end
+
+    drawSquare(1, {.2, 0, 0}, {1, 0, 0})
+    drawSquare(2, {0, .2, 0}, {0, 1, 0})
+    drawSquare(3, {0, 0, .2}, {0, 0, 1})
+    drawSquare(4, {.2, .2, 0}, {1, 1, 0})
+
+    love.graphics.print(current..'/'..#sequence, 20, 60)
+    love.graphics.print('sequence[current]: '..sequence[current], 20, 100)
+    love.graphics.print(table.concat(sequence, ', '), 20, 140)
+    |love.graphics.print('state: '..state, 20, 180)|
+end
+``
+`
+function love.load()
+    -- etc.
+
+    state = 'watch' -- 'watch', 'repeat'
+end
+
+function love.update(dt)
+    |if state == 'watch' then|
+        timer = timer + dt
+        if timer >= 1 then
+            timer = 0
+            current = current + 1
+            |if current > #sequence then|
+            |    state = 'repeat'|
+            |    current = 1|
+            |end|
+        end
+    |end|
+end
+
+function love.keypressed(key)
+    |if state == 'repeat' then|
+        if tonumber(key) == sequence[current] then
+            current = current + 1
+            if current > #sequence then
+                current = 1
+                addToSequence()
+                |state = 'watch'|
+            end
+        else
+            love.load()
+        end
+    |end|
+end
+
+function love.draw()
+    local function drawSquare(number, color)
+        local squareSize = 50
+
+        if |state == 'watch' and| number == sequence[current] then
+            love.graphics.setColor(colorFlashing)
+        else
+            love.graphics.setColor(color)
+        end
+
+        -- etc.
+    end
+
+    -- etc.
+
+    |love.graphics.print('state: '..state, 20, 180)|
+end
+`
+
+!
+
+### Momentary flashing
+
+A boolean variable is used to indicate whether to set the highlighted color or not.
+
+It starts off as `false`, gets toggled to `true` when the timer ticks, and gets toggled back to `false` when the timer ticks again.
+
+The timer limit is changed to tick twice as fast.
+
+``
+function love.load()
+    sequence = {4, 3, 1, 2, 2, 3} -- Temporary
+
+    function addToSequence()
+        table.insert(sequence, love.math.random(4))
+    end
+
+    addToSequence()
+
+    current = 1
+    timer = 0
+    state = 'watch' -- 'watch', 'repeat'
+    |flashing = false|
+
+    love.graphics.setNewFont(20)
+end
+
+function love.update(dt)
+    if state == 'watch' then
+        timer = timer + dt
+        if timer >= |0.5| then
+            timer = 0
+            |flashing = not flashing|
+            |if not flashing then|
+                current = current + 1
+                if current > #sequence then
+                    state = 'repeat'
+                    current = 1
+                end
+            |end|
+        end
+    end
+end
+
+function love.keypressed(key)
+    if state == 'repeat' then
+        if tonumber(key) == sequence[current] then
+            current = current + 1
+            if current > #sequence then
+                current = 1
+                addToSequence()
+                state = 'watch'
+            end
+        else
+            love.load()
+        end
+    end
+end
+
+function love.draw()
+    local function drawSquare(number, color, colorFlashing)
+        local squareSize = 50
+
+        if state == 'watch' |and flashing| and number == sequence[current] then
+            love.graphics.setColor(colorFlashing)
+        else
+            love.graphics.setColor(color)
+        end
+
+        love.graphics.rectangle('fill',
+            squareSize * (number - 1), 0, squareSize, squareSize)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(number, squareSize * (number - 1) + 19, 14)
+    end
+
+    drawSquare(1, {.2, 0, 0}, {1, 0, 0})
+    drawSquare(2, {0, .2, 0}, {0, 1, 0})
+    drawSquare(3, {0, 0, .2}, {0, 0, 1})
+    drawSquare(4, {.2, .2, 0}, {1, 1, 0})
+
+    love.graphics.print(current..'/'..#sequence, 20, 60)
+    love.graphics.print('sequence[current]: '..sequence[current], 20, 100)
+    love.graphics.print(table.concat(sequence, ', '), 20, 140)
+    love.graphics.print('state: '..state, 20, 180)
+    |love.graphics.print('flashing: '..tostring(flashing), 20, 220)|
+end
+``
+`
+function love.load()
+    -- etc.
+
+    flashing = false
+end
+
+function love.update(dt)
+    if state == 'watch' then
+        timer = timer + dt
+        if timer >= |0.5| then
+            timer = 0
+            |flashing = not flashing|
+            |if not flashing then|
+                current = current + 1
+                if current > #sequence then
+                    state = 'repeat'
+                    current = 1
+                end
+            |end|
+        end
+    end
+end
+
+function love.draw()
+    local function drawSquare(number, color, colorFlashing)
+        local squareSize = 50
+
+        if state == 'watch' |and flashing| and number == sequence[current] then
+            love.graphics.setColor(colorFlashing)
+        else
+            love.graphics.setColor(color)
+        end
+
+        -- etc.
+    end
+
+    -- etc.
+
+    |love.graphics.print('flashing: '..tostring(flashing), 20, 220)|
+end
+`
+
+### Game over state
+
+If the wrong key is pressed, instead of resetting the game immediately, the state is set to `'gameover'`. When a key is pressed in the `'gameover'` state, the game is then reset.
+
+``
+function love.load()
+    sequence = |{}|
+
+    function addToSequence()
+        table.insert(sequence, love.math.random(4))
+    end
+
+    addToSequence()
+
+    current = 1
+    timer = 0
+    state = 'watch' -- 'watch', 'repeat'|, 'gameover'|
+    flashing = false
+
+    love.graphics.setNewFont(20)
+end
+
+function love.update(dt)
+    if state == 'watch' then
+        timer = timer + dt
+        if timer >= 0.5 then
+            timer = 0
+            flashing = not flashing
+            if not flashing then
+                current = current + 1
+                if current > #sequence then
+                    state = 'repeat'
+                    current = 1
+                end
+            end
+        end
+    end
+end
+
+function love.keypressed(key)
+    if state == 'repeat' then
+        if tonumber(key) == sequence[current] then
+            current = current + 1
+            if current > #sequence then
+                current = 1
+                addToSequence()
+                state = 'watch'
+            end
+        else
+            |state = 'gameover'|
+        end
+    |elseif state == 'gameover' then|
+        |love.load()|
+    end
+end
+
+function love.draw()
+    local function drawSquare(number, color, colorFlashing)
+        local squareSize = 50
+
+        if state == 'watch' and flashing and number == sequence[current] then
+            love.graphics.setColor(colorFlashing)
+        else
+            love.graphics.setColor(color)
+        end
+
+        love.graphics.rectangle('fill',
+            squareSize * (number - 1), 0, squareSize, squareSize)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(number, squareSize * (number - 1) + 19, 14)
+    end
+
+    drawSquare(1, {.2, 0, 0}, {1, 0, 0})
+    drawSquare(2, {0, .2, 0}, {0, 1, 0})
+    drawSquare(3, {0, 0, .2}, {0, 0, 1})
+    drawSquare(4, {.2, .2, 0}, {1, 1, 0})
+
+    love.graphics.print(current..'/'..#sequence, 20, 60)
+    love.graphics.print('sequence[current]: '..sequence[current], 20, 100)
+    love.graphics.print(table.concat(sequence, ', '), 20, 140)
+    love.graphics.print('state: '..state, 20, 180)
+    love.graphics.print('flashing: '..tostring(flashing), 20, 220)
+end
+``
+`
+function love.load()
+    sequence = |{}|
+    -- etc.
+end
+
+function love.keypressed(key)
+    if state == 'repeat' then
+        if tonumber(key) == sequence[current] then
+            current = current + 1
+            if current > #sequence then
+                current = 1
+                addToSequence()
+                state = 'watch'
+            end
+        else
+            |state = 'gameover'|
+        end
+    |elseif state == 'gameover' then|
+        |love.load()|
+    end
+end
+`
+
+### Displaying text based on state
+
+The current sequence position and the length of the sequence is only displayed if the game is in the `'repeat'` state, and a game over message is shown if the game is in the `'gameover'` state.
+
+``
+function love.load()
+    sequence = {}
+
+    function addToSequence()
+        table.insert(sequence, love.math.random(4))
+    end
+
+    addToSequence()
+
+    current = 1
+    timer = 0
+    state = 'watch' -- 'watch', 'repeat', 'gameover'
+    flashing = false
+
+    love.graphics.setNewFont(20)
+end
+
+function love.update(dt)
+    if state == 'watch' then
+        timer = timer + dt
+        if timer >= 0.5 then
+            timer = 0
+            flashing = not flashing
+            if not flashing then
+                current = current + 1
+                if current > #sequence then
+                    state = 'repeat'
+                    current = 1
+                end
+            end
+        end
+    end
+end
+
+function love.keypressed(key)
+    if state == 'repeat' then
+        if tonumber(key) == sequence[current] then
+            current = current + 1
+            if current > #sequence then
+                current = 1
+                addToSequence()
+                state = 'watch'
+            end
+        else
+            state = 'gameover'
+        end
+    elseif state == 'gameover' then
+        love.load()
+    end
+end
+
+function love.draw()
+    local function drawSquare(number, color, colorFlashing)
+        local squareSize = 50
+
+        if state == 'watch' and flashing and number == sequence[current] then
+            love.graphics.setColor(colorFlashing)
+        else
+            love.graphics.setColor(color)
+        end
+
+        love.graphics.rectangle('fill',
+            squareSize * (number - 1), 0, squareSize, squareSize)
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.print(number, squareSize * (number - 1) + 19, 14)
+    end
+
+    drawSquare(1, {.2, 0, 0}, {1, 0, 0})
+    drawSquare(2, {0, .2, 0}, {0, 1, 0})
+    drawSquare(3, {0, 0, .2}, {0, 0, 1})
+    drawSquare(4, {.2, .2, 0}, {1, 1, 0})
+
+    |if state == 'repeat' then|
+        love.graphics.print(current..'/'..#sequence, 20, 60)
+    |elseif state == 'gameover' then|
+    |    love.graphics.print('Game over!', 20, 60)|
+    |end|
+
+    |-- Removed: love.graphics.print('sequence[current]: '..sequence[current], 20, 100)|
+    |-- Removed: love.graphics.print(table.concat(sequence, ', '), 20, 140)|
+    |-- Removed: love.graphics.print('state: '..state, 20, 180)|
+    |-- Removed: love.graphics.print('flashing: '..tostring(flashing), 20, 220)|
+end
+``
+`
+function love.draw()
+    -- etc.
+
+    |if state == 'repeat' then|
+        love.graphics.print(current..'/'..#sequence, 20, 60)
+    |elseif state == 'gameover' then|
+    |    love.graphics.print('Game over!', 20, 60)|
+    |end|
+
+    -- Removed: love.graphics.print('sequence[current]: '..sequence[current], 20, 100)
+    -- Removed: love.graphics.print(table.concat(sequence, ', '), 20, 140)
+    -- Removed: love.graphics.print('state: '..state, 20, 180)
+    -- Removed: love.graphics.print('flashing: '..tostring(flashing), 20, 220)
+end
+`
+
+!
